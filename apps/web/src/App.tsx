@@ -40,11 +40,13 @@ function App() {
             {/* Card Glass PRETO */}
             <div className="relative w-full max-w-sm bg-[#111111]/80 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
 
-                {/* Título */}
+                {/*
+                Título
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-white mb-2 tracking-wider font-bricolage">LOGIN</h1>
                     <p className="text-white/70 text-sm">ACESSE SUA CONTA SIGE</p>
                 </div>
+                */}
 
                 <form onSubmit={handleLogin} className="space-y-5">
                     {/* Input Usuário - FUNDO BRANCO IGUAL A PRINT */}
