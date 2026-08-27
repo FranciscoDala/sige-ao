@@ -15,107 +15,66 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center p-4">
+      {/* Fundo com brilho */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-cyan-900/20 blur-3xl"></div>
 
-      {/* Lado Esquerdo - Banner */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-700 to-blue-900 p-12 flex-col justify-between text-white">
-        <div>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-blue-700">S</span>
+      <div className="relative w-full max-w-sm">
+
+        {/* Card Principal Neo-Tactile */}
+        <div className="bg-[#232736]/60 backdrop-blur-2xl rounded-[3rem] p-8 shadow-[20px_20px_60px_#151820,_-20px_-20px_60px_#2b3040] border-white/10">
+
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-3xl mb-4 shadow-[inset_4px_4px_8px_#0f1220,_inset_-4px_-4px_8px_#3a4a70]">
+              <span className="text-4xl font-bold text-white">S</span>
             </div>
-            <h1 className="text-2xl font-bold">SIGE AO</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">SIGE AO</h1>
+            <p className="text-gray-400 text-sm">Sistema de Gestão Escolar</p>
           </div>
 
-          <h2 className="text-4xl font-bold leading-tight mb-4">
-            Gestão Escolar <br /> Inteligente
-          </h2>
-          <p className="text-blue-100 text-lg">
-            Modernizando a educação de Angola. Controle alunos, notas,
-            turmas e relatórios em um só lugar.
-          </p>
-        </div>
-
-        <div className="text-sm text-blue-200">
-          Ministério da Educação - República de Angola
-        </div>
-      </div>
-
-      {/* Lado Direito - Formulário */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-700 rounded-xl mb-3">
-              <span className="text-2xl font-bold text-white">S</span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">SIGE AO</h1>
-          </div>
-
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo de volta</h2>
-          <p className="text-gray-500 mb-8">Acesse sua conta para continuar</p>
-
-          <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* Input Neo-Tactile */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Institucional
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
-                placeholder="nome@sige.ao"
-                required
-              />
+              <label className="block text-sm font-medium text-gray-300 mb-3">Email</label>
+              <div className="bg-[#1a1d29] rounded-2xl p-1 shadow-[inset_5px_5px_10px_#151820,_inset_-5px_-5px_10px_#2b3040]">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-transparent px-4 py-3 text-white placeholder-gray-500 focus:outline-none"
+                  placeholder="admin@sige.ao"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Senha */}
+            {/* Input Senha */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
-                placeholder="Digite sua senha"
-                required
-              />
+              <label className="block text-sm font-medium text-gray-300 mb-3">Senha</label>
+              <div className="bg-[#1a1d29] rounded-2xl p-1 shadow-[inset_5px_5px_10px_#151820,_inset_-5px_-5px_10px_#2b3040]">
+                <input
+                  type="password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="w-full bg-transparent px-4 py-3 text-white placeholder-gray-500 focus:outline-none"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Ações */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600" />
-                Lembrar-me
-              </label>
-              <a href="#" className="text-sm font-medium text-blue-700 hover:text-blue-800 transition">
-                Esqueci a senha
-              </a>
-            </div>
-
-            {/* Botão */}
+            {/* Botão Neo-Tactile Active */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-400 text-white font-semibold rounded-lg transition shadow-md flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-2xl transition-all
+              shadow-[8px_8px_16px_#151820,_-8px_-8px_16px_#2b3040] hover:shadow-[4px_4px_8px_#151820,_-4px_-4px_8px_#2b3040]
+              active:shadow-[inset_4px_4px_8px_#0f4a9e,_inset_-4px_-4px_8px_#00c4ff] disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Entrando...
-                </>
-              ) : 'Entrar no Sistema'}
+              {loading? 'Entrando...' : 'Entrar'}
             </button>
           </form>
-
-          <p className="text-center text-gray-400 text-xs mt-8">
-            © 2026 SIGE AO. Todos os direitos reservados.
-          </p>
         </div>
       </div>
     </div>
