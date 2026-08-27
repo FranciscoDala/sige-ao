@@ -19,7 +19,7 @@ function App() {
         <div
             className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 app-wrapper"
             style={{
-                background: 'linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-secundaria) 50%, #00c6ff 100%)'
+                background: 'linear-gradient(135deg, #0a4a8a 0%, #1e90ff 50%, #00c6ff 100%)' // <- AZUL DE VOLTA
             }}
             data-theme="dark"
             data-card-style="glass"
@@ -37,49 +37,51 @@ function App() {
                 </svg>
             </div>
 
-            {/* Card Glass */}
-            <div className="relative w-full max-w-sm card backdrop-blur-2xl rounded-3xl p-8 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
+            {/* Card Glass PRETO */}
+            <div className="relative w-full max-w-sm bg-[#111111]/80 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
 
                 {/* Título */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-cor mb-2 tracking-wider">LOGIN</h1>
-                    <p className="text-secundario text-sm">ACESSE SUA CONTA SIGE</p>
+                    <h1 className="text-4xl font-bold text-white mb-2 tracking-wider font-bricolage">LOGIN</h1>
+                    <p className="text-white/70 text-sm">ACESSE SUA CONTA SIGE</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-5">
-                    {/* Input Usuário */}
+                    {/* Input Usuário - FUNDO BRANCO IGUAL A PRINT */}
                     <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secundario" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
-                            type="text"
+                            type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-card border-cor rounded-full
-                text-cor placeholder:text-secundario focus:outline-none focus:border-primaria focus:bg-card-hover transition"
+                            className="w-full pl-12 pr-4 py-3 bg-white rounded-full
+                text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primaria transition"
                             placeholder="E-mail"
                             required
                         />
                     </div>
 
-                    {/* Input Senha */}
+                    {/* Input Senha - FUNDO BRANCO IGUAL A PRINT */}
                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secundario" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="password"
                             value={senha}
                             onChange={(e) => setSenha(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-card border-cor rounded-full
-                text-cor placeholder:text-secundario focus:outline-none focus:border-primaria focus:bg-card-hover transition"
+                            className="w-full pl-12 pr-4 py-3 bg-white rounded-full
+                text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primaria transition"
                             placeholder="Senha"
                             required
                         />
                     </div>
 
-                    {/* Botão Login */}
+                    {/* Botão Login - AZUL COM GLOW */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-primary w-full py-3 disabled:opacity-50 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-primaria/30"
+                        className="w-full py-3 bg-gradient-to-r from-[#0a4a8a] to-[#1e90ff] hover:from-[#1e90ff] hover:to-[#00c6ff]
+                        disabled:opacity-50 text-white font-bold rounded-full transition flex items-center justify-center gap-2
+                        shadow-lg shadow-[#0a4a8a]/40"
                     >
                         {loading ? 'Acessando...' :
                             <>
@@ -91,9 +93,9 @@ function App() {
 
                 {/* Links */}
                 <div className="text-center mt-6 space-y-2 text-sm">
-                    <a href="#" className="block text-secundario hover:text-cor transition">Forgot Password?</a>
-                    <p className="text-secundario">
-                        Don't have an account? <a href="#" className="text-cor font-semibold hover:underline">Sign Up</a>
+                    <a href="#" className="block text-white/70 hover:text-white transition">Esqueceu a senha?</a>
+                    <p className="text-white/60">
+                        Não tem conta? <a href="#" className="text-white font-semibold hover:underline">Criar conta</a>
                     </p>
                 </div>
             </div>

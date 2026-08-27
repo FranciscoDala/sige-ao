@@ -1,55 +1,36 @@
-/* 1. PRIMEIRO IMPORTA A FONTE */
+/* IMPORT DO GOOGLE FONTS */
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
 
-/* 2. DEPOIS O TAILWIND */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-    --cor-primaria: #16a34a;
-    --cor-secundaria: #22c55e;
-    --cor-fundo: #000;
-    --cor-card: #171717;
-    --cor-card-hover: #262626;
-    --cor-borda: #2a2a2a;
+    --cor-primaria: #0a4a8a; /* <- AZUL SIGE */
+    --cor-secundaria: #1e90ff; /* <- AZUL CLARO */
+    --cor-terciaria: #00c6ff; /* <- CIANO */
+    --cor-fundo: #0f172a; /* <- AZUL ESCURO */
+    --cor-card: #1e293b;
+    --cor-card-hover: #334155;
+    --cor-borda: #334155;
     --cor-texto: #ffffff;
-    --cor-texto-sec: #9ca3af;
+    --cor-texto-sec: #94a3b8;
 }
 
 [data-theme="light"] {
-    --cor-fundo: #f5f5f5;
+    --cor-fundo: #f0f9ff;
     --cor-card: #ffffff;
-    --cor-card-hover: #f9fafb;
-    --cor-borda: #e5e7eb;
-    --cor-texto: #111827;
-    --cor-texto-sec: #6b7280;
+    --cor-card-hover: #f8fafc;
+    --cor-borda: #e0e7ff;
+    --cor-texto: #0f172a;
+    --cor-texto-sec: #64748b;
 }
 
 @layer base {
-    * { border-color: var(--cor-borda); }
-
-    html, body, #root {
-        background: var(--cor-fundo);
-        color: var(--cor-texto);
-    }
-
     body {
-        @apply font-sans; /* <- Usa o font-sans do tailwind.config */
-        background: var(--cor-fundo);
+        @apply font-sans;
+        background: linear-gradient(135deg, #0a4a8a 0%, #1e90ff 50%, #00c6ff 100%); /* <- VOLTOU O GRADIENTE AZUL */
         color: var(--cor-texto);
+        min-height: 100vh;
     }
-
-    h1, h2, h3 {
-        @apply font-bricolage; /* <- Títulos usam Bricolage */
-        font-weight: 700;
-    }
-}
-
-/* SEUS CARDS E BOTOES AQUI... */
-.card {
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    background-color: var(--cor-card);
-    border: 1px solid var(--cor-borda);
 }

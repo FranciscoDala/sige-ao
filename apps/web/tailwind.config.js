@@ -4,13 +4,13 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Zalando Sans"', 'ui-sans-serif', 'system-ui'], // <- Nome exato do Google Fonts
-                zalando: ['"Zalando Sans"', 'sans-serif'],
+                sans: ['"Zalando Sans"', 'ui-sans-serif', 'system-ui'],
                 bricolage: ['"Bricolage Grotesque"', 'sans-serif'],
             },
             colors: {
-                'primaria': '#16a34a',
-                'secundaria': '#22c55e',
+                'primaria': '#0a4a8a',  // <- AZUL
+                'secundaria': '#1e90ff',
+                'terciaria': '#00c6ff',
             }
         },
     },
