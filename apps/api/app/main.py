@@ -7,9 +7,10 @@ app = FastAPI(title="SIGE-AO API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://sige-ao.vercel.app",
+        "http://localhost:5173",           # dev local Vite
+        "http://localhost:3000",           # dev local alternativo
+        "https://sige-ao.vercel.app",      # se ainda usar vercel
+        "https://sige-ao.onrender.com",    # <- FRONTEND NO RENDER - ATUALIZADO
     ],
     allow_credentials=True,
     allow_methods=["*"],
