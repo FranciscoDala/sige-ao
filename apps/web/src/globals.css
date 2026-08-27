@@ -1,14 +1,10 @@
+/* 1. PRIMEIRO IMPORTA A FONTE */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
+
+/* 2. DEPOIS O TAILWIND */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@font-face {
-    font-family: 'Zalando';
-    src: url('/fonts/ZalandoSans-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
 
 :root {
     --cor-primaria: #16a34a;
@@ -31,9 +27,29 @@
 }
 
 @layer base {
-    body {
-        font-family: 'Zalando', sans-serif; /* <- Força a Zalando */
+    * { border-color: var(--cor-borda); }
+
+    html, body, #root {
         background: var(--cor-fundo);
         color: var(--cor-texto);
     }
+
+    body {
+        @apply font-sans; /* <- Usa o font-sans do tailwind.config */
+        background: var(--cor-fundo);
+        color: var(--cor-texto);
+    }
+
+    h1, h2, h3 {
+        @apply font-bricolage; /* <- Títulos usam Bricolage */
+        font-weight: 700;
+    }
+}
+
+/* SEUS CARDS E BOTOES AQUI... */
+.card {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background-color: var(--cor-card);
+    border: 1px solid var(--cor-borda);
 }
