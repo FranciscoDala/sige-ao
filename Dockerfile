@@ -2,9 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY apps/api/requirements.txt .
+# Agora estamos na raiz, então copia assim
+COPY apps/api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copia todo o código da api
 COPY apps/api/ .
 
 EXPOSE 8000
