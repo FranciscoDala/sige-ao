@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { User, Lock, ArrowRight } from 'lucide-react' // npm i lucide-react
 
 function App() {
   const [email, setEmail] = useState('')
@@ -15,66 +16,83 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d29] flex items-center justify-center p-4">
-      {/* Fundo com brilho */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-cyan-900/20 blur-3xl"></div>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4"
+      style={{
+        background: 'linear-gradient(135deg, #0a4a8a 0%, #1e90ff 50%, #00c6ff 100%)'
+      }}>
 
-      <div className="relative w-full max-w-sm">
+      {/* Bolhas e ondas de fundo */}
+      <div className="absolute inset-0">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-16 w-40 h-40 bg-cyan-300/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-white/10 rounded-full blur-lg animate-bounce"></div>
+        {/* Ondas */}
+        <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 320">
+          <path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L0,320Z"></path>
+        </svg>
+      </div>
 
-        {/* Card Principal Neo-Tactile */}
-        <div className="bg-[#232736]/60 backdrop-blur-2xl rounded-[3rem] p-8 shadow-[20px_20px_60px_#151820,_-20px_-20px_60px_#2b3040] border-white/10">
+      {/* Card Glass */}
+      <div className="relative w-full max-w-sm bg-white/10 backdrop-blur-2xl rounded-3xl p-8
+        border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
 
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-3xl mb-4 shadow-[inset_4px_4px_8px_#0f1220,_inset_-4px_-4px_8px_#3a4a70]">
-              <span className="text-4xl font-bold text-white">S</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-1">SIGE AO</h1>
-            <p className="text-gray-400 text-sm">Sistema de Gestão Escolar</p>
+        {/* Título */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2 tracking-wider">LOGIN</h1>
+          <p className="text-white/70 text-sm">ACESSE SUA CONTA SIGE</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Input Usuário */}
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/30 rounded-full
+                text-white placeholder-white/50 focus:outline-none focus:border-cyan-400 focus:bg-white/10 transition"
+              placeholder="Username"
+              required
+            />
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Input Neo-Tactile */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Email</label>
-              <div className="bg-[#1a1d29] rounded-2xl p-1 shadow-[inset_5px_5px_10px_#151820,_inset_-5px_-5px_10px_#2b3040]">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent px-4 py-3 text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="admin@sige.ao"
-                  required
-                />
-              </div>
-            </div>
+          {/* Input Senha */}
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+            <input
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/30 rounded-full
+                text-white placeholder-white/50 focus:outline-none focus:border-cyan-400 focus:bg-white/10 transition"
+              placeholder="Password"
+              required
+            />
+          </div>
 
-            {/* Input Senha */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Senha</label>
-              <div className="bg-[#1a1d29] rounded-2xl p-1 shadow-[inset_5px_5px_10px_#151820,_inset_-5px_-5px_10px_#2b3040]">
-                <input
-                  type="password"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full bg-transparent px-4 py-3 text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
+          {/* Botão Login */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400
+              disabled:opacity-50 text-white font-bold rounded-full transition flex items-center justify-center gap-2
+              shadow-lg shadow-cyan-500/30"
+          >
+            {loading ? 'ENTRANDO...' :
+              <>
+                LOGIN <ArrowRight className="w-5 h-5" />
+              </>
+            }
+          </button>
+        </form>
 
-            {/* Botão Neo-Tactile Active */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold rounded-2xl transition-all
-              shadow-[8px_8px_16px_#151820,_-8px_-8px_16px_#2b3040] hover:shadow-[4px_4px_8px_#151820,_-4px_-4px_8px_#2b3040]
-              active:shadow-[inset_4px_4px_8px_#0f4a9e,_inset_-4px_-4px_8px_#00c4ff] disabled:opacity-50"
-            >
-              {loading? 'Entrando...' : 'Entrar'}
-            </button>
-          </form>
+        {/* Links */}
+        <div className="text-center mt-6 space-y-2 text-sm">
+          <a href="#" className="block text-white/70 hover:text-white transition">Forgot Password?</a>
+          <p className="text-white/60">
+            Don't have an account? <a href="#" className="text-white font-semibold hover:underline">Sign Up</a>
+          </p>
         </div>
       </div>
     </div>
