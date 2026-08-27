@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Zalando';
+    src: url('/fonts/ZalandoSans-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ============ TEMA BASE ============ */
+:root {
+    /* CORES */
+    --cor-primaria: #16a34a;
+    --cor-secundaria: #22c55e;
+    --cor-fundo: #000;
+    --cor-card: #171717;
+    --cor-card-hover: #262626;
+    --cor-borda: #2a2a2a;
+    --cor-texto: #ffffff;
+    --cor-texto-sec: #9ca3af;
+
+    /* ESTADOS */
+    --cor-sucesso: #22c55e;
+    --cor-erro: #ef4444;
+    --cor-aviso: #f59e0b;
+
+    /* TAMANHOS */
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --padding-card: 1.5rem;
+
+    /* FONTE */
+    --font-zalando: 'Zalando', sans-serif;
+    --font-sans: var(--font-zalando), ui-sans-serif, system-ui, sans-serif;
+
+    /* MAPEAMENTO SHADCN/TAILWIND */
+    --background: var(--cor-fundo);
+    --foreground: var(--cor-texto);
+    --card: var(--cor-card);
+    --border: var(--cor-borda);
+}
+
+/* TEMA CLARO */
+[data-theme="light"] {
+    --cor-fundo: #f5f5f5;
+    --cor-card: #ffffff;
+    --cor-card-hover: #f9fafb;
+    --cor-borda: #e5e7eb;
+    --cor-texto: #111827;
+    --cor-texto-sec: #6b7280;
+
+    --background: var(--cor-fundo);
+    --foreground: var(--cor-texto);
+    --card: var(--cor-card);
+    --border: var(--cor-borda);
+}
+
+/* ============ BASE DO TEMA ============ */
+@layer base {
+    * {
+        border-color: var(--border);
+    }
+
+    html, body, #root {
+        background: var(--cor-fundo) !important;
+        color: var(--cor-texto) !important;
+    }
+
+    body {
+        font-family: var(--font-zalando);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        min-height: 100vh;
+    }
+}
+
+/* ============ CARD + BOTÕES + INPUTS IGUAL STOCKBOT ============ */
+.card {
+    padding: var(--padding-card);
+    font-family: var(--font-zalando);
+    border-radius: var(--radius);
+    background-color: var(--cor-card);
+    color: var(--cor-texto);
+    transition: all 0.3s;
+    border: 1px solid var(--cor-borda);
+}
+
+.card:hover {
+    background-color: var(--cor-card-hover);
+}
+
+[data-card-style="glass"] .card {
+    background: rgba(23, 23, 23, 0.25);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--cor-primaria) !important;
+    color: white !important;
+    border: 1px solid var(--cor-primaria) !important;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: var(--font-zalando);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+input[type="text"], input[type="email"], select {
+    border: 1.5px solid var(--cor-primaria) !important;
+    background-color: var(--cor-card);
+    color: var(--cor-texto);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-zalando);
+}
