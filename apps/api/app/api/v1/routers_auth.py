@@ -17,7 +17,6 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
 
-    # Força pra str pra Pylance parar de reclamar
     if not verify_password(dados.senha, str(usuario.senha_hash)):
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
 
@@ -35,7 +34,17 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         super_admin = result.scalar_one_or_none()
         if super_admin:
             access_token = create_access_token({"sub": str(usuario.id), "email": usuario.email, "nivel": "MINISTERIO", "escola_id": None})
-            return {"access_token": access_token, "token_type": "bearer", "nivel": NivelAcesso.MINISTERIO, "nome": usuario.nome, "email": usuario.email, "escola_id": None}
+            return {
+                "access_token": access_token,
+                "token_type": "bearer",
+                "nivel": NivelAcesso.MINISTERIO.value,
+                "user": {
+                    "id": str(usuario.id),
+                    "email": usuario.email,
+                    "nome": usuario.nome,
+                    "escola_id": None
+                }
+            }
 
     # FLUXO 2: USUARIO NORMAL - com escola_id
     if dados.escola_id is None:
@@ -47,4 +56,14 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Usuário não vinculado a esta escola")
 
     access_token = create_access_token({"sub": str(usuario.id), "email": usuario.email, "nivel": vinculo.nivel.value, "escola_id": vinculo.escola_id})
-    return {"access_token": access_token, "token_type": "bearer", "nivel": vinculo.nivel, "nome": usuario.nome, "email": usuario.email, "escola_id": vinculo.escola_id}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "nivel": vinculo.nivel.value,
+        "user": {
+            "id": str(usuario.id),
+            "email": usuario.email,
+            "nome": usuario.nome,
+            "escola_id": vinculo.escola_id
+        }
+    }
