@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle } from 'lucide-react'
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, AxiosResponse } from 'axios' // 1. Adicionei AxiosResponse aqui
 import toast, { Toaster } from 'react-hot-toast'
 
 import { Button } from "./components/ui/button"
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select"
 import { Alert, AlertDescription } from "./components/ui/alert"
 
+
 const API_URL = "http://localhost:8000"
 
 interface Escola {
@@ -17,7 +18,7 @@ interface Escola {
     nome: string
 }
 
-interface LoginResponse { // 1. Tipagem da resposta do login
+interface LoginResponse {
     access_token: string
     nivel: string
     user: {
@@ -42,7 +43,7 @@ function App() {
     useEffect(() => {
         const fetchEscolas = async () => {
             try {
-                const res = await axios.get<Escola[]>(`${API_URL}/escolas`) // 2. Tipa o get também
+                const res = await axios.get<Escola[]>(`${API_URL}/escolas`)
                 setEscolas(res.data)
                 setApiOnline(true)
             } catch (err) {
@@ -76,7 +77,7 @@ function App() {
             return
         }
         setLoading(true)
-        const promise = axios.post<LoginResponse>(`${API_URL}/auth/login`, { // 3. Tipa o post aqui
+        const promise = axios.post<LoginResponse>(`${API_URL}/auth/login`, {
             email,
             senha,
             ...(!isSuperAdmin && { escola_id: escolaId })
@@ -84,7 +85,7 @@ function App() {
 
         toast.promise(promise, {
             loading: 'Acessando sistema...',
-            success: (res: { data: LoginResponse }) => { // <-- Mudei aqui
+            success: (res: AxiosResponse<LoginResponse>) => { // 2. Mudei para AxiosResponse aqui
                 localStorage.setItem('token', res.data.access_token)
                 localStorage.setItem('nivel', res.data.nivel)
                 localStorage.setItem('user', JSON.stringify(res.data.user))
