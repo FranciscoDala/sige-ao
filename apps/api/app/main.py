@@ -1,27 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import routers_auth
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="SIGE-AO API")
+from app.db.database import engine, Base
+from app.api.v1 import routers_escola, routers_auth, routers_usuario # <-- 1. Importa
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose()
+
+app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",           # dev local Vite
-        "http://localhost:3000",           # dev local alternativo
-        "https://sige-ao.vercel.app",      # se ainda usar vercel
-        "https://sige-ao.onrender.com",    # <- FRONTEND NO RENDER - ATUALIZADO
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost:5173", "https://sige-ao.onrender.com"],
+    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
 
-app.include_router(routers_auth.router)
-
-@app.get("/")
-def root():
-    return {"message": "SIGE-AO API is running"}
+app.include_router(routers_auth.router, prefix="/api/v1")
+app.include_router(routers_escola.router, prefix="/api/v1")
+app.include_router(routers_usuario.router, prefix="/api/v1") # <-- 2. Registra
 
 @app.get("/health")
 def health():
