@@ -1,93 +1,107 @@
 import { useState } from 'react'
-import { User, Lock, ArrowRight } from 'lucide-react'
+import { User, Lock, ArrowRight, School, Eye, EyeOff } from 'lucide-react'
 
 function App() {
+    const [codigoEscola, setCodigoEscola] = useState('')
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
+    const [showSenha, setShowSenha] = useState(false)
     const [loading, setLoading] = useState(false)
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setTimeout(() => {
-            alert(`Login: ${email}`)
+            alert(`Login: ${email} | Escola: ${codigoEscola}`)
             setLoading(false)
         }, 1500)
     }
 
     return (
         <div
-            className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 app-wrapper"
+            className="min-h-screen relative overflow-hidden flex items-center justify-center p-4"
             style={{
-                background: 'linear-gradient(135deg, #0a4a8a 0%, #1e90ff 50%, #00c6ff 100%)' // <- AZUL DE VOLTA
+                background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' // Preto, Vermelho, Amarelo AO
             }}
-            data-theme="dark"
-            data-card-style="glass"
-            data-card-size="medio"
         >
 
-            {/* Bolhas e ondas de fundo */}
+            {/* Efeitos de fundo */}
             <div className="absolute inset-0">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
-                <div className="absolute bottom-20 right-16 w-40 h-40 bg-cyan-300/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
-                <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-white/10 rounded-full blur-lg animate-bounce"></div>
-                {/* Ondas */}
-                <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 320">
-                    <path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L0,320Z"></path>
-                </svg>
+                <div className="absolute top-10 right-10 w-72 h-72 bg-[#CF0921]/30 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-20 left-16 w-96 h-96 bg-[#FFD700]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                {/* Grade sutil */}
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyem0wLTR2MkgydjJoMjR6bTAtNGgtMnYyaDJ2LTJ6bTItNGgtMnYyaDJ2LTJ6bTQtNGgtMnYyaDJ2LTJ6bTItNGgtMnYyaDJ2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
             </div>
 
-            {/* Card Glass PRETO */}
-            <div className="relative w-full max-w-sm bg-[#111111]/80 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]">
+            {/* Card Glass */}
+            <div className="relative w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border-white/10 shadow-2xl">
 
-                {/*
-                Título
+                {/* Header SIGE-AO */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2 tracking-wider font-bricolage">LOGIN</h1>
-                    <p className="text-white/70 text-sm">ACESSE SUA CONTA SIGE</p>
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#CF0921] to-[#FFD700] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <School className="w-8 h-8 text-white" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-white tracking-wider">SIGE-AO</h1>
+                    <p className="text-white/60 text-sm mt-1">Sistema de Gestão Escolar de Angola</p>
                 </div>
-                */}
 
-                <form onSubmit={handleLogin} className="space-y-5">
-                    {/* Input Usuário - FUNDO BRANCO IGUAL A PRINT */}
+                <form onSubmit={handleLogin} className="space-y-4">
+                    {/* Input Código da Escola */}
                     <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
+                        <input
+                            type="text"
+                            value={codigoEscola}
+                            onChange={(e) => setCodigoEscola(e.target.value.toUpperCase())}
+                            className="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl
+                            text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] transition"
+                            placeholder="Código da Escola: MUTAMBA001"
+                            required
+                        />
+                    </div>
+
+                    {/* Input Email */}
+                    <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-white rounded-full
-                text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primaria transition"
+                            className="w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl
+                            text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] transition"
                             placeholder="E-mail"
                             required
                         />
                     </div>
 
-                    {/* Input Senha - FUNDO BRANCO IGUAL A PRINT */}
+                    {/* Input Senha */}
                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
                         <input
-                            type="password"
+                            type={showSenha ? "text" : "password"}
                             value={senha}
                             onChange={(e) => setSenha(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-white rounded-full
-                text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primaria transition"
+                            className="w-full pl-12 pr-12 py-3.5 bg-white/10 border border-white/20 rounded-xl
+                            text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] transition"
                             placeholder="Senha"
                             required
                         />
+                        <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                            {showSenha ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
+                        </button>
                     </div>
 
-                    {/* Botão Login - AZUL COM GLOW */}
+                    {/* Botão Login */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-gradient-to-r from-[#0a4a8a] to-[#1e90ff] hover:from-[#1e90ff] hover:to-[#00c6ff]
-                        disabled:opacity-50 text-white font-bold rounded-full transition flex items-center justify-center gap-2
-                        shadow-lg shadow-[#0a4a8a]/40"
+                        className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] hover:from-[#FFD700] hover:to-[#CF0921]
+                        disabled:opacity-50 text-black font-bold rounded-xl transition flex items-center justify-center gap-2
+                        shadow-lg shadow-[#CF0921]/30 hover:shadow-[#FFD700]/30 hover:scale-[1.02]"
                     >
                         {loading ? 'Acessando...' :
                             <>
-                                Acessar <ArrowRight className="w-5 h-5" />
+                                Entrar no Sistema <ArrowRight className="w-5 h-5" />
                             </>
                         }
                     </button>
@@ -95,11 +109,14 @@ function App() {
 
                 {/* Links */}
                 <div className="text-center mt-6 space-y-2 text-sm">
-                    <a href="#" className="block text-white/70 hover:text-white transition">Esqueceu a senha?</a>
+                    <a href="#" className="block text-white/70 hover:text-[#FFD700] transition">Esqueceu a senha?</a>
                     <p className="text-white/60">
-                        Não tem conta? <a href="#" className="text-white font-semibold hover:underline">Criar conta</a>
+                        Precisa de acesso? <a href="#" className="text-white font-semibold hover:text-[#FFD700] transition">Fale com a Direção</a>
                     </p>
                 </div>
+
+                {/* Footer */}
+                <p className="text-center text-white/40 text-xs mt-6">© 2026 SIGE-AO. Versão 1.0</p>
             </div>
         </div>
     )
