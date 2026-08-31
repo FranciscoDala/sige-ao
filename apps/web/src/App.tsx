@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle } from 'lucide-react'
-import axios, { AxiosError, AxiosResponse } from 'axios' // 1. Adicionei AxiosResponse aqui
+import axios, { AxiosError, AxiosResponse } from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 
 import { Button } from "./components/ui/button"
@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select"
 import { Alert, AlertDescription } from "./components/ui/alert"
 
-
-const API_URL = "http://localhost:8000"
+// Pega do Render. Fallback pro localhost
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
 interface Escola {
     id: string
@@ -43,7 +43,8 @@ function App() {
     useEffect(() => {
         const fetchEscolas = async () => {
             try {
-                const res = await axios.get<Escola[]>(`${API_URL}/escolas`)
+                // ADICIONADO /api/v1
+                const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`)
                 setEscolas(res.data)
                 setApiOnline(true)
             } catch (err) {
@@ -51,7 +52,7 @@ function App() {
                 console.error("Erro ao buscar escolas", error)
                 setApiOnline(false)
                 if (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED') {
-                    toast.error('API Offline. Ligue o backend com: uvicorn app.main:app --reload')
+                    toast.error(`API Offline. Verifique: ${API_URL}`)
                 } else {
                     toast.error('Não foi possível carregar as escolas')
                 }
@@ -72,20 +73,20 @@ function App() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!isSuperAdmin && !escolaId) {
+        if (!isSuperAdmin &&!escolaId) {
             toast.error("Selecione uma escola")
             return
         }
         setLoading(true)
-        const promise = axios.post<LoginResponse>(`${API_URL}/auth/login`, {
+        const promise = axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, { // ADICIONADO /api/v1
             email,
             senha,
-            ...(!isSuperAdmin && { escola_id: escolaId })
+           ...(!isSuperAdmin && { escola_id: escolaId })
         })
 
         toast.promise(promise, {
             loading: 'Acessando sistema...',
-            success: (res: AxiosResponse<LoginResponse>) => { // 2. Mudei para AxiosResponse aqui
+            success: (res: AxiosResponse<LoginResponse>) => {
                 localStorage.setItem('token', res.data.access_token)
                 localStorage.setItem('nivel', res.data.nivel)
                 localStorage.setItem('user', JSON.stringify(res.data.user))
@@ -94,7 +95,7 @@ function App() {
             },
             error: (err: AxiosError<{ detail: string }>) => {
                 if (err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_REFUSED') {
-                    return 'Erro: API Offline. Ligue o backend.'
+                    return `Erro: API Offline em ${API_URL}`
                 }
                 return err.response?.data?.detail || "Usuário ou senha inválidos"
             },
@@ -123,16 +124,16 @@ function App() {
                         <Alert variant="destructive" className="mb-4 bg-red-500/20 border-red-500/50 text-red-300">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                API Offline. Rode `uvicorn app.main:app --reload`
+                                API Offline. Verifique se está rodando em: {API_URL}
                             </AlertDescription>
                         </Alert>
                     )}
-                    <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin ? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-all`}>
-                        {isSuperAdmin ? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
+                    <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-all`}>
+                        {isSuperAdmin? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
                     </div>
                     <CardTitle className="text-3xl font-bold text-white tracking-wider">SIGE-AO</CardTitle>
                     <CardDescription className="text-white/60 text-sm mt-1">
-                        {isSuperAdmin ? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}
+                        {isSuperAdmin? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -140,9 +141,9 @@ function App() {
                         {!isSuperAdmin && (
                             <div className="space-y-2">
                                 <Label>Escola</Label>
-                                <Select onValueChange={setEscolaId} value={escolaId} disabled={loadingEscolas || !apiOnline}>
+                                <Select onValueChange={setEscolaId} value={escolaId} disabled={loadingEscolas ||!apiOnline}>
                                     <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                                        <SelectValue placeholder={loadingEscolas ? "Carregando escolas..." : "Selecione sua escola"} />
+                                        <SelectValue placeholder={loadingEscolas? "Carregando escolas..." : "Selecione sua escola"} />
                                     </SelectTrigger>
                                     <SelectContent className="bg-black border-white/20 text-white">
                                         {escolas.map(escola => (
@@ -175,7 +176,7 @@ function App() {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
                                 <Input
-                                    type={showSenha ? "text" : "password"}
+                                    type={showSenha? "text" : "password"}
                                     value={senha}
                                     onChange={(e) => setSenha(e.target.value)}
                                     className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-[#FFD700]"
@@ -183,19 +184,19 @@ function App() {
                                     required
                                 />
                                 <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
-                                    {showSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    {showSenha? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
 
                         <Button
                             type="submit"
-                            disabled={loading || loadingEscolas || !apiOnline}
+                            disabled={loading || loadingEscolas ||!apiOnline}
                             className="w-full py-6 bg-gradient-to-r from-[#CF0921] to-[#FFD700] hover:from-[#FFD700] hover:to-[#CF0921]
                             disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-xl transition
                             shadow-lg shadow-[#CF0921]/30 hover:shadow-[#FFD700]/30 hover:scale-[1.02]"
                         >
-                            {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Acessando...</> :
+                            {loading? <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Acessando...</> :
                                 <>
                                     Entrar no Sistema <ArrowRight className="w-5 h-5 ml-2" />
                                 </>
