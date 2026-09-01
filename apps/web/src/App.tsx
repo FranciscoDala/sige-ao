@@ -26,16 +26,28 @@ export default function App() {
       setLoadingEscolas(true)
       console.log("[FETCH_ESCOLAS] 1. Iniciando busca em:", `${API_URL}/api/v1/escolas`)
       try {
-        const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`)
+        const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`, {
+          timeout: 60000 // 60s pra Render acordar
+        })
         console.log("[FETCH_ESCOLAS] 2. Status:", res.status)
         console.log("[FETCH_ESCOLAS] 3. Dados:", res.data)
         setEscolas(res.data)
         setApiOnline(true)
-        if(res.data.length === 0) toast("Atenção: Nenhuma escola ativa no DB")
+        if(res.data.length === 0) {
+          toast("Atenção: Nenhuma escola ativa no DB", { icon: '⚠️' })
+        } else {
+          toast.success(`${res.data.length} escola(s) carregada(s)`)
+        }
       } catch (err: any) {
-        console.error("[FETCH_ESCOLAS] ERRO:", err.response?.data || err.message)
+        console.error("[FETCH_ESCOLAS] ERRO COMPLETO:", err.code, err.message)
         setApiOnline(false)
-        toast.error(`Erro ao carregar escolas: ${err.message}`)
+        if(err.code === 'ECONNABORTED') {
+          toast.error("API demorou +60s. Render está acordando... Tenta atualizar a página")
+        } else if(err.code === 'ERR_NETWORK') {
+          toast.error(`API Offline. Verifique: ${API_URL}`)
+        } else {
+          toast.error(`Erro ao carregar escolas: ${err.message}`)
+        }
       } finally {
         setLoadingEscolas(false)
         console.log("[FETCH_ESCOLAS] 4. Finalizado")
@@ -59,7 +71,7 @@ export default function App() {
     if (!isSuperAdmin &&!escolaId) { toast.error("Selecione uma escola"); return }
     setLoading(true)
 
-    axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, payload)
+    axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, payload, { timeout: 15000 })
   .then((res: AxiosResponse<LoginResponse>) => {
       console.log("[LOGIN] Sucesso:", res.data)
       localStorage.setItem('token', res.data.access_token)
@@ -69,19 +81,28 @@ export default function App() {
       setTimeout(() => window.location.href = '/dashboard', 1000)
     })
   .catch((err: AxiosError<{ detail: string }>) => {
-      console.error("[LOGIN] Erro:", err.response?.data)
-      toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
+      console.error("[LOGIN] Erro:", err.code, err.response?.data)
+      if(err.code === 'ECONNABORTED') {
+        toast.error("Login demorou muito. API pode estar dormindo.")
+      } else {
+        toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
+      }
     })
   .finally(() => setLoading(false))
   }
 
-  const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
+  const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
       <Toaster position="top-center" />
       <div className="w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 text-white">
-        {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex gap-2 items-center"><AlertCircle/>API Offline: {API_URL}</div>}
+        {!apiOnline &&
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex gap-2 items-center text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0"/>
+            <span>API Offline: {API_URL}. Se for Render, espere 1min e atualize.</span>
+          </div>
+        }
 
         <div className="text-center mb-8">
           <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin? 'from-yellow-400 to-yellow-600': 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
@@ -97,8 +118,15 @@ export default function App() {
               <label className="text-sm text-white/80 mb-1 block">Escola</label>
               <div className="relative">
                 <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none"/>
-                <select value={escolaId} onChange={(e) => setEscolaId(e.target.value)} disabled={loadingEscolas ||!apiOnline} className={`${inputClass} appearance-none`}>
-                  <option value="" disabled className="bg-black">{loadingEscolas? "Carregando escolas...": "Selecione sua escola"}</option>
+                <select
+                  value={escolaId}
+                  onChange={(e) => setEscolaId(e.target.value)}
+                  disabled={loadingEscolas ||!apiOnline}
+                  className={`${inputClass} appearance-none`}
+                >
+                  <option value="" disabled className="bg-black">
+                    {loadingEscolas? "Carregando escolas... Aguarde 1min": "Selecione sua escola"}
+                  </option>
                   {escolas.map(e => <option key={e.id} value={e.id} className="bg-black">{e.nome}</option>)}
                 </select>
               </div>
@@ -106,16 +134,30 @@ export default function App() {
           )}
           <div>
             <label className="text-sm text-white/80 mb-1 block">Email</label>
-            <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="superadmin@sige-ao.gov.ao" required /></div>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="superadmin@sige-ao.gov.ao" required />
+            </div>
           </div>
           <div>
             <label className="text-sm text-white/80 mb-1 block">Senha</label>
-            <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/><input type={showSenha? "text": "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required /><button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">{showSenha? <EyeOff className="w-5 h-5"/>: <Eye className="w-5 h-5"/>}</button></div>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/>
+              <input type={showSenha? "text": "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required />
+              <button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                {showSenha? <EyeOff className="w-5 h-5"/>: <Eye className="w-5 h-5"/>}
+              </button>
+            </div>
           </div>
-          <button type="submit" disabled={loading || loadingEscolas ||!apiOnline} className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
-            {loading? <Loader2 className="animate-spin"/>: <>Entrar <ArrowRight/></>}
+          <button
+            type="submit"
+            disabled={loading || loadingEscolas ||!apiOnline}
+            className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition"
+          >
+            {loading? <><Loader2 className="animate-spin"/> Acessando...</>: <>Entrar <ArrowRight/></>}
           </button>
         </form>
+        <p className="text-center text-white/40 text-xs mt-6">Render Free: Primeira carga pode demorar 60s</p>
       </div>
     </div>
   )
