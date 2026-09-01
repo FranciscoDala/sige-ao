@@ -26,6 +26,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://sige-ao.onrender.com",
+        "https://sige-backend-7rv1.onrender.com" # <- adiciona essa
     ],
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
