@@ -20,14 +20,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
+# CORS CORRIGIDO
+origins = [
+    "http://localhost:5173",
+    "https://sige-ao.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://sige-ao.onrender.com",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], # <- especifica
     allow_headers=["*"],
 )
 
