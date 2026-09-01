@@ -3,8 +3,8 @@ import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, Aler
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
-const REQUEST_TIMEOUT = 60000 // 60s pro Render acordar
+const API_URL = import.meta.env.VITE_API_URL // https://sige-backend-7rv1.onrender.com/api/v1
+const REQUEST_TIMEOUT = 60000
 console.log("[INIT] API_URL USADA:", API_URL)
 
 interface Escola { id: string; nome: string }
@@ -25,27 +25,21 @@ export default function App() {
   useEffect(() => {
     const fetchEscolas = async () => {
       setLoadingEscolas(true)
-      console.log("[FETCH_ESCOLAS] 1. Iniciando busca em:", `${API_URL}/api/v1/escolas`)
+      // AGORA CHAMA DIRETO: /escolas
+      const url = `${API_URL}/escolas`
+      console.log("[FETCH_ESCOLAS] 1. Iniciando busca em:", url)
       try {
-        const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`, { timeout: REQUEST_TIMEOUT })
+        const res = await axios.get<Escola[]>(url, { timeout: REQUEST_TIMEOUT })
         console.log("[FETCH_ESCOLAS] 2. Status:", res.status)
-        console.log("[FETCH_ESCOLAS] 3. Dados:", res.data)
         setEscolas(res.data)
         setApiOnline(true)
         if(res.data.length === 0) toast("Atenção: Nenhuma escola cadastrada no DB", { icon: '⚠️' })
       } catch (err: any) {
-        console.error("[FETCH_ESCOLAS] ERRO COMPLETO:", err.code, err.message)
+        console.error("[FETCH_ESCOLAS] ERRO COMPLETO:", err)
         setApiOnline(false)
-        if(err.code === 'ECONNABORTED') {
-          toast.error("API demorou pra responder. O servidor Render pode estar acordando...")
-        } else if (err.code === 'ERR_NETWORK') {
-          toast.error("Não foi possível conectar na API. Verifique a VITE_API_URL")
-        } else {
-          toast.error(`Erro ao carregar escolas: ${err.message}`)
-        }
+        toast.error(`Erro ao carregar escolas: ${err.response?.status || ''} ${err.message}`)
       } finally {
         setLoadingEscolas(false)
-        console.log("[FETCH_ESCOLAS] 4. Finalizado")
       }
     }
     fetchEscolas()
@@ -53,7 +47,6 @@ export default function App() {
 
   useEffect(() => {
     const isAdmin = email.toLowerCase().trim() === 'superadmin@sige-ao.gov.ao'
-    console.log("[EMAIL_CHANGE] Email:", email, "IsSuper:", isAdmin)
     setIsSuperAdmin(isAdmin)
     if (isAdmin) setEscolaId('')
   }, [email])
@@ -61,14 +54,12 @@ export default function App() {
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const payload = { email, senha, ...(!isSuperAdmin && { escola_id: escolaId }) }
-    console.log("[LOGIN] Payload enviado:", payload)
-
     if (!isSuperAdmin && !escolaId) { toast.error("Selecione uma escola"); return }
     setLoading(true)
 
-    axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
+    // AGORA CHAMA DIRETO: /auth/login
+    axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
     .then((res: AxiosResponse<LoginResponse>) => {
-      console.log("[LOGIN] Sucesso:", res.data)
       localStorage.setItem('token', res.data.access_token)
       localStorage.setItem('nivel', res.data.nivel)
       localStorage.setItem('user', JSON.stringify(res.data.user))
@@ -76,12 +67,7 @@ export default function App() {
       setTimeout(() => window.location.href = '/dashboard', 1000)
     })
     .catch((err: AxiosError<{ detail: string }>) => {
-      console.error("[LOGIN] Erro:", err.code, err.response?.data)
-      if(err.code === 'ECONNABORTED') {
-        toast.error("Login demorou. O servidor pode estar acordando, tente novamente.")
-      } else {
-        toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
-      }
+      toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
     })
     .finally(() => setLoading(false))
   }
@@ -93,7 +79,6 @@ export default function App() {
       <Toaster position="top-center" />
       <div className="w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 text-white">
         {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5"/>API Offline: {API_URL}</div>}
-
         <div className="text-center mb-8">
           <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin ? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
             {isSuperAdmin ? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
@@ -101,7 +86,6 @@ export default function App() {
           <h1 className="text-3xl font-bold">SIGE-AO</h1>
           <p className="text-white/60 text-sm">{isSuperAdmin ? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
         </div>
-
         <form onSubmit={handleLogin} className="space-y-4">
           {!isSuperAdmin && (
             <div>
