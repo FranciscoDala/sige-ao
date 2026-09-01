@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -14,10 +15,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
+# CORS liberado pro front + pra ele mesmo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://sige-ao.onrender.com"], # Confere se é esse o domínio do front
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://sige-ao.onrender.com",
+        "https://sige-backend.onrender.com" # pra testar direto
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(routers_auth.router, prefix="/api/v1")
@@ -26,4 +34,8 @@ app.include_router(routers_usuario.router, prefix="/api/v1")
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "port": os.environ.get("PORT")} # pra debug
+
+@app.get("/")
+def root():
+    return {"msg": "SIGE-AO API Online"}
