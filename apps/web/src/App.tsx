@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosResponse } from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
+const REQUEST_TIMEOUT = 60000 // 60s pro Render acordar
 console.log("[INIT] API_URL USADA:", API_URL)
 
 interface Escola { id: string; nome: string }
@@ -26,17 +27,19 @@ export default function App() {
       setLoadingEscolas(true)
       console.log("[FETCH_ESCOLAS] 1. Iniciando busca em:", `${API_URL}/api/v1/escolas`)
       try {
-        const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`, { timeout: 15000 })
+        const res = await axios.get<Escola[]>(`${API_URL}/api/v1/escolas`, { timeout: REQUEST_TIMEOUT })
         console.log("[FETCH_ESCOLAS] 2. Status:", res.status)
         console.log("[FETCH_ESCOLAS] 3. Dados:", res.data)
         setEscolas(res.data)
         setApiOnline(true)
-        if(res.data.length === 0) toast("Atenção: Nenhuma escola ativa no DB", { icon: '⚠️' })
+        if(res.data.length === 0) toast("Atenção: Nenhuma escola cadastrada no DB", { icon: '⚠️' })
       } catch (err: any) {
         console.error("[FETCH_ESCOLAS] ERRO COMPLETO:", err.code, err.message)
         setApiOnline(false)
         if(err.code === 'ECONNABORTED') {
-          toast.error("API demorou pra responder. Verifique se o sige-backend está On")
+          toast.error("API demorou pra responder. O servidor Render pode estar acordando...")
+        } else if (err.code === 'ERR_NETWORK') {
+          toast.error("Não foi possível conectar na API. Verifique a VITE_API_URL")
         } else {
           toast.error(`Erro ao carregar escolas: ${err.message}`)
         }
@@ -57,14 +60,14 @@ export default function App() {
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const payload = { email, senha,...(!isSuperAdmin && { escola_id: escolaId }) }
+    const payload = { email, senha, ...(!isSuperAdmin && { escola_id: escolaId }) }
     console.log("[LOGIN] Payload enviado:", payload)
 
-    if (!isSuperAdmin &&!escolaId) { toast.error("Selecione uma escola"); return }
+    if (!isSuperAdmin && !escolaId) { toast.error("Selecione uma escola"); return }
     setLoading(true)
 
-    axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, payload, { timeout: 15000 })
-  .then((res: AxiosResponse<LoginResponse>) => {
+    axios.post<LoginResponse>(`${API_URL}/api/v1/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
+    .then((res: AxiosResponse<LoginResponse>) => {
       console.log("[LOGIN] Sucesso:", res.data)
       localStorage.setItem('token', res.data.access_token)
       localStorage.setItem('nivel', res.data.nivel)
@@ -72,11 +75,15 @@ export default function App() {
       toast.success(`Bem-vindo, ${res.data.user.nome}!`)
       setTimeout(() => window.location.href = '/dashboard', 1000)
     })
-  .catch((err: AxiosError<{ detail: string }>) => {
+    .catch((err: AxiosError<{ detail: string }>) => {
       console.error("[LOGIN] Erro:", err.code, err.response?.data)
-      toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
+      if(err.code === 'ECONNABORTED') {
+        toast.error("Login demorou. O servidor pode estar acordando, tente novamente.")
+      } else {
+        toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
+      }
     })
-  .finally(() => setLoading(false))
+    .finally(() => setLoading(false))
   }
 
   const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
@@ -88,11 +95,11 @@ export default function App() {
         {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5"/>API Offline: {API_URL}</div>}
 
         <div className="text-center mb-8">
-          <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin? 'from-yellow-400 to-yellow-600': 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-            {isSuperAdmin? <ShieldCheck className="w-8 h-8 text-black" />: <School className="w-8 h-8 text-white" />}
+          <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin ? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+            {isSuperAdmin ? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
           </div>
           <h1 className="text-3xl font-bold">SIGE-AO</h1>
-          <p className="text-white/60 text-sm">{isSuperAdmin? 'Acesso Global de Super Administrador': 'Selecione sua escola para entrar'}</p>
+          <p className="text-white/60 text-sm">{isSuperAdmin ? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -101,8 +108,8 @@ export default function App() {
               <label className="text-sm text-white/80 mb-1 block">Escola</label>
               <div className="relative">
                 <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none"/>
-                <select value={escolaId} onChange={(e) => setEscolaId(e.target.value)} disabled={loadingEscolas ||!apiOnline} className={`${inputClass} appearance-none`}>
-                  <option value="" disabled className="bg-black">{loadingEscolas? "Carregando escolas...": "Selecione sua escola"}</option>
+                <select value={escolaId} onChange={(e) => setEscolaId(e.target.value)} disabled={loadingEscolas || !apiOnline} className={`${inputClass} appearance-none`}>
+                  <option value="" disabled className="bg-black">{loadingEscolas ? "Carregando escolas..." : "Selecione sua escola"}</option>
                   {escolas.map(e => <option key={e.id} value={e.id} className="bg-black">{e.nome}</option>)}
                 </select>
               </div>
@@ -114,10 +121,10 @@ export default function App() {
           </div>
           <div>
             <label className="text-sm text-white/80 mb-1 block">Senha</label>
-            <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/><input type={showSenha? "text": "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required /><button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">{showSenha? <EyeOff className="w-5 h-5"/>: <Eye className="w-5 h-5"/>}</button></div>
+            <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"/><input type={showSenha ? "text" : "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required /><button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">{showSenha ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}</button></div>
           </div>
-          <button type="submit" disabled={loading || loadingEscolas ||!apiOnline} className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
-            {loading? <><Loader2 className="animate-spin"/> Acessando...</>: <>Entrar <ArrowRight/></>}
+          <button type="submit" disabled={loading || loadingEscolas || !apiOnline} className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
+            {loading ? <><Loader2 className="animate-spin"/> Acessando...</> : <>Entrar <ArrowRight/></>}
           </button>
         </form>
       </div>
