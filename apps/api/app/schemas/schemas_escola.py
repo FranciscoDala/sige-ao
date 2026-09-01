@@ -62,11 +62,15 @@ class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
 
-class TokenResponse(BaseModel):
+class UserInToken(BaseModel): # <-- ADD ESSE
+    id: UUID
+    email: EmailStr
+    nome: str
+    escola_id: Optional[str] = None
+
+class TokenResponse(BaseModel): # <-- CORRIGIDO
     access_token: str
     token_type: str = "bearer"
     nivel: NivelAcesso
-    nome: str
-    email: EmailStr
-    escola_id: Optional[str] = None
+    user: UserInToken # <-- ERA ISSO QUE FALTAVA
     expires_in: int = 28800
