@@ -2,17 +2,17 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from sqlalchemy import text # <-- IMPORTA ISSO
+from sqlalchemy import text
 
 from app.db.database import engine, Base
 from app.api.v1 import routers_escola, routers_auth, routers_usuario
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # TIRA O create_all DAQUI. Deixa só testar a conexão
+    # Só testa a conexão. Migration roda no CMD do Dockerfile
     try:
         async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1")) # <-- USA text()
+            await conn.execute(text("SELECT 1"))
             print("DB Connected")
     except Exception as e:
         print(f"DB Connection Error: {e}")
@@ -21,14 +21,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
+# CORS - Só libera quem vai chamar a API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://sige-ao.onrender.com",
-        "https://sige-backend-7rv1.onrender.com" # <- adiciona essa
+        "https://sige-ao.onrender.com", # <- Só o frontend
     ],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(routers_auth.router, prefix="/api/v1")
@@ -36,10 +38,10 @@ app.include_router(routers_escola.router, prefix="/api/v1")
 app.include_router(routers_usuario.router, prefix="/api/v1")
 
 @app.get("/health")
-async def health(): # <-- tem que ser async
+async def health():
     try:
         async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1")) # <-- USA text() AQUI TAMBÉM
+            await conn.execute(text("SELECT 1"))
         return {"status": "ok", "db": "connected"}
     except Exception as e:
         return {"status": "error", "db": str(e)}
