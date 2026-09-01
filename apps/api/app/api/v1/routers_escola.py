@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List, Optional # <-- ADD Optional AQUI
+from typing import List, Optional
 import logging
 
 from app.db.database import get_db
@@ -17,12 +17,12 @@ def check_ministerio(current_user: dict):
     if current_user["nivel"]!= "MINISTERIO":
         raise HTTPException(status_code=403, detail="Apenas MINISTERIO pode fazer isso")
 
-@router.get("/", response_model=List[EscolaResponse])
-async def listar_escolas(ativo: Optional[bool] = None, db: AsyncSession = Depends(get_db)): # <- MUDOU AQUI
+@router.get("", response_model=List[EscolaResponse]) # <- tirei a / pra evitar redirect
+@router.get("/", response_model=List[EscolaResponse]) # <- aceita com e sem /
+async def listar_escolas(ativo: Optional[bool] = None, db: AsyncSession = Depends(get_db)):
     logger.info(f"[ESCOLAS] ROTA CHAMADA. Filtro ativo={ativo}")
     query = select(Escola).order_by(Escola.nome)
 
-    # Só filtra se o front passar?ativo=true ou?ativo=false
     if ativo is not None:
         query = query.where(Escola.ativo == ativo)
 
@@ -38,7 +38,8 @@ async def obter_escola(escola_id: str, db: AsyncSession = Depends(get_db)):
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
     return escola
 
-@router.post("/", response_model=EscolaResponse, status_code=201)
+@router.post("", response_model=EscolaResponse, status_code=201) # <- tirei a /
+@router.post("/", response_model=EscolaResponse, status_code=201) # <- aceita com e sem /
 async def criar_escola(dados: EscolaCreate, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == dados.id))
