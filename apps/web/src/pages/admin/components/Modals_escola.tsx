@@ -84,8 +84,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 }}
             >
                 <style>{`
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+     .hide-scrollbar::-webkit-scrollbar { display: none; }
+     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
@@ -97,48 +97,48 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     <div className="grid gap-4 py-4 px-5 overflow-y-auto flex-1 min-h-0 hide-scrollbar">
                         <p className="text-sm font-semibold -mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Dados da Escola</p>
 
-                        {/* COLUNA FIXA DE 120px PARA LABEL FICAR ALINHADA */}
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        {/* LABEL ALINHADO A ESQUERDA */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label htmlFor="nome" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Nome *</label>
-                            <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className="text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} required />
+                            <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} required />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label htmlFor="sigla" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Sigla</label>
-                            <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className="text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="EEMJC" />
+                            <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="EEMJC" />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label htmlFor="provincia" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Província</label>
-                            <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className="text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Luanda" />
+                            <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Luanda" />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label htmlFor="municipio" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Município</label>
-                            <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className="text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Talatona" />
+                            <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Talatona" />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Cor Primária</label>
-                            <input type="color" value={form.cor_primaria} onChange={e => handleChange('cor_primaria', e.target.value)} className="w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
+                            <input type="color" value={form.cor_primaria} onChange={e => handleChange('cor_primaria', e.target.value)} className="sm:col-span-3 w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Cor Secundária</label>
-                            <input type="color" value={form.cor_secundaria} onChange={e => handleChange('cor_secundaria', e.target.value)} className="w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
+                            <input type="color" value={form.cor_secundaria} onChange={e => handleChange('cor_secundaria', e.target.value)} className="sm:col-span-3 w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label htmlFor="tema" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Tema</label>
-                            <select id="tema" value={form.tema} onChange={e => handleChange('tema', e.target.value)} className="flex h-9 w-full rounded-md px-3 py-2 text-xs" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }}>
+                            <select id="tema" value={form.tema} onChange={e => handleChange('tema', e.target.value)} className="sm:col-span-3 flex h-9 w-full rounded-md px-3 py-2 text-xs" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }}>
                                 <option value="claro">Claro</option>
                                 <option value="escuro">Escuro</option>
                             </select>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] sm:items-center gap-1 sm:gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                             <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Logo</label>
-                            <div>
+                            <div className="sm:col-span-3">
                                 <input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" />
                                 <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 rounded-lg text-white/70 cursor-pointer hover:bg-white/20 text-xs h-9" style={{ border: `1px dashed ${form.cor_primaria}` }}>
                                     <Upload className="w-4 h-4" /> Enviar Logo
@@ -151,7 +151,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     <div className="p-4 shrink-0 flex-col sm:flex-row gap-2 flex" style={{ backgroundColor: '#1A1A1A', borderTop: `1px solid ${form.cor_primaria}4D` }}>
                         <button type="submit" disabled={saving} className="gap-2 text-sm w-full sm:flex-1 h-10 font-bold rounded-md flex items-center justify-center" style={{ background: `linear-gradient(90deg, ${form.cor_primaria} 0%, ${form.cor_secundaria} 100%)`, color: '#000', borderRadius: '0.5rem' }}>
                             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {escola ? "Salvar Alterações" : "Salvar"}
+                            {escola ? "Salvar" : "Salvar"}
                         </button>
                         <button type="button" onClick={onClose} className="text-sm w-full sm:flex-1 h-10 font-semibold rounded-md" style={{ backgroundColor: 'transparent', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem' }}>
                             Cancelar
