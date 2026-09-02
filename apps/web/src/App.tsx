@@ -56,7 +56,8 @@ export default function App() {
     }, [])
 
     useEffect(() => {
-        const isAdmin = email.toLowerCase().trim() === 'admin@sige.com'
+        // ALTERAÇÃO 1: Agora verifica se começa com admin@
+        const isAdmin = email.toLowerCase().trim().startsWith('admin@')
         setIsSuperAdmin(isAdmin)
         if (isAdmin) setEscolaId('')
     }, [email])
@@ -81,8 +82,7 @@ export default function App() {
             .finally(() => setLoading(false))
     }
 
-    const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
-    // Classe nova só pro dropdown pra alinhar igual
+    const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
     const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
     const selectedEscola = escolas.find(e => e.id === escolaId)
 
@@ -101,6 +101,7 @@ export default function App() {
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
+                    {/* ALTERAÇÃO 2: Só renderiza o campo Escola se NÃO for super admin */}
                     {!isSuperAdmin && (
                         <div ref={dropdownRef} className="relative">
                             <label className="text-sm text-white/80 mb-1 block">Escola</label>
@@ -140,7 +141,7 @@ export default function App() {
 
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Email</label>
-                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="superadmin@sige-ao.gov.ao" required /></div>
+                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="admin@sige.com" required /></div>
                     </div>
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Senha</label>
