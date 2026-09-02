@@ -106,15 +106,17 @@ export default function App() {
                                 type="button"
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 disabled={loadingEscolas || !apiOnline}
-                                className={`${inputClass} flex items-center text-left`}
+                                className={`${inputClass} flex items-center justify-between text-left`}
                             >
-                                <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50 pointer-events-none" />
-                                <span className="truncate pl-0">{selectedEscola?.nome || (loadingEscolas ? "Carregando escolas..." : "Selecione sua escola")}</span>
-                                <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                                <div className="flex items-center gap-3 truncate">
+                                    <School className="w-5 h-5 text-white/50 flex-shrink-0" />
+                                    <span className="truncate">{selectedEscola?.nome || (loadingEscolas ? "Carregando escolas..." : "Selecione sua escola")}</span>
+                                </div>
+                                <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {dropdownOpen && (
-                                <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border border-white/20 rounded-xl shadow-2xl overflow-hidden">
+                                <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border-white/20 rounded-xl shadow-2xl overflow-hidden">
                                     <div className="max-h-60 overflow-y-auto">
                                         {escolas.length === 0 && <div className="p-3 pl-12 text-white/50 text-sm">Nenhuma escola encontrada</div>}
                                         {escolas.map(e => (
@@ -122,10 +124,10 @@ export default function App() {
                                                 key={e.id}
                                                 type="button"
                                                 onClick={() => { setEscolaId(e.id); setDropdownOpen(false) }}
-                                                className={`w-full text-left px-4 py-3 hover:bg-[#CF0921]/30 transition relative ${escolaId === e.id ? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white'}`}
+                                                className={`w-full text-left px-4 py-3 hover:bg-[#CF0921]/30 transition flex items-center gap-3 ${escolaId === e.id ? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white'}`}
                                             >
-                                                <School className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" />
-                                                <span className="pl-8">{e.nome}</span>
+                                                <School className="w-5 h-5 flex-shrink-0" />
+                                                <span>{e.nome}</span>
                                             </button>
                                         ))}
                                     </div>
