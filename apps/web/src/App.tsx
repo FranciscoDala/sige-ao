@@ -65,11 +65,15 @@ export default function App() {
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const payload = { email, senha, ...(!isSuperAdmin && { escola_id: escolaId }) }
+        console.log("[FRONT] Payload enviado:", payload) // <-- ADD
+        console.log("[FRONT] URL:", `${API_URL}/auth/login`) // <-- ADD
+
         if (!isSuperAdmin && !escolaId) { toast.error("Selecione uma escola"); return }
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
             .then((res: AxiosResponse<LoginResponse>) => {
+                console.log("[FRONT] Resposta OK:", res.data) // <-- ADD
                 localStorage.setItem('token', res.data.access_token)
                 localStorage.setItem('nivel', res.data.nivel)
                 localStorage.setItem('user', JSON.stringify(res.data.user))
@@ -77,6 +81,9 @@ export default function App() {
                 setTimeout(() => window.location.href = '/dashboard', 1000)
             })
             .catch((err: AxiosError<{ detail: string }>) => {
+                console.error("[FRONT] Erro completo:", err) // <-- ADD
+                console.error("[FRONT] Status:", err.response?.status) // <-- ADD
+                console.error("[FRONT] Data:", err.response?.data) // <-- ADD
                 toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
             })
             .finally(() => setLoading(false))
