@@ -1,9 +1,13 @@
 services:
-    - type: web
+    - type: static
     name: sige-frontend
     rootDir: apps/web
     buildCommand: npm install --include=dev && npm run build
     staticPublishPath: dist
+    headers:
+            - path: /*
+        name: Cache-Control
+        value: no-cache
     routes:
             - type: rewrite
         source: /*
