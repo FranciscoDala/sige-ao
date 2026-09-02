@@ -82,13 +82,15 @@ export default function App() {
     }
 
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
+    // Classe nova só pro dropdown pra alinhar igual
+    const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
     const selectedEscola = escolas.find(e => e.id === escolaId)
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
             <Toaster position="top-center" />
             <div className="w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border-white/10 shadow-2xl text-white">
-                {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5" />API Offline: {API_URL}</div>}
+                {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5" />API Offline: {API_URL}</div>}
 
                 <div className="text-center mb-8">
                     <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin ? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
@@ -106,7 +108,7 @@ export default function App() {
                                 type="button"
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 disabled={loadingEscolas || !apiOnline}
-                                className={`${inputClass} flex items-center justify-between text-left`}
+                                className={dropdownButtonClass}
                             >
                                 <div className="flex items-center gap-3 truncate">
                                     <School className="w-5 h-5 text-white/50 flex-shrink-0" />
@@ -118,7 +120,7 @@ export default function App() {
                             {dropdownOpen && (
                                 <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border-white/20 rounded-xl shadow-2xl overflow-hidden">
                                     <div className="max-h-60 overflow-y-auto">
-                                        {escolas.length === 0 && <div className="p-3 pl-12 text-white/50 text-sm">Nenhuma escola encontrada</div>}
+                                        {escolas.length === 0 && <div className="p-3 pl-4 text-white/50 text-sm flex items-center gap-3"><School className="w-5 h-5 flex-shrink-0" />Nenhuma escola encontrada</div>}
                                         {escolas.map(e => (
                                             <button
                                                 key={e.id}
