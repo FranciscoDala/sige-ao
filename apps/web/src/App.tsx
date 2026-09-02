@@ -3,9 +3,8 @@ import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, Aler
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 
-const API_URL = import.meta.env.VITE_API_URL // https://sige-backend-7rv1.onrender.com/api/v1
+const API_URL = import.meta.env.VITE_API_URL
 const REQUEST_TIMEOUT = 60000
-console.log("[INIT] API_URL USADA:", API_URL)
 
 interface Escola { id: string; nome: string }
 interface UserInToken { id: string; email: string; nome: string; escola_id?: string }
@@ -37,15 +36,12 @@ export default function App() {
     useEffect(() => {
         const fetchEscolas = async () => {
             setLoadingEscolas(true)
-            const url = `${API_URL}/escolas`
-            console.log("[FETCH_ESCOLAS] 1. Iniciando busca em:", url)
             try {
-                const res = await axios.get<Escola[]>(url, { timeout: REQUEST_TIMEOUT })
+                const res = await axios.get<Escola[]>(`${API_URL}/escolas`, { timeout: REQUEST_TIMEOUT })
                 setEscolas(res.data)
                 setApiOnline(true)
                 if (res.data.length === 0) toast("Atenção: Nenhuma escola cadastrada no DB", { icon: '⚠️' })
             } catch (err: any) {
-                console.error("[FETCH_ESCOLAS] ERRO COMPLETO:", err)
                 setApiOnline(false)
                 toast.error(`Erro ao carregar escolas: ${err.response?.status || ''} ${err.message}`)
             } finally {
@@ -56,7 +52,6 @@ export default function App() {
     }, [])
 
     useEffect(() => {
-        // ALTERAÇÃO 1: Agora verifica se começa com admin@
         const isAdmin = email.toLowerCase().trim().startsWith('admin@')
         setIsSuperAdmin(isAdmin)
         if (isAdmin) setEscolaId('')
@@ -65,15 +60,12 @@ export default function App() {
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const payload = { email, senha, ...(!isSuperAdmin && { escola_id: escolaId }) }
-        console.log("[FRONT] Payload enviado:", payload) // <-- ADD
-        console.log("[FRONT] URL:", `${API_URL}/auth/login`) // <-- ADD
 
         if (!isSuperAdmin && !escolaId) { toast.error("Selecione uma escola"); return }
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
             .then((res: AxiosResponse<LoginResponse>) => {
-                console.log("[FRONT] Resposta OK:", res.data) // <-- ADD
                 localStorage.setItem('token', res.data.access_token)
                 localStorage.setItem('nivel', res.data.nivel)
                 localStorage.setItem('user', JSON.stringify(res.data.user))
@@ -81,9 +73,6 @@ export default function App() {
                 setTimeout(() => window.location.href = '/dashboard', 1000)
             })
             .catch((err: AxiosError<{ detail: string }>) => {
-                console.error("[FRONT] Erro completo:", err) // <-- ADD
-                console.error("[FRONT] Status:", err.response?.status) // <-- ADD
-                console.error("[FRONT] Data:", err.response?.data) // <-- ADD
                 toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
             })
             .finally(() => setLoading(false))
@@ -108,34 +97,22 @@ export default function App() {
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
-                    {/* ALTERAÇÃO 2: Só renderiza o campo Escola se NÃO for super admin */}
                     {!isSuperAdmin && (
                         <div ref={dropdownRef} className="relative">
                             <label className="text-sm text-white/80 mb-1 block">Escola</label>
-                            <button
-                                type="button"
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                disabled={loadingEscolas || !apiOnline}
-                                className={dropdownButtonClass}
-                            >
+                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} disabled={loadingEscolas || !apiOnline} className={dropdownButtonClass}>
                                 <div className="flex items-center gap-3 truncate">
                                     <School className="w-5 h-5 text-white/50 flex-shrink-0" />
                                     <span className="truncate">{selectedEscola?.nome || (loadingEscolas ? "Carregando escolas..." : "Selecione sua escola")}</span>
                                 </div>
                                 <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
-
                             {dropdownOpen && (
                                 <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border-white/20 rounded-xl shadow-2xl overflow-hidden">
                                     <div className="max-h-60 overflow-y-auto">
                                         {escolas.length === 0 && <div className="p-3 pl-4 text-white/50 text-sm flex items-center gap-3"><School className="w-5 h-5 flex-shrink-0" />Nenhuma escola encontrada</div>}
                                         {escolas.map(e => (
-                                            <button
-                                                key={e.id}
-                                                type="button"
-                                                onClick={() => { setEscolaId(e.id); setDropdownOpen(false) }}
-                                                className={`w-full text-left px-4 py-3 hover:bg-[#CF0921]/30 transition flex items-center gap-3 ${escolaId === e.id ? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white'}`}
-                                            >
+                                            <button key={e.id} type="button" onClick={() => { setEscolaId(e.id); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-[#CF0921]/30 transition flex items-center gap-3 ${escolaId === e.id ? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white'}`}>
                                                 <School className="w-5 h-5 flex-shrink-0" />
                                                 <span>{e.nome}</span>
                                             </button>
