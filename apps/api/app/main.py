@@ -16,34 +16,36 @@ def import_all_models():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("SIGE-AO API a iniciar...")
+    logger.info(">>> SIGE-AO API INICIANDO <<<") # <-- LOG
     import_all_models()
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             await conn.execute(text("SELECT 1"))
-            logger.info("DB Connected e tabelas verificadas")
+            logger.info(">>> DB OK <<<") # <-- LOG
     except Exception as e:
-        logger.error(f"ERRO CRITICO DB: {e}\n{traceback.format_exc()}")
+        logger.error(f"ERRO CRITICO DB: {e}", exc_info=True)
     yield
     await engine.dispose()
 
-app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan) # <-- CORRIGIDO: tirei root_path="/api/v1"
+app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://sige-ao.onrender.com", "http://localhost:5173"],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"], expose_headers=["*"]
+    allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Erro 500 na rota {request.url}: {exc}\n{traceback.format_exc()}")
+    logger.error(f"Erro 500 na rota {request.url}: {exc}", exc_info=True)
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
-app.include_router(routers_auth.router, prefix="/api/v1") # <-- IMPORTANTE: add prefix aqui
+app.include_router(routers_auth.router, prefix="/api/v1")
 app.include_router(routers_escola.router, prefix="/api/v1")
 app.include_router(routers_usuario.router, prefix="/api/v1")
 
 @app.get("/health")
-async def health(): return {"status": "ok"}
+async def health():
+    logger.info(">>> HEALTH CHECK <<<")
+    return {"status": "ok"}
