@@ -56,7 +56,7 @@ export default function App() {
     }, [])
 
     useEffect(() => {
-        const isAdmin = email.toLowerCase().trim() === 'superadmin@sige-ao.gov.ao'
+        const isAdmin = email.toLowerCase().trim() === 'admin@sige.com'
         setIsSuperAdmin(isAdmin)
         if (isAdmin) setEscolaId('')
     }, [email])
