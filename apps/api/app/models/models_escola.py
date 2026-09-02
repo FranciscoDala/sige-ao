@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, TIMESTAMP, ForeignKey, func, Enum, UniqueConstraint, Index
+from sqlalchemy import Column, String, Boolean, TIMESTAMP, ForeignKey, func, Enum as SAEnum, UniqueConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import Optional
@@ -31,12 +31,12 @@ class Escola(Base):
     usuarios: Mapped[list["UsuarioEscola"]] = relationship("UsuarioEscola", back_populates="escola", cascade="all, delete-orphan")
 
 class Usuario(Base):
-    __tablename__ = "usuarios" # Nome da tabela do DB
+    __tablename__ = "usuarios"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    nome: Mapped[str] = mapped_column(String(255), nullable=False) # Bate com DB
+    nome: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    senha: Mapped[str] = mapped_column(String(255), nullable=False) # CORRIGIDO: era senha_hash
+    senha: Mapped[str] = mapped_column(String(255), nullable=False)
     telefone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     foto_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, server_default='true')
@@ -50,7 +50,10 @@ class UsuarioEscola(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
     escola_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=True)
-    nivel: Mapped[NivelAcesso] = mapped_column(Enum(NivelAcesso, name="nivelacesso", native_enum=False), nullable=False)
+    nivel: Mapped[NivelAcesso] = mapped_column(
+        SAEnum(NivelAcesso, name="nivelacesso", native_enum=False, create_constraint=False), # <-- CORRIGIDO
+        nullable=False
+    )
 
     aluno_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     professor_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
