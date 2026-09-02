@@ -11,8 +11,8 @@ from app.api.v1 import routers_escola, routers_auth, routers_usuario
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def import_all_models(): # <- força importar pra registrar no Base.metadata
-    from app.models import models_escola, models_user
+def import_all_models():
+    from app.models import models_escola
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     import_all_models()
     try:
         async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all) # <- cria se não existir
+            await conn.run_sync(Base.metadata.create_all)
             await conn.execute(text("SELECT 1"))
             logger.info("DB Connected e tabelas verificadas")
     except Exception as e:
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     yield
     await engine.dispose()
 
-app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan, root_path="/api/v1")
+app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan) # <-- CORRIGIDO: tirei root_path="/api/v1"
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,9 +41,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Erro 500 na rota {request.url}: {exc}\n{traceback.format_exc()}")
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
-app.include_router(routers_auth.router, tags=["Auth"])
-app.include_router(routers_escola.router, tags=["Escolas"])
-app.include_router(routers_usuario.router, tags=["Usuarios"])
+app.include_router(routers_auth.router, prefix="/api/v1") # <-- IMPORTANTE: add prefix aqui
+app.include_router(routers_escola.router, prefix="/api/v1")
+app.include_router(routers_usuario.router, prefix="/api/v1")
 
 @app.get("/health")
 async def health(): return {"status": "ok"}

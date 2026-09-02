@@ -31,30 +31,27 @@ async def criar_usuario(
 ):
     check_permissao_criar_usuario(current_user, dados.escola_id)
 
-    # 1. Verifica se escola existe
     result = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
     escola = result.scalar_one_or_none()
     if not escola:
         raise HTTPException(status_code=404, detail="Escola não encontrada")
 
-    # 2. Verifica se email já existe
     result = await db.execute(select(Usuario).where(Usuario.email == dados.email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
-    # 3. Cria o Usuario
+    # CORRIGIDO: era senha_hash, agora é senha
     novo_usuario = Usuario(
         id=uuid.uuid4(),
-        nome=dados.nome,
+        nome=dados.nome, # CORRIGIDO: era full_name
         email=dados.email,
-        senha_hash=get_password_hash(dados.senha),
+        senha=get_password_hash(dados.senha), # CORRIGIDO
         telefone=dados.telefone,
         ativo=True
     )
     db.add(novo_usuario)
-    await db.flush() # pra pegar o id
+    await db.flush()
 
-    # 4. Cria o Vínculo com a escola
     novo_vinculo = UsuarioEscola(
         id=uuid.uuid4(),
         usuario_id=novo_usuario.id,
@@ -78,7 +75,6 @@ async def listar_usuarios_da_minha_escola(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Lista todos os usuários da escola do usuário logado"""
     escola_id = current_user["escola_id"]
     if not escola_id:
         raise HTTPException(status_code=400, detail="Super Admin não tem escola. Use /usuarios?escola_id=XXX")

@@ -31,12 +31,12 @@ class Escola(Base):
     usuarios: Mapped[list["UsuarioEscola"]] = relationship("UsuarioEscola", back_populates="escola", cascade="all, delete-orphan")
 
 class Usuario(Base):
-    __tablename__ = "usuarios"
+    __tablename__ = "usuarios" # Nome da tabela do DB
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    nome: Mapped[str] = mapped_column(String(255), nullable=False) # Bate com DB
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    senha: Mapped[str] = mapped_column(String(255), nullable=False) # CORRIGIDO: era senha_hash
     telefone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     foto_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, server_default='true')

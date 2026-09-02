@@ -17,7 +17,7 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
 
-    if not verify_password(dados.senha, str(usuario.senha_hash)):
+    if not verify_password(dados.senha, str(usuario.senha)):
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
 
     # FLUXO 1: SUPER ADMIN - sem escola_id
@@ -38,6 +38,7 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
                 "access_token": access_token,
                 "token_type": "bearer",
                 "nivel": NivelAcesso.MINISTERIO.value,
+                "expires_in": 28800, # <-- CORRIGIDO
                 "user": {
                     "id": str(usuario.id),
                     "email": usuario.email,
@@ -60,6 +61,7 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "nivel": vinculo.nivel.value,
+        "expires_in": 28800, # <-- CORRIGIDO
         "user": {
             "id": str(usuario.id),
             "email": usuario.email,
