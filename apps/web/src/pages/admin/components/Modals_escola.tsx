@@ -20,7 +20,7 @@ interface Props {
     saving: boolean
 }
 
-const focusStyle = { outline: 'none', boxShadow: '0 0 0 3px rgba(255, 215, 0, 0.3)' }
+const focusStyle = { outline: 'none', boxShadow: '0 0 0 3px rgba(207, 9, 33, 0.3)' } // troquei pra vermelho também
 
 export default function EscolaModal({ open, onClose, onSave, escola, saving }: Props) {
     const fileRef = useRef<HTMLInputElement>(null)
@@ -45,8 +45,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         }
     }, [escola, open])
 
-    // 1. TRAVAR CLIQUE FORA
-    useEffect(() => {
+    useEffect(() => { // TRAVA ESC
         if (!open) return
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') e.preventDefault()
@@ -72,26 +71,25 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     }
 
     return (
-        // 2. REMOVER onClick DO FUNDO PRA NÃO FECHAR
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div
-                className="w-[95vw] max-w-[600px] p-0 flex-col shadow-2xl overflow-hidden mx-auto hide-scrollbar"
+                className="w-[95vw] max-w-[600px] p-0 flex flex-col shadow-2xl overflow-hidden mx-auto hide-scrollbar" // <- TIREI O 'border' DAQUI
                 style={{
                     backgroundColor: '#1A1A1A',
                     color: '#fff',
-                    border: '2px solid #CF0921', // 3. BORDA UNICA 2PX SOLID
+                    border: '2px solid #CF0921', // AGORA SÓ O STYLE MANDA
                     borderRadius: '1rem',
                     height: '85vh',
                     maxHeight: '85vh'
                 }}
             >
                 <style>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+       .hide-scrollbar::-webkit-scrollbar { display: none; }
+       .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                    <div className="p-5 pb-3 shrink-0 text-left border-b" style={{ borderColor: 'rgba(207, 9, 33, 0.3)' }}>
+                    <div className="p-5 pb-3 shrink-0 text-left" style={{ borderBottom: '1px solid rgba(207, 9, 33, 0.3)' }}>
                         <h2 className="text-lg font-bold" style={{ color: '#fff' }}>{escola? "Editar Escola" : "Cadastrar Nova Escola"}</h2>
                         <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{escola? "Altere os dados abaixo." : "Preencha os dados da escola"}</p>
                     </div>
@@ -140,14 +138,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                         <div className="grid grid-cols-1 gap-1">
                             <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Logo</label>
                             <input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" />
-                            <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 border-dashed rounded-lg text-white/70 cursor-pointer hover:bg-white/20 text-xs h-9" style={{ border: '2px dashed #CF0921' }}>
+                            <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 rounded-lg text-white/70 cursor-pointer hover:bg-white/20 text-xs h-9" style={{ border: '2px dashed #CF0921' }}>
                                 <Upload className="w-4 h-4" /> Enviar Logo
                             </label>
                         </div>
 
                     </div>
 
-                    <div className="p-4 border-t shrink-0 flex-col sm:flex-row gap-2 flex" style={{ backgroundColor: '#1A1A1A', borderColor: 'rgba(207, 9, 33, 0.3)' }}>
+                    <div className="p-4 shrink-0 flex-col sm:flex-row gap-2 flex" style={{ backgroundColor: '#1A1A1A', borderTop: '1px solid rgba(207, 9, 33, 0.3)' }}>
                         <button type="submit" disabled={saving} className="gap-2 text-sm w-full sm:flex-1 h-10 font-bold rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(90deg, #CF0921 0%, #FFD700 100%)', color: '#000', borderRadius: '0.5rem' }}>
                             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                             {escola? "Salvar Alterações" : "Cadastrar Escola"}
