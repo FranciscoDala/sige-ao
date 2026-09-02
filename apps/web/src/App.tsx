@@ -1,7 +1,8 @@
 import { useState, useEffect, FormEvent, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle, ChevronDown } from 'lucide-react'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 const API_URL = import.meta.env.VITE_API_URL
 const REQUEST_TIMEOUT = 60000
@@ -11,6 +12,7 @@ interface UserInToken { id: string; email: string; nome: string; escola_id?: str
 interface LoginResponse { access_token: string; nivel: string; user: UserInToken }
 
 export default function App() {
+    const navigate = useNavigate() // <- MUDANÇA 1
     const [escolas, setEscolas] = useState<Escola[]>([])
     const [escolaId, setEscolaId] = useState('')
     const [email, setEmail] = useState('')
@@ -70,7 +72,7 @@ export default function App() {
                 localStorage.setItem('nivel', res.data.nivel)
                 localStorage.setItem('user', JSON.stringify(res.data.user))
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
-                setTimeout(() => window.location.href = '/dashboard', 1000)
+                setTimeout(() => navigate('/dashboard'), 1000) // <- MUDANÇA 2: useNavigate em vez de window.location
             })
             .catch((err: AxiosError<{ detail: string }>) => {
                 toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
@@ -78,14 +80,13 @@ export default function App() {
             .finally(() => setLoading(false))
     }
 
-    const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
-    const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
+    const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
+    const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
     const selectedEscola = escolas.find(e => e.id === escolaId)
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
-            <Toaster position="top-center" />
-            <div className="w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border-white/10 shadow-2xl text-white">
+            <div className="w-full max-w-md bg-black/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-2xl text-white">
                 {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5" />API Offline: {API_URL}</div>}
 
                 <div className="text-center mb-8">
@@ -108,7 +109,7 @@ export default function App() {
                                 <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border-white/20 rounded-xl shadow-2xl overflow-hidden">
+                                <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border border-white/20 rounded-xl shadow-2xl overflow-hidden">
                                     <div className="max-h-60 overflow-y-auto">
                                         {escolas.length === 0 && <div className="p-3 pl-4 text-white/50 text-sm flex items-center gap-3"><School className="w-5 h-5 flex-shrink-0" />Nenhuma escola encontrada</div>}
                                         {escolas.map(e => (
