@@ -1,137 +1,81 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Loader2 } from 'lucide-react'
-import axios from 'axios'
-import { toast } from 'sonner' // <- MUDOU
-import { Header, EscolaCard, EscolaModal } from './components'
-import { authService } from '../../services/auth'
-
-const API_URL = import.meta.env.VITE_API_URL
-const REQUEST_TIMEOUT = 60000
-
-interface Escola {
-    id: number
-    nome: string
-    sigla: string | null
-    id_curto: string
-    provincia: string | null
-    municipio: string | null
-    logo_url: string | null
-    cor_primaria: string
-    cor_secundaria: string
-    tema: string
-}
+import { Folder, FileText, FileSpreadsheet, FileImage, MoreHorizontal, Link2 } from 'lucide-react'
 
 export default function Dashboard() {
-    const navigate = useNavigate()
-    const [escolas, setEscolas] = useState<Escola[]>([])
-    const [loading, setLoading] = useState(true)
-    const [modalOpen, setModalOpen] = useState(false)
-    const [editando, setEditando] = useState<Escola | null>(null)
-    const [saving, setSaving] = useState(false)
+    const quickAccess = [
+        { title: 'Documentos', subtitle: 'Design Files', color: 'bg-[#1E40AF]', avatars: 3 },
+        { title: 'Fotos', subtitle: 'Google Photos', color: 'bg-gray-100', avatars: 3 },
+        { title: 'Treinamentos', subtitle: 'Training Materials', color: 'bg-gray-100', avatars: 4 },
+    ]
 
-    const token = authService.getToken()
-    const nivel = authService.getNivel()
-    const headers = { Authorization: `Bearer ${token}` }
+    const files = [
+        { name: 'Relatório Semanal.docx', type: 'doc', owner: 'Admin', date: '03 Set 2026, 10:30', size: '2.4 MB' },
+        { name: 'Planilha Notas.xlsx', type: 'xls', owner: 'Diretor', date: '02 Set 2026, 14:20', size: '1.1 MB' },
+        { name: 'Regulamento.pdf', type: 'pdf', owner: 'Secretaria', date: '01 Set 2026, 09:15', size: '5.2 MB' },
+    ]
 
-    useEffect(() => {
-        if (!authService.isAuthenticated()) {
-            navigate('/', { replace: true }); return
-        }
-        carregarEscolas()
-    }, [token, navigate])
-
-    const carregarEscolas = async () => {
-        setLoading(true)
-        try {
-            const res = await axios.get<Escola[]>(`${API_URL}/escolas`, { headers, timeout: REQUEST_TIMEOUT })
-            setEscolas(res.data)
-        } catch (err: any) {
-            toast.error(`Erro ao carregar escolas: ${err.response?.data?.detail || err.message}`)
-            if (err.response?.status === 401) {
-                authService.logout()
-                navigate('/')
-            }
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const salvar = async (formData: FormData) => {
-        if (!formData.get('nome')) { toast.error("Nome da escola é obrigatório"); return }
-        setSaving(true)
-        try {
-            if (editando) {
-                await axios.put(`${API_URL}/escolas/${editando.id}`, formData, { headers: {...headers, "Content-Type": "multipart/form-data" } })
-                toast.success("Escola atualizada com sucesso!")
-            } else {
-                await axios.post(`${API_URL}/escolas`, formData, { headers: {...headers, "Content-Type": "multipart/form-data" } })
-                toast.success("Escola criada com sucesso!")
-            }
-            setModalOpen(false)
-            carregarEscolas()
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Erro ao salvar escola")
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const deletar = async (id: number) => {
-        if (!confirm("Tem certeza que deseja excluir esta escola?")) return
-        try {
-            await axios.delete(`${API_URL}/escolas/${id}`, { headers })
-            toast.success("Escola excluída")
-            carregarEscolas()
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Erro ao excluir")
-        }
-    }
-
-    const logout = () => {
-        authService.logout()
-        navigate('/', { replace: true })
+    const getIcon = (type: string) => {
+        if (type === 'doc') return <FileText className="w-5 h-5 text-blue-500" />
+        if (type === 'xls') return <FileSpreadsheet className="w-5 h-5 text-green-500" />
+        if (type === 'pdf') return <FileText className="w-5 h-5 text-red-500" />
+        return <FileText className="w-5 h-5" />
     }
 
     return (
-        <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
-            <Header onLogout={logout} />
-            <main className="p-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">Gestão de Escolas</h2>
-                        {nivel === 'MINISTERIO' && (
-                            <button onClick={() => { setEditando(null); setModalOpen(true) }} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl hover:scale-105 transition">
-                                <Plus className="w-4 h-4" /> Nova Escola
-                            </button>
-                        )}
-                    </div>
+        <div>
+            {/* Título */}
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    Painel Principal
+                    <Folder className="w-6 h-6 text-[#1E40AF]" />
+                </h2>
+            </div>
 
-                    {loading? (
-                        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-white" /></div>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {escolas.map(escola => (
-                                <EscolaCard
-                                    key={escola.id}
-                                    escola={escola}
-                                    isMinisterio={nivel === 'MINISTERIO'}
-                                    onEdit={(e) => { setEditando(e); setModalOpen(true) }}
-                                    onDelete={deletar}
-                                />
+            {/* QUICK ACCESS */}
+            <h3 className="text-sm font-semibold text-gray-500 mb-3">ACESSO RÁPIDO</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {quickAccess.map((item, i) => (
+                    <div key={i} className={`${item.color} rounded-2xl p-4 cursor-pointer hover:scale-[1.02] transition`}>
+                        <p className="text-xs text-gray-500 mb-2">COMPARTILHADO</p>
+                        <div className="flex -space-x-2 mb-3">
+                            {[...Array(item.avatars)].map((_, j) => (
+                                <div key={j} className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white"></div>
                             ))}
                         </div>
-                    )}
-                </div>
-            </main>
+                        <p className="font-semibold text-gray-800">{item.title}</p>
+                        <p className="text-xs text-gray-500">{item.subtitle}</p>
+                    </div>
+                ))}
+            </div>
 
-            <EscolaModal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                onSave={salvar}
-                escola={editando}
-                saving={saving}
-            />
+            {/* ALL FILES */}
+            <h3 className="text-sm font-semibold text-gray-500 mb-3">TODOS OS ARQUIVOS</h3>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <table className="w-full">
+                    <thead className="text-left text-xs text-gray-500 border-b">
+                        <tr>
+                            <th className="p-4">NOME</th>
+                            <th className="p-4">PROPRIETÁRIO</th>
+                            <th className="p-4">ÚLTIMA MODIFICAÇÃO</th>
+                            <th className="p-4">TAMANHO</th>
+                            <th className="p-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {files.map((file, i) => (
+                            <tr key={i} className="border-b hover:bg-gray-50">
+                                <td className="p-4 flex items-center gap-3">
+                                    {getIcon(file.type)}
+                                    <span className="font-medium">{file.name}</span>
+                                </td>
+                                <td className="p-4"><div className="w-6 h-6 rounded-full bg-gray-300"></div></td>
+                                <td className="p-4 text-sm text-gray-600">{file.date}</td>
+                                <td className="p-4 text-sm text-gray-600">{file.size}</td>
+                                <td className="p-4"><Link2 className="w-4 h-4 text-gray-400" /></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }
