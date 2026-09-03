@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
-import { X, Upload, Loader2 } from 'lucide-react'
+import { X, Upload, Loader2, School, Building2, Palette, Image as ImageIcon, MapPin } from 'lucide-react' // <- ADICIONEI O MapPin AQUI
+import { toast } from 'sonner'
 
 interface Escola {
-    id: number
+    id: string
     nome: string
     sigla: string | null
     provincia: string | null
@@ -10,6 +11,7 @@ interface Escola {
     cor_primaria: string
     cor_secundaria: string
     tema: string
+    logo_url?: string
 }
 
 interface Props {
@@ -22,9 +24,10 @@ interface Props {
 
 export default function EscolaModal({ open, onClose, onSave, escola, saving }: Props) {
     const fileRef = useRef<HTMLInputElement>(null)
+    const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const [form, setForm] = useState({
         nome: "", sigla: "", provincia: "", municipio: "",
-        cor_primaria: "#CF0921", cor_secundaria: "#FFD700", tema: "claro"
+        cor_primaria: "#3B82F6", cor_secundaria: "#8B5CF6", tema: "escuro"
     })
 
     useEffect(() => {
@@ -38,26 +41,34 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 cor_secundaria: escola.cor_secundaria,
                 tema: escola.tema
             })
+            setLogoPreview(escola.logo_url || null)
         } else {
-            setForm({ nome: "", sigla: "", provincia: "", municipio: "", cor_primaria: "#CF0921", cor_secundaria: "#FFD700", tema: "claro" })
+            setForm({ nome: "", sigla: "", provincia: "", municipio: "", cor_primaria: "#3B82F6", cor_secundaria: "#8B5CF6", tema: "escuro" })
+            setLogoPreview(null)
         }
     }, [escola, open])
 
-    const focusStyle = { outline: 'none' }
-
-    useEffect(() => { // TRAVA ESC
+    useEffect(() => {
         if (!open) return
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') e.preventDefault()
-        }
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
         document.addEventListener('keydown', handleKeyDown)
         return () => document.removeEventListener('keydown', handleKeyDown)
-    }, [open])
+    }, [open, onClose])
 
     if (!open) return null
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const reader = new FileReader()
+            reader.onloadend = () => setLogoPreview(reader.result as string)
+            reader.readAsDataURL(file)
+        }
+    }
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
+        if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
         const formData = new FormData()
         Object.entries(form).forEach(([k, v]) => formData.append(k, v))
         if (fileRef.current?.files?.[0]) {
@@ -70,94 +81,110 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         setForm(prev => ({ ...prev, [field]: value }))
     }
 
-    return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div
-                className="w-[95vw] max-w-[600px] p-0 flex flex-col shadow-2xl overflow-hidden mx-auto hide-scrollbar"
-                style={{
-                    backgroundColor: '#1A1A1A',
-                    color: '#fff',
-                    border: `1px solid ${form.cor_primaria}`,
-                    borderRadius: '1rem',
-                    height: '85vh',
-                    maxHeight: '85vh'
-                }}
-            >
-                <style>{`
-     .hide-scrollbar::-webkit-scrollbar { display: none; }
-     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
+    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
+    const labelClass = "text-sm font-semibold text-gray-300 mb-2 block"
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                    <div className="p-5 pb-3 shrink-0 text-left" style={{ borderBottom: `1px solid ${form.cor_primaria}4D` }}>
-                        <h2 className="text-lg font-bold" style={{ color: '#fff' }}>{escola ? "Editar Escola" : "Cadastrar Escola"}</h2>
-                        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{escola ? "Altere os dados abaixo." : "Preencha os dados da escola"}</p>
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in-0">
+            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex-col max-h-[90vh]">
+
+                {/* HEADER */}
+                <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center">
+                            <School className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-white">{escola ? "Editar Escola" : "Cadastrar Nova Escola"}</h2>
+                            <p className="text-sm text-gray-400">{escola ? "Altere os dados abaixo." : "Preencha os dados da nova escola"}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+
+                    {/* DADOS GERAIS */}
+                    <div>
+                        <p className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="nome" className={labelClass}>Nome da Escola *</label>
+                                <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
+                            </div>
+                            <div>
+                                <label htmlFor="sigla" className={labelClass}>Sigla</label>
+                                <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className={inputClass} placeholder="EEM" />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="grid gap-4 py-4 px-5 overflow-y-auto flex-1 min-h-0 hide-scrollbar">
-                        <p className="text-sm font-semibold -mb-2" style={{ color: 'rgba(255,255,255,0.7)' }}>Dados da Escola</p>
-
-                        {/* LABEL ALINHADO A ESQUERDA */}
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label htmlFor="nome" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Nome *</label>
-                            <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} required />
+                    {/* LOCALIZAÇÃO */}
+                    <div>
+                        <p className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</p> {/* <- AGORA VAI FUNCIONAR */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="provincia" className={labelClass}>Província</label>
+                                <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={inputClass} placeholder="Luanda" />
+                            </div>
+                            <div>
+                                <label htmlFor="municipio" className={labelClass}>Município</label>
+                                <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={inputClass} placeholder="Talatona" />
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label htmlFor="sigla" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Sigla</label>
-                            <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="EEMJC" />
+                    {/* PERSONALIZAÇÃO */}
+                    <div>
+                        <p className="text-sm font-bold text-white mb-3 flex items-center gap-2"><Palette className="w-4 h-4 text-[#3B82F6]" />Personalização</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label className={labelClass}>Cor Primária</label>
+                                <input type="color" value={form.cor_primaria} onChange={e => handleChange('cor_primaria', e.target.value)} className="w-full h-11 rounded-xl bg-white/5 border-white/10 cursor-pointer" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Cor Secundária</label>
+                                <input type="color" value={form.cor_secundaria} onChange={e => handleChange('cor_secundaria', e.target.value)} className="w-full h-11 rounded-xl bg-white/5 border border-white/10 cursor-pointer" />
+                            </div>
+                            <div>
+                                <label htmlFor="tema" className={labelClass}>Tema</label>
+                                <select id="tema" value={form.tema} onChange={e => handleChange('tema', e.target.value)} className={inputClass}>
+                                    <option value="escuro">Escuro</option>
+                                    <option value="claro">Claro</option>
+                                </select>
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label htmlFor="provincia" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Província</label>
-                            <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Luanda" />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label htmlFor="municipio" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Município</label>
-                            <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className="sm:col-span-3 text-xs h-9 px-3 rounded-md w-full" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }} placeholder="Talatona" />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Cor Primária</label>
-                            <input type="color" value={form.cor_primaria} onChange={e => handleChange('cor_primaria', e.target.value)} className="sm:col-span-3 w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Cor Secundária</label>
-                            <input type="color" value={form.cor_secundaria} onChange={e => handleChange('cor_secundaria', e.target.value)} className="sm:col-span-3 w-full h-9 rounded-md" style={{ backgroundColor: '#000', border: `1px solid ${form.cor_primaria}` }} />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label htmlFor="tema" className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Tema</label>
-                            <select id="tema" value={form.tema} onChange={e => handleChange('tema', e.target.value)} className="sm:col-span-3 flex h-9 w-full rounded-md px-3 py-2 text-xs" style={{ backgroundColor: '#000', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem', ...focusStyle }}>
-                                <option value="claro">Claro</option>
-                                <option value="escuro">Escuro</option>
-                            </select>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                            <label className="text-xs text-left" style={{ color: 'rgba(255,255,255,0.7)' }}>Logo</label>
-                            <div className="sm:col-span-3">
-                                <input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" />
-                                <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/10 rounded-lg text-white/70 cursor-pointer hover:bg-white/20 text-xs h-9" style={{ border: `1px dashed ${form.cor_primaria}` }}>
+                    {/* LOGO */}
+                    <div>
+                        <p className="text-sm font-bold text-white mb-3 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo da Escola</p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
+                                {logoPreview ? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}
+                            </div>
+                            <div className="flex-1">
+                                <input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} />
+                                <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold">
                                     <Upload className="w-4 h-4" /> Enviar Logo
                                 </label>
                             </div>
                         </div>
-
                     </div>
 
-                    <div className="p-4 shrink-0 flex-col sm:flex-row gap-2 flex" style={{ backgroundColor: '#1A1A1A', borderTop: `1px solid ${form.cor_primaria}4D` }}>
-                        <button type="submit" disabled={saving} className="gap-2 text-sm w-full sm:flex-1 h-10 font-bold rounded-md flex items-center justify-center" style={{ background: `linear-gradient(90deg, ${form.cor_primaria} 0%, ${form.cor_secundaria} 100%)`, color: '#000', borderRadius: '0.5rem' }}>
-                            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {escola ? "Salvar" : "Salvar"}
-                        </button>
-                        <button type="button" onClick={onClose} className="text-sm w-full sm:flex-1 h-10 font-semibold rounded-md" style={{ backgroundColor: 'transparent', color: '#fff', border: `1px solid ${form.cor_primaria}`, borderRadius: '0.5rem' }}>
-                            Cancelar
-                        </button>
-                    </div>
                 </form>
+
+                {/* FOOTER */}
+                <div className="p-6 border-t border-white/10 flex flex-col sm:flex-row gap-3 shrink-0">
+                    <button type="button" onClick={onClose} className="w-full sm:w-auto px-6 h-11 font-semibold rounded-xl bg-white/5 text-white hover:bg-white/10 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" onClick={handleSubmit} disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition disabled:opacity-50">
+                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                        {saving ? "Salvando..." : escola ? "Salvar Alterações" : "Criar Escola"}
+                    </button>
+                </div>
             </div>
         </div>
     )
