@@ -1,8 +1,28 @@
 import { useState, useEffect, useRef } from 'react'
-import { Building2, Users, MapPin, TrendingUp, Eye, Edit, Trash2, Plus, ChevronDown, Filter } from 'lucide-react'
+import axios from 'axios'
+import {
+    Building2, Users, MapPin, TrendingUp, Eye, Edit, Trash2, Plus,
+    ChevronDown, Loader2, School, Phone, Mail, MapPinIcon
+} from 'lucide-react'
+import { toast } from 'sonner'
+
+const API_URL = import.meta.env.VITE_API_URL
+
+interface Escola {
+    id: string
+    nome: string
+    sigla?: string
+    provincia?: string
+    municipio?: string
+    telefone?: string
+    email?: string
+    logo_url?: string
+    ativo: boolean
+    alunos?: number // se tu tiver essa contagem na API depois
+}
 
 const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6 hover:border-white/20 transition">
+    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300">
         <div className="flex justify-between items-start mb-4">
             <p className="text-sm text-gray-400">{title}</p>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
@@ -17,12 +37,72 @@ const StatCard = ({ title, value, icon: Icon, color }: any) => (
     </div>
 )
 
+// CARD DA ESCOLA - BRABO
+const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () => void, onDelete: () => void }) => (
+    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1">
+
+        {/* HEADER DO CARD */}
+        <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0">
+                    {escola.logo_url ?
+                        <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-xl" /> :
+                        <School className="w-6 h-6 text-white" />
+                    }
+                </div>
+                <div>
+                    <h3 className="font-bold text-white text-lg leading-tight">{escola.nome}</h3>
+                    <p className="text-xs text-gray-400">{escola.sigla || `ID: ${escola.id}`}</p>
+                </div>
+            </div>
+            <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${escola.ativo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                {escola.ativo ? 'Ativa' : 'Inativa'}
+            </span>
+        </div>
+
+        {/* INFOS */}
+        <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-300">
+                <MapPinIcon className="w-4 h-4 text-[#3B82F6]" />
+                <span>{escola.provincia || 'N/A'} - {escola.municipio || 'N/A'}</span>
+            </div>
+            {escola.email && (
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <Mail className="w-4 h-4 text-[#3B82F6]" />
+                    <span className="truncate">{escola.email}</span>
+                </div>
+            )}
+            {escola.telefone && (
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <Phone className="w-4 h-4 text-[#3B82F6]" />
+                    <span>{escola.telefone}</span>
+                </div>
+            )}
+        </div>
+
+        {/* AÇÕES */}
+        <div className="flex gap-2 pt-3 border-t border-white/10">
+            <button className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#3B82F6]/20 rounded-lg text-sm transition">
+                <Eye className="w-4 h-4" /> Ver
+            </button>
+            <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#8B5CF6]/20 rounded-lg text-sm transition">
+                <Edit className="w-4 h-4" /> Editar
+            </button>
+            <button onClick={onDelete} className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-lg transition">
+                <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+        </div>
+    </div>
+)
+
 export default function Dashboard() {
-    const [filtroStatus, setFiltroStatus] = useState('todas')
+    const [filtroStatus, setFiltroStatus] = useState('todas') // todas, ativa, inativa
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [escolas, setEscolas] = useState<Escola[]>([])
+    const [loading, setLoading] = useState(true)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Fecha dropdown ao clicar fora
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -33,27 +113,38 @@ export default function Dashboard() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
+    // BUSCAR ESCOLAS DO DB
+    useEffect(() => {
+        const fetchEscolas = async () => {
+            setLoading(true)
+            try {
+                const params: any = {}
+                if (filtroStatus === 'ativa') params.ativo = true
+                if (filtroStatus === 'inativa') params.ativo = false
+
+                const res = await axios.get<Escola[]>(`${API_URL}/escolas`, { params })
+                setEscolas(res.data)
+            } catch (err: any) {
+                toast.error(`Erro ao carregar escolas: ${err.message}`)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchEscolas()
+    }, [filtroStatus]) // recarrega quando muda o filtro
+
     const opcoesFiltro = [
         { value: 'todas', label: 'Todas as Escolas', icon: Building2 },
         { value: 'ativa', label: 'Apenas Ativas', icon: TrendingUp },
         { value: 'inativa', label: 'Apenas Inativas', icon: Trash2 },
-        { value: 'pendente', label: 'Pendentes', icon: Eye },
     ]
-
-    const escolas = [
-        { id: 1, nome: 'Escola Mutamba', provincia: 'Luanda', alunos: 2340, status: 'ativa' },
-        { id: 2, nome: 'Complexo Escolar Futungo', provincia: 'Luanda', alunos: 1890, status: 'ativa' },
-        { id: 3, nome: 'Escola do Futuro', provincia: 'Benguela', alunos: 1540, status: 'pendente' },
-        { id: 4, nome: 'Escola do Kilamba', provincia: 'Luanda', alunos: 980, status: 'inativa' },
-    ]
-
-    const escolasFiltradas = escolas.filter(e =>
-        filtroStatus === 'todas' ? true : e.status === filtroStatus
-    )
 
     const handleAddEscola = () => {
         console.log('Abrir modal de nova escola')
     }
+
+    const handleEdit = (id: string) => toast.info(`Editar escola ${id}`)
+    const handleDelete = (id: string) => toast.warning(`Desativar escola ${id}`)
 
     const opcaoSelecionada = opcoesFiltro.find(o => o.value === filtroStatus)
 
@@ -65,15 +156,13 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Total de Escolas" value="248" icon={Building2} color="bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" />
-                <StatCard title="Usuários Totais" value="84.2K" icon={Users} color="bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" />
-                <StatCard title="Províncias Atendidas" value="18" icon={MapPin} color="bg-gradient-to-br from-[#10B981] to-[#059669]" />
+                <StatCard title="Total de Escolas" value={escolas.length} icon={Building2} color="bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" />
+                <StatCard title="Escolas Ativas" value={escolas.filter(e => e.ativo).length} icon={Users} color="bg-gradient-to-br from-[#10B981] to-[#059669]" />
+                <StatCard title="Províncias" value={new Set(escolas.map(e => e.provincia)).size} icon={MapPin} color="bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" />
             </div>
 
             {/* AÇÕES: DROPDOWN CUSTOM + BTN 50/50 */}
             <div className="flex flex-col sm:flex-row gap-4 w-full">
-
-                {/* DROPDOWN CUSTOM */}
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
                     <label className="text-sm text-gray-400 mb-2 block">Filtrar por Status</label>
                     <button
@@ -89,7 +178,7 @@ export default function Dashboard() {
                     </button>
 
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
                             <div className="max-h-60 overflow-y-auto py-1">
                                 {opcoesFiltro.map(op => (
                                     <button
@@ -107,7 +196,6 @@ export default function Dashboard() {
                     )}
                 </div>
 
-                {/* BTN ADICIONAR */}
                 <div className="w-full sm:w-1/2 flex items-end">
                     <button
                         onClick={handleAddEscola}
@@ -119,52 +207,34 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* TABELA */}
-            <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6">
+            {/* LISTA DE CARDS */}
+            <div>
                 <p className="font-bold text-white text-lg mb-4">
-                    Escolas
-                    <span className="text-sm font-normal text-gray-400 ml-2">({escolasFiltradas.length} encontradas)</span>
+                    Escolas Cadastradas
+                    <span className="text-sm font-normal text-gray-400 ml-2">({escolas.length} encontradas)</span>
                 </p>
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[700px]">
-                        <thead className="text-left text-gray-400 text-xs uppercase border-b border-white/10">
-                            <tr>
-                                <th className="pb-3 font-semibold">Escola</th>
-                                <th className="pb-3 font-semibold">Província</th>
-                                <th className="pb-3 font-semibold">Alunos</th>
-                                <th className="pb-3 font-semibold">Status</th>
-                                <th className="pb-3 font-semibold text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {escolasFiltradas.map((e) => (
-                                <tr key={e.id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition">
-                                    <td className="py-4">
-                                        <p className="text-white font-semibold">{e.nome}</p>
-                                        <p className="text-xs text-gray-400">ID: #ESC{e.id.toString().padStart(4, '0')}</p>
-                                    </td>
-                                    <td className="py-4 text-gray-300">{e.provincia}</td>
-                                    <td className="py-4 text-gray-300">{e.alunos.toLocaleString()}</td>
-                                    <td className="py-4">
-                                        <span className={`text-xs px-3 py-1 rounded-full font-semibold ${e.status === 'ativa' ? 'bg-green-500/20 text-green-400' :
-                                                e.status === 'inativa' ? 'bg-red-500/20 text-red-400' :
-                                                    'bg-yellow-500/20 text-yellow-400'
-                                            }`}>
-                                            {e.status === 'ativa' ? 'Ativa' : e.status === 'inativa' ? 'Inativa' : 'Pendente'}
-                                        </span>
-                                    </td>
-                                    <td className="py-4">
-                                        <div className="flex gap-2 justify-end">
-                                            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg"><Eye className="w-4 h-4 text-gray-300" /></button>
-                                            <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg"><Edit className="w-4 h-4 text-gray-300" /></button>
-                                            <button className="p-2 bg-white/5 hover:bg-red-500/20 rounded-lg"><Trash2 className="w-4 h-4 text-red-400" /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                    </div>
+                ) : escolas.length === 0 ? (
+                    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center">
+                        <School className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                        <p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        {escolas.map((escola) => (
+                            <EscolaCard
+                                key={escola.id}
+                                escola={escola}
+                                onEdit={() => handleEdit(escola.id)}
+                                onDelete={() => handleDelete(escola.id)}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
