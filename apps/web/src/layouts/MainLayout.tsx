@@ -1,98 +1,94 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutGrid, ListTodo, Calendar, BarChart3, Users,
-  Settings, HelpCircle, LogOut, Search, Mail, Bell, Plus
+    LayoutDashboard, GraduationCap, Users, Building2, BarChart3,
+    Settings, LogOut, Search, Bell, Plus, ChevronDown
 } from 'lucide-react'
 import { authService } from '../services/auth'
 
 const menuItems = [
-  { section: 'MENU', items: [
-    { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
-    { icon: ListTodo, label: 'Tasks', path: '/dashboard/tasks', badge: '12+' },
-    { icon: Calendar, label: 'Calendar', path: '/dashboard/calendar' },
-    { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
-    { icon: Users, label: 'Team', path: '/dashboard/team' },
-  ]},
-  { section: 'GENERAL', items: [
-    { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
-    { icon: HelpCircle, label: 'Help', path: '/dashboard/help' },
-    { icon: LogOut, label: 'Logout', path: '/logout' },
-  ]}
+    { icon: LayoutDashboard, label: 'Visão Geral', path: '/dashboard' },
+    { icon: Building2, label: 'Escolas', path: '/dashboard/schools' },
+    { icon: Users, label: 'Usuários', path: '/dashboard/users' },
+    { icon: GraduationCap, label: 'Alunos', path: '/dashboard/students' },
+    { icon: BarChart3, label: 'Relatórios', path: '/dashboard/reports' },
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },
 ]
 
 export default function MainLayout() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const user = authService.getUser() || { nome: 'Totok Michael', email: 'tmichael20@mail.com' }
+    const navigate = useNavigate()
+    const location = useLocation()
+    const user = authService.getUser() || { nome: 'Admin', email: 'admin@sige.ao' }
 
-  return (
-    <div className="flex min-h-screen bg-[#F7F8FA]">
+    return (
+        <div className="flex min-h-screen bg-[#0A0A0B] text-gray-200">
 
-      {/* SIDEBAR */}
-      <aside className="w-[260px] bg-white p-6 flex-col border-r border-gray-100">
-        {/* Logo */}
-        <div className="flex items-center gap-2 mb-12">
-          <div className="w-8 h-8 bg-[#10B981] rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 border-[2px] border-white rounded-full"></div>
-          </div>
-          <h1 className="text-xl font-bold text-[#111827]">Donezo</h1>
-        </div>
+            {/* SIDEBAR DARK */}
+            <aside className="w-[260px] bg-[#111113] border-r border-[#1F1F22] p-4 flex flex-col">
+                {/* Logo SIGE */}
+                <div className="flex items-center gap-2 mb-8 px-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#00D4AA] to-[#00A884] rounded-lg flex items-center justify-center font-bold text-black">S</div>
+                    <h1 className="text-lg font-bold text-white">SIGE</h1>
+                </div>
 
-        {/* Menu */}
-        {menuItems.map(sec => (
-          <div key={sec.section} className="mb-8">
-            <p className="text-[11px] text-gray-400 mb-3 px-3 font-semibold tracking-wider uppercase">{sec.section}</p>
-            <nav className="space-y-1">
-              {sec.items.map(item => {
-                const isActive = location.pathname === item.path
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => navigate(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${isActive? 'bg-[#D1FAE5] text-[#059669] font-semibold border-l-4 border-[#059669]' : 'text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                    {item.badge && <span className="ml-auto text-[10px] bg-[#D1FAE5] text-[#059669] px-2 py-0.5 rounded-md font-bold">{item.badge}</span>}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-        ))}
+                {/* Menu */}
+                <nav className="space-y-1">
+                    {menuItems.map(item => {
+                        const isActive = location.pathname === item.path
+                        return (
+                            <button
+                                key={item.path}
+                                onClick={() => navigate(item.path)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${isActive ? 'bg-[#00D4AA]/10 text-[#00D4AA] font-semibold' : 'text-gray-400 hover:bg-[#1A1A1D] hover:text-white'
+                                    }`}
+                            >
+                                <item.icon className="w-5 h-5" />
+                                {item.label}
+                            </button>
+                        )
+                    })}
+                </nav>
 
-        {/* Card Download App - QUE ESTAVA FALTANDO */}
-        <div className="mt-auto bg-gradient-to-b from-[#065F46] to-[#047857] rounded-2xl p-5 text-white">
-          <p className="font-bold text-base mb-1 leading-tight">Download our<br/>Mobile App</p>
-          <p className="text-xs text-white/70 mb-4">Get easy in another way</p>
-          <button className="w-full bg-[#059669] text-white font-semibold py-2.5 rounded-xl text-sm">Download</button>
-        </div>
-      </aside>
+                {/* User + Logout */}
+                <div className="mt-auto">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#1A1A1D] mb-2">
+                        <img src="https://i.pravatar.cc/40" className="w-9 h-9 rounded-lg" />
+                        <div className="flex-1">
+                            <p className="font-semibold text-sm text-white">{user.nome}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-[#1A1A1D] hover:text-red-400">
+                        <LogOut className="w-5 h-5" /> Sair
+                    </button>
+                </div>
+            </aside>
 
-      {/* CONTEUDO */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        {/* TOPBAR */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="relative flex-1 max-w-[450px]">
-            <Search className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
-            <input placeholder="Search task" className="w-full pl-12 pr-16 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none text-sm" />
-            <span className="absolute right-3 top-2.5 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-mono">⌘F</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="p-3 bg-white rounded-xl border-gray-200"><Mail className="w-5 h-5" /></button>
-            <button className="p-3 bg-white rounded-xl border-gray-200"><Bell className="w-5 h-5" /></button>
-            <div className="flex items-center gap-3">
-              <img src="https://i.pravatar.cc/40" className="w-10 h-10 rounded-full" />
-              <div>
-                <p className="font-semibold text-sm">{user.nome}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
-              </div>
+            {/* CONTEUDO */}
+            <div className="flex-1 overflow-y-auto">
+                {/* TOPBAR */}
+                <header className="sticky top-0 z-10 bg-[#0A0A0B]/80 backdrop-blur-md border-b border-[#1F1F22] px-8 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="relative flex-1 max-w-[500px]">
+                            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
+                            <input
+                                placeholder="Pesquisar escolas, alunos, professores..."
+                                className="w-full pl-10 pr-4 py-2.5 bg-[#1A1A1D] border border-[#2A2A2E] rounded-lg focus:outline-none focus:border-[#00D4AA] text-sm"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button className="p-2.5 bg-[#1A1A1D] border-[#2A2A2E] rounded-lg hover:border-[#00D4AA]"><Bell className="w-5 h-5" /></button>
+                            <button className="flex items-center gap-2 bg-gradient-to-r from-[#00D4AA] to-[#00A884] text-black px-4 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90">
+                                <Plus className="w-4 h-4" /> Nova Escola
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <main className="p-8">
+                    <Outlet />
+                </main>
             </div>
-          </div>
         </div>
-
-        <Outlet />
-      </div>
-    </div>
-  )
+    )
 }
