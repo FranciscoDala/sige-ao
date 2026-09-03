@@ -1,134 +1,119 @@
-import { Users, UserPlus, UserMinus, Briefcase, ArrowUpRight, Plus, ArrowLeft, ArrowRight, MoreHorizontal } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 
-const StatCard = ({ icon, title, value, percent, isUp }: any) => (
-    <div className="bg-white rounded-2xl p-5 shadow-sm h-36"> {/* altura igual em todos */}
-        {/* Linha 1: Icone + Seta */}
-        <div className="flex items-start justify-between mb-6">
-            <div className="w-10 h-10 bg-[#F7F3EA] rounded-xl flex items-center justify-center">{icon}</div>
-            <ArrowUpRight className="w-4 h-4 text-gray-400" />
-        </div>
-
-        {/* Linha 2: Número Grande */}
-        <p className="text-3xl font-bold text-[#1f2937] mb-3">{value}</p>
-
-        {/* Linha 3: TAG % centralizada */}
-        <div className="flex justify-center mb-2">
-            <span className={`text-xs px-3 py-1 rounded-full font-semibold ${isUp ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' // <- amarelo igual print
-                }`}>{percent}</span>
-        </div>
-
-        {/* Linha 4: Titulo centralizado */}
-        <p className="text-sm text-gray-500 text-center">{title}</p>
+const StatCard = ({ title, value, sub, color = 'white', isGreen = false }: any) => (
+  <div className={`rounded-2xl p-5 ${isGreen? 'bg-gradient-to-br from-[#0A4D3E] to-[#0D9488] text-white' : 'bg-white'}`}>
+    <div className="flex justify-between items-start mb-4">
+      <p className={`text-sm ${isGreen? 'text-white/80' : 'text-gray-500'}`}>{title}</p>
+      <ArrowUpRight className={`w-5 h-5 ${isGreen? 'text-white' : ''} border rounded-full p-1`} />
     </div>
+    <p className="text-4xl font-bold mb-3">{value}</p>
+    <p className={`text-xs ${isGreen? 'text-white/70' : 'text-gray-500'}`}>{sub}</p>
+  </div>
 )
 
-
 export default function Dashboard() {
-    return (
-        <div className="space-y-6">
+  return (
+    <div className="space-y-6">
+      {/* 4 CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Projects" value="24" sub="Increased from last month" isGreen={true} />
+        <StatCard title="Ended Projects" value="10" sub="Increased from last month" />
+        <StatCard title="Running Projects" value="12" sub="Increased from last month" />
+        <StatCard title="Pending Project" value="2" sub="On Discuss" />
+      </div>
 
-            {/* 5 CARDS PRIMEIRA LINHA */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <StatCard icon={<Users className="w-5 h-5 text-[#0A4D3E]" />} title="Total Employee" value="310" percent="+ 3.72%" isUp={true} />
-                <StatCard icon={<UserPlus className="w-5 h-5 text-[#0A4D3E]" />} title="Total Applicant" value="1,244" percent="+ 5.02%" isUp={true} />
-                <StatCard icon={<Users className="w-5 h-5 text-[#0A4D3E]" />} title="New Employees" value="1,298K" percent="- 1.72%" isUp={false} />
-                <StatCard icon={<UserMinus className="w-5 h-5 text-[#0A4D3E]" />} title="Resigned Employees" value="1,298K" percent="- 3.72%" isUp={false} />
-
-                <button className="bg-white rounded-2xl p-5 shadow-sm flex flex-col items-center justify-center gap-3 hover:shadow-md transition h-36"> {/* <- h-36 adicionado */}
-                    <div className="w-12 h-12 bg-[#0A4D3E] rounded-full flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-700">Add new widget</p>
-                </button>
-            </div>
-
-            {/* 3 COLUNAS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Escolas Ativas */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <p className="font-bold text-gray-800">Escolas Ativas</p>
-                            <p className="text-2xl font-bold">24 <span className="text-sm font-normal text-gray-500">Escolas</span></p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"><ArrowLeft className="w-4 h-4" /></button>
-                            <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"><ArrowRight className="w-4 h-4" /></button>
-                        </div>
-                    </div>
-                    {[
-                        { nome: 'Escola Mutamba', tipo: 'Pública', cor: 'bg-purple-100 text-purple-700' },
-                        { nome: 'Escola do Futuro', tipo: 'Privada', cor: 'bg-green-100 text-green-700' },
-                        { nome: 'Complexo Escolar', tipo: 'Pública', cor: 'bg-blue-100 text-blue-700' },
-                        { nome: 'Centro Educacional', tipo: 'Privada', cor: 'bg-indigo-100 text-indigo-700' },
-                    ].map((job, i) => (
-                        <div key={i} className="flex items-center gap-3 py-3 border-b last:border-0">
-                            <div className={`w-10 h-10 ${job.cor} rounded-lg flex items-center justify-center font-bold text-sm`}>{job.nome[0]}</div>
-                            <div>
-                                <p className="font-semibold text-sm text-gray-800">{job.nome}</p>
-                                <p className="text-xs text-gray-500">{job.tipo}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Próximas Reuniões */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <p className="font-bold text-gray-800">Próximas Reuniões</p>
-                            <p className="text-2xl font-bold">12 <span className="text-sm font-normal text-gray-500">Reuniões</span></p>
-                        </div>
-                        <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                    </div>
-                    {[
-                        { nome: 'Reunião Pedagógica', cargo: 'Diretor Geral' },
-                        { nome: 'Conselho de Turma', cargo: 'Coordenador' },
-                        { nome: 'Reunião de Pais', cargo: 'Secretário' },
-                        { nome: 'Planejamento', cargo: 'Professores' },
-                    ].map((p, i) => (
-                        <div key={i} className="flex items-center justify-between py-3 border-b last:border-0">
-                            <div className="flex items-center gap-3">
-                                <img src={`https://i.pravatar.cc/40?u=${i}`} className="w-10 h-10 rounded-full" />
-                                <div>
-                                    <p className="font-semibold text-sm text-gray-800">{p.nome}</p>
-                                    <p className="text-xs text-gray-500">{p.cargo}</p>
-                                </div>
-                            </div>
-                            <span className="text-xs bg-[#F7F3EA] text-gray-700 px-3 py-1.5 rounded-full font-medium">Seg 12, 2026 - 10:00</span>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Status de Usuários */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <p className="font-bold text-gray-800">Status de Usuários</p>
-                        <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="flex justify-between mb-3">
-                        <p className="text-sm text-gray-500">Total de Usuários</p>
-                        <p className="font-bold text-gray-800">3109</p>
-                    </div>
-                    <div className="flex gap-1 h-2 mb-4 rounded-full overflow-hidden">
-                        <div className="bg-[#0A4D3E] w-[20%]"></div>
-                        <div className="bg-[#0D6B59] w-[25%]"></div>
-                        <div className="bg-[#0F8A75] w-[15%]"></div>
-                        <div className="bg-[#2DD4BF] w-[20%]"></div>
-                        <div className="bg-[#99F6E4] flex-1"></div>
-                    </div>
-                    {['Diretores', 'Professores', 'Secretários', 'Administrativos', 'Alunos'].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between py-2.5">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[#0A4D3E]"></div>
-                                <p className="text-sm text-gray-700">{item}</p>
-                            </div>
-                            <p className="font-semibold text-gray-800">3109</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      {/* LINHA 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Project Analytics */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-5">
+          <p className="font-bold mb-4">Project Analytics</p>
+          <div className="flex items-end justify-around h-40">
+            {['S','M','T','W','T','F','S'].map((d, i) => (
+              <div key={i} className="text-center">
+                <div className={`w-12 rounded-full ${[1,2,3].includes(i)? 'bg-green-600' : 'bg-gray-200'}`} style={{height: `${[60,80,70,90,40,30,20][i]}%`}}></div>
+                <p className="text-xs text-gray-500 mt-2">{d}</p>
+              </div>
+            ))}
+          </div>
         </div>
-    )
+
+        {/* Reminders */}
+        <div className="bg-white rounded-2xl p-5">
+          <p className="font-bold mb-4">Reminders</p>
+          <p className="font-semibold text-lg">Meeting with Arc Company</p>
+          <p className="text-sm text-gray-500 mb-4">Time : 02.00 pm - 04.00 pm</p>
+          <button className="w-full bg-[#0A4D3E] text-white py-2.5 rounded-full font-semibold">Start Meeting</button>
+        </div>
+      </div>
+
+      {/* LINHA 3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Team Collaboration */}
+        <div className="bg-white rounded-2xl p-5">
+          <div className="flex justify-between mb-4">
+            <p className="font-bold">Team Collaboration</p>
+            <button className="text-xs border px-3 py-1 rounded-full">+ Add Member</button>
+          </div>
+          {[
+            {nome: 'Alexandra Deff', job: 'Github Project Repository', status: 'Completed'},
+            {nome: 'Edwin Adenike', job: 'Integrate User Authentication', status: 'In Progress'},
+            {nome: 'Isaac Oluwatemi', job: 'Develop Search and Filter', status: 'Pending'},
+            {nome: 'David Oshodi', job: 'Responsive Layout', status: 'In Progress'},
+          ].map((m, i) => (
+            <div key={i} className="flex items-center gap-3 py-3">
+              <img src={`https://i.pravatar.cc/40?u=${i}`} className="w-10 h-10 rounded-full" />
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{m.nome}</p>
+                <p className="text-xs text-gray-500">Working on: {m.job}</p>
+              </div>
+              <span className="text-xs">{m.status}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Project Progress */}
+        <div className="bg-white rounded-2xl p-5">
+          <p className="font-bold mb-4">Project Progress</p>
+          <div className="flex flex-col items-center">
+            <div className="relative w-40 h-40">
+              <div className="absolute inset-0 rounded-full border-[16px] border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-[16px] border-green-600 border-b-transparent border-l-transparent" style={{transform: 'rotate(45deg)'}}></div>
+              <p className="absolute inset-0 flex items-center justify-center text-4xl font-bold">41%</p>
+            </div>
+            <p className="text-sm text-gray-500">Project Ended</p>
+          </div>
+        </div>
+
+        {/* Project List */}
+        <div className="bg-white rounded-2xl p-5">
+          <div className="flex justify-between mb-4">
+            <p className="font-bold">Project</p>
+            <button className="text-xs border px-3 py-1 rounded-full">+ New</button>
+          </div>
+          {[
+            {nome: 'Develop API Endpoints', due: 'Nov 26, 2024'},
+            {nome: 'Onboarding Flow', due: 'Nov 28, 2024'},
+            {nome: 'Build Dashboard', due: 'Nov 30, 2024'},
+            {nome: 'Optimize Page Load', due: 'Dec 5, 2024'},
+            {nome: 'Cross-Browser Testing', due: 'Dec 6, 2024'},
+          ].map((p, i) => (
+            <div key={i} className="py-3">
+              <p className="font-semibold text-sm">{p.nome}</p>
+              <p className="text-xs text-gray-500">Due date: {p.due}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Time Tracker */}
+      <div className="bg-gradient-to-br from-[#0A4D3E] to-[#0D9488] rounded-2xl p-5 text-white">
+        <p className="font-bold mb-2">Time Tracker</p>
+        <p className="text-4xl font-bold mb-4">01:24:08</p>
+        <div className="flex gap-3">
+          <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black">||</button>
+          <button className="w-10 h-10 bg-red-500 rounded-full"></button>
+        </div>
+      </div>
+    </div>
+  )
 }
