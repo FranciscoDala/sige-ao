@@ -4,6 +4,7 @@ import { Plus, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { Header, EscolaCard, EscolaModal } from './components'
+import { authService } from '../../services/auth' // <- NOVO
 
 const API_URL = import.meta.env.VITE_API_URL
 const REQUEST_TIMEOUT = 60000
@@ -29,12 +30,14 @@ export default function Dashboard() {
     const [editando, setEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
 
-    const token = localStorage.getItem('token')
-    const nivel = localStorage.getItem('nivel')
+    const token = authService.getToken() // <- MUDOU
+    const nivel = authService.getNivel() // <- MUDOU
     const headers = { Authorization: `Bearer ${token}` }
 
     useEffect(() => {
-        if (!token) { navigate('/'); return }
+        if (!authService.isAuthenticated()) { // <- MUDOU
+            navigate('/', { replace: true }); return
+        }
         carregarEscolas()
     }, [token, navigate])
 
@@ -45,7 +48,10 @@ export default function Dashboard() {
             setEscolas(res.data)
         } catch (err: any) {
             toast.error(`Erro ao carregar escolas: ${err.response?.data?.detail || err.message}`)
-            if (err.response?.status === 401) navigate('/')
+            if (err.response?.status === 401) {
+                authService.logout() // <- MUDOU
+                navigate('/')
+            }
         } finally {
             setLoading(false)
         }
@@ -83,8 +89,8 @@ export default function Dashboard() {
     }
 
     const logout = () => {
-        localStorage.clear()
-        navigate('/')
+        authService.logout() // <- MUDOU
+        navigate('/', { replace: true }) // <- MUDOU: replace impede de voltar
     }
 
     return (
