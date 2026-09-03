@@ -18,7 +18,6 @@ const menuItems = [
 ]
 
 export default function MainLayout() {
-    const [sidebarOpen, setSidebarOpen] = useState(true)
     const [search, setSearch] = useState('')
     const navigate = useNavigate()
     const location = useLocation()
@@ -32,8 +31,11 @@ export default function MainLayout() {
     return (
         <div className="h-screen w-screen flex bg-[#F5F7FA] overflow-hidden">
 
-            {/* SIDEBAR AZUL COM CURVA */}
-            <aside className="w-64 bg-gradient-to-b from-[#1E40AF] to-[#1E3A8A] text-white flex-col rounded-r-[40px] shadow-2xl">
+            {/* SIDEBAR AZUL COM BORDER-RADIUS-TOP-RIGHT */}
+            <aside
+                className="w-64 bg-gradient-to-b from-[#1E40AF] to-[#1E3A8A] text-white flex-col shadow-2xl"
+                style={{ borderTopRightRadius: '32px' }} // <- AQUI: só a curva de cima da direita
+            >
 
                 {/* Logo SIGE-AO em branco */}
                 <div className="p-6 flex items-center gap-3">
@@ -87,7 +89,7 @@ export default function MainLayout() {
                 {/* HEADER BRANCO */}
                 <header className="bg-white px-6 py-4 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-4 flex-1">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+                        <button onClick={() => { }}>
                             <Menu className="w-6 h-6 text-gray-600" />
                         </button>
 
