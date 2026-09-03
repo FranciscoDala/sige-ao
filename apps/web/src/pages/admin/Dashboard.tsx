@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Loader2 } from 'lucide-react'
 import axios from 'axios'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner' // <- MUDOU
 import { Header, EscolaCard, EscolaModal } from './components'
-import { authService } from '../../services/auth' // <- NOVO
+import { authService } from '../../services/auth'
 
 const API_URL = import.meta.env.VITE_API_URL
 const REQUEST_TIMEOUT = 60000
@@ -30,12 +30,12 @@ export default function Dashboard() {
     const [editando, setEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
 
-    const token = authService.getToken() // <- MUDOU
-    const nivel = authService.getNivel() // <- MUDOU
+    const token = authService.getToken()
+    const nivel = authService.getNivel()
     const headers = { Authorization: `Bearer ${token}` }
 
     useEffect(() => {
-        if (!authService.isAuthenticated()) { // <- MUDOU
+        if (!authService.isAuthenticated()) {
             navigate('/', { replace: true }); return
         }
         carregarEscolas()
@@ -49,7 +49,7 @@ export default function Dashboard() {
         } catch (err: any) {
             toast.error(`Erro ao carregar escolas: ${err.response?.data?.detail || err.message}`)
             if (err.response?.status === 401) {
-                authService.logout() // <- MUDOU
+                authService.logout()
                 navigate('/')
             }
         } finally {
@@ -62,10 +62,10 @@ export default function Dashboard() {
         setSaving(true)
         try {
             if (editando) {
-                await axios.put(`${API_URL}/escolas/${editando.id}`, formData, { headers: { ...headers, "Content-Type": "multipart/form-data" } })
+                await axios.put(`${API_URL}/escolas/${editando.id}`, formData, { headers: {...headers, "Content-Type": "multipart/form-data" } })
                 toast.success("Escola atualizada com sucesso!")
             } else {
-                await axios.post(`${API_URL}/escolas`, formData, { headers: { ...headers, "Content-Type": "multipart/form-data" } })
+                await axios.post(`${API_URL}/escolas`, formData, { headers: {...headers, "Content-Type": "multipart/form-data" } })
                 toast.success("Escola criada com sucesso!")
             }
             setModalOpen(false)
@@ -89,8 +89,8 @@ export default function Dashboard() {
     }
 
     const logout = () => {
-        authService.logout() // <- MUDOU
-        navigate('/', { replace: true }) // <- MUDOU: replace impede de voltar
+        authService.logout()
+        navigate('/', { replace: true })
     }
 
     return (
@@ -107,7 +107,7 @@ export default function Dashboard() {
                         )}
                     </div>
 
-                    {loading ? (
+                    {loading? (
                         <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-white" /></div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/auth/Login'
 import Dashboard from './pages/admin/Dashboard'
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from 'sonner' // <- MUDOU
 import { authService } from './services/auth'
 import './globals.css'
 
@@ -15,7 +15,7 @@ import './globals.css'
  */
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    return isAuth ? children : <Navigate to="/" replace />
+    return isAuth? children : <Navigate to="/" replace />
 }
 
 /**
@@ -26,15 +26,15 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
  */
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    return !isAuth ? children : <Navigate to="/dashboard" replace />
+    return!isAuth? children : <Navigate to="/dashboard" replace />
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     // StrictMode desativado temporariamente por causa do bug do react-hot-toast + DevTools
     // <React.StrictMode>
         <>
-            {/* Toaster global para notificações de sucesso/erro */}
-            <Toaster position="top-center" />
+            {/* Toaster global para notificações de sucesso/erro - Sonner */}
+            <Toaster position="top-center" richColors />
 
             {/* Router usando HashRouter por causa do deploy no Render */}
             <HashRouter>

@@ -2,8 +2,8 @@ import { useState, useEffect, FormEvent, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Lock, ArrowRight, School, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle, ChevronDown } from 'lucide-react'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import toast from 'react-hot-toast'
-import { authService } from '../../services/auth' // <- NOVO
+import { toast } from 'sonner' // <- MUDOU
+import { authService } from '../../services/auth'
 
 const API_URL = import.meta.env.VITE_API_URL
 const REQUEST_TIMEOUT = 60000
@@ -26,7 +26,7 @@ export default function Login() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // <- NOVO: Se já estiver logado, não deixa ficar na tela de login
+    // Se já estiver logado, não deixa ficar na tela de login
     useEffect(() => {
         if (authService.isAuthenticated()) {
             navigate('/dashboard', { replace: true })
@@ -50,7 +50,7 @@ export default function Login() {
                 const res = await axios.get<Escola[]>(`${API_URL}/escolas`, { timeout: REQUEST_TIMEOUT })
                 setEscolas(res.data)
                 setApiOnline(true)
-                if (res.data.length === 0) toast("Atenção: Nenhuma escola cadastrada no DB", { icon: '⚠️' })
+                if (res.data.length === 0) toast("Atenção: Nenhuma escola cadastrada no DB", { icon: '⚠️' }) // <- Sonner aceita icon
             } catch (err: any) {
                 setApiOnline(false)
                 toast.error(`Erro ao carregar escolas: ${err.response?.status || ''} ${err.message}`)
@@ -75,15 +75,15 @@ export default function Login() {
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
-           .then((res: AxiosResponse<LoginResponse>) => {
-                authService.login(res.data) // <- MUDOU
+          .then((res: AxiosResponse<LoginResponse>) => {
+                authService.login(res.data)
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
-                setTimeout(() => navigate('/dashboard', { replace: true }), 1000) // <- replace
+                setTimeout(() => navigate('/dashboard', { replace: true }), 1000)
             })
-           .catch((err: AxiosError<{ detail: string }>) => {
+          .catch((err: AxiosError<{ detail: string }>) => {
                 toast.error(err.response?.data?.detail || "Usuário ou senha inválidos")
             })
-           .finally(() => setLoading(false))
+          .finally(() => setLoading(false))
     }
 
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
