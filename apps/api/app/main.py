@@ -1,6 +1,7 @@
+import os # <- 1. Importa o os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles # <- ADD ISSO
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 
@@ -13,6 +14,9 @@ def import_all_models():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import_all_models()
+
+    os.makedirs("static/logos", exist_ok=True) # <- 2. CRIA A PASTA AQUI
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(text("SELECT 1"))
@@ -22,11 +26,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="SIGE-AO API", version="1.0.0", lifespan=lifespan)
 
 # Servir arquivos estáticos da pasta /static
-app.mount("/static", StaticFiles(directory="static"), name="static") # <- ADD ISSO
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://sige-ao.onrender.com", "http://localhost:5173", "*"], # <- * pra teste
+    allow_origins=["https://sige-ao.onrender.com", "http://localhost:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
