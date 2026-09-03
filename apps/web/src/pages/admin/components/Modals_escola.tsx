@@ -67,6 +67,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
         const formData = new FormData()
         Object.entries(form).forEach(([k, v]) => formData.append(k, v))
+        // Valores padrão - o gestor altera depois
         formData.append("cor_primaria", "#3B82F6")
         formData.append("cor_secundaria", "#8B5CF6")
         formData.append("tema", "escuro")
@@ -81,11 +82,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     }
 
     const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
-    const labelClass = "text-sm font-semibold text-gray-300 pt-3" // pt-3 pra alinhar com o input
+    const labelClass = "text-sm font-semibold text-gray-300 flex items-center" // flex items-center pra centralizar vertical
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in-0">
-            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"> {/* overflow-hidden pra travar scroll */}
+            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
 
                 {/* HEADER */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
@@ -101,64 +102,60 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"> {/* Scroll invisível */}
+                <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
 
                     {/* DADOS GERAIS */}
-                    <div>
-                        <p className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</p>
+                    <section>
+                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</h3>
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start"> {/* 3 colunas: label | input | input */}
+                            {/* Linha 1: Label Esq | Input Dir */}
+                            <div className="grid grid-cols-[160px_1fr] gap-4 items-center">
                                 <label htmlFor="nome" className={labelClass}>Nome da Escola *</label>
-                                <div className="sm:col-span-2">
-                                    <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
-                                </div>
+                                <input id="nome" value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                            {/* Linha 2 */}
+                            <div className="grid grid-cols-[160px_1fr] gap-4 items-center">
                                 <label htmlFor="sigla" className={labelClass}>Sigla</label>
-                                <div className="sm:col-span-2">
-                                    <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className={inputClass} placeholder="EEM" />
-                                </div>
+                                <input id="sigla" value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className={inputClass} placeholder="EEM" />
                             </div>
                         </div>
-                    </div>
+                    </section>
 
                     {/* LOCALIZAÇÃO */}
-                    <div>
-                        <p className="text-sm font-bold text-white mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</p>
+                    <section>
+                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                            {/* Linha 3 */}
+                            <div className="grid grid-cols-[160px_1fr] gap-4 items-center">
                                 <label htmlFor="provincia" className={labelClass}>Província</label>
-                                <div className="sm:col-span-2">
-                                    <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={inputClass} placeholder="Luanda" />
-                                </div>
+                                <input id="provincia" value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={inputClass} placeholder="Luanda" />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                            {/* Linha 4 */}
+                            <div className="grid grid-cols-[160px_1fr] gap-4 items-center">
                                 <label htmlFor="municipio" className={labelClass}>Município</label>
-                                <div className="sm:col-span-2">
-                                    <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={inputClass} placeholder="Talatona" />
-                                </div>
+                                <input id="municipio" value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={inputClass} placeholder="Talatona" />
                             </div>
                         </div>
-                    </div>
+                    </section>
 
                     {/* LOGO */}
-                    <div>
-                        <p className="text-sm font-bold text-white mb-4 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo da Escola</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                    <section>
+                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo da Escola</h3>
+                        <div className="grid grid-cols-[160px_1fr] gap-4 items-center">
                             <label className={labelClass}>Imagem</label>
-                            <div className="sm:col-span-2 flex items-center gap-4">
-                                <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">
                                     {logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}
                                 </div>
                                 <div className="flex-1">
                                     <input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} />
-                                    <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold">
+                                    <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold">
                                         <Upload className="w-4 h-4" /> Enviar Logo
                                     </label>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
                 </form>
 
