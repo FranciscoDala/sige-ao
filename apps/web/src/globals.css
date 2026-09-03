@@ -1,36 +1,15 @@
-/* IMPORT DO GOOGLE FONTS */
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Zalando+Sans:ital,wght@0,200..900;1,200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --cor-primaria: #0a4a8a; /* <- AZUL SIGE */
-    --cor-secundaria: #1e90ff; /* <- AZUL CLARO */
-    --cor-terciaria: #00c6ff; /* <- CIANO */
-    --cor-fundo: #0f172a; /* <- AZUL ESCURO */
-    --cor-card: #1e293b;
-    --cor-card-hover: #334155;
-    --cor-borda: #334155;
-    --cor-texto: #ffffff;
-    --cor-texto-sec: #94a3b8;
+* {
+    font-family: 'Bricolage Grotesque', sans-serif; /* <- FORÇA A FONTE EM TUDO */
 }
 
-[data-theme="light"] {
-    --cor-fundo: #f0f9ff;
-    --cor-card: #ffffff;
-    --cor-card-hover: #f8fafc;
-    --cor-borda: #e0e7ff;
-    --cor-texto: #0f172a;
-    --cor-texto-sec: #64748b;
-}
-
-@layer base {
-    body {
-        @apply font-sans;
-        background: linear-gradient(135deg, #0a4a8a 0%, #1e90ff 50%, #00c6ff 100%); /* <- VOLTOU O GRADIENTE AZUL */
-        color: var(--cor-texto);
-        min-height: 100vh;
-    }
+body {
+    background-color: #F7F3EA; /* <- FUNDO BEGE IGUAL A PRINT */
+    color: #1f2937; /* <- TEXTO ESCURO */
+    min-height: 100vh;
 }
