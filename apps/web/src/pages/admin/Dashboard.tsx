@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 })
 
 const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300 w-full snap-center shrink-0">
         <div className="flex justify-between items-start mb-4">
             <p className="text-sm text-gray-400">{title}</p>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
@@ -35,7 +35,7 @@ const StatCard = ({ title, value, icon: Icon, color }: any) => (
 )
 
 const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () => void, onDelete: () => void }) => (
-    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 w-full snap-center shrink-0">
+    <div className="group bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 w-full snap-center shrink-0">
         <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0">
@@ -137,15 +137,28 @@ export default function Dashboard() {
     ]
     const opcaoSelecionada = opcoesFiltro.find(o => o.value === filtroStatus)
 
+    const stats = [
+        { title: "Total de Escolas", value: escolas.length, icon: Building2, color: "bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" },
+        { title: "Escolas Ativas", value: escolas.filter(e => e.ativo).length, icon: Users, color: "bg-gradient-to-br from-[#10B981] to-[#059669]" },
+        { title: "Províncias", value: new Set(escolas.map(e => e.provincia)).size, icon: MapPin, color: "bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" },
+    ]
+
     return (
         <div className="space-y-6">
             <div><h2 className="text-3xl font-bold text-white">Painel Administrativo</h2><p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p></div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard title="Total de Escolas" value={escolas.length} icon={Building2} color="bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" />
-                <StatCard title="Escolas Ativas" value={escolas.filter(e => e.ativo).length} icon={Users} color="bg-gradient-to-br from-[#10B981] to-[#059669]" />
-                <StatCard title="Províncias" value={new Set(escolas.map(e => e.provincia)).size} icon={MapPin} color="bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" />
+            {/* STATS: CARROSSEL NO MOBILE */}
+            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {stats.map((stat, i) => (
+                    <div key={i} className="w-full flex-shrink-0">
+                        <StatCard {...stat} />
+                    </div>
+                ))}
             </div>
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
+            </div>
+
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
@@ -177,16 +190,15 @@ export default function Dashboard() {
                 {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
                     escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
                         <>
-                            {/* MOBILE: CARROSSEL */}
-                            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            {/* ESCOLAS: CARROSSEL NO MOBILE */}
+                            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
-                                    <div key={escola.id} className="w-[85%] mx-auto">
+                                    <div key={escola.id} className="w-full flex-shrink-0">
                                         <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />
                                     </div>
                                 ))}
                             </div>
 
-                            {/* DESKTOP: GRID */}
                             <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
                                 {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />)}
                             </div>
