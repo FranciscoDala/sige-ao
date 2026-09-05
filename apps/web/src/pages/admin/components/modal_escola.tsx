@@ -18,7 +18,6 @@ const MUNICIPIOS_ANGOLA: Record<string, string[]> = {
   "Lunda Sul": ["Saurimo", "Dala", "Cacolo", "Cassai Sul", "Muangueji", "Cassengo", "Luma Cassai", "Muconda"],
   "Huambo": ["Huambo", "Bailundo", "Caála", "Ecunha", "Londuimbali", "Mungo", "Cachiungo"],
   "Huíla": ["Lubango", "Chibia", "Chicomba", "Chipindo", "Cuvango", "Humpata", "Jamba", "Matala"],
-  // Completa o resto depois
 };
 
 export interface Escola {
@@ -39,7 +38,7 @@ export interface Escola {
 
 export default function EscolaModal({ open, onClose, onSave, escola, saving }: { open: boolean, onClose: () => void, onSave: (data: FormData, id?: string) => Promise<void>, escola: Escola | null, saving: boolean }) {
     const fileRef = useRef<HTMLInputElement>(null)
-    const primeiraCarga = useRef(true) // 👈 NOVO: pra não zerar municipio ao carregar
+    const primeiraCarga = useRef(true)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const [form, setForm] = useState({
         nome: "", sigla: "", nif: "", endereco: "", telefone: "", provincia: "", municipio: ""
@@ -47,22 +46,20 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
 
     const municipios = useMemo(() => MUNICIPIOS_ANGOLA[form.provincia] || [], [form.provincia]);
 
-    // Gera sigla automatica: "Escola Mutamba" -> "EM"
     useEffect(() => {
         if (form.nome) {
             const siglaAuto = form.nome
-              .split(" ")
-              .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
-              .map(w => w[0]).join("").toUpperCase().slice(0, 4);
+             .split(" ")
+             .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
+             .map(w => w[0]).join("").toUpperCase().slice(0, 4);
             setForm(prev => ({...prev, sigla: siglaAuto }));
         } else {
             setForm(prev => ({...prev, sigla: "" }));
         }
     }, [form.nome]);
 
-    // Zera municipio quando troca provincia manualmente
     useEffect(() => {
-        if (primeiraCarga.current) return; // 👈 IGNORA NA PRIMEIRA CARGA
+        if (primeiraCarga.current) return;
         setForm(prev => ({...prev, municipio: "" }));
     }, [form.provincia]);
 
@@ -78,7 +75,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                 municipio: escola.municipio || ""
             })
             setLogoPreview(escola.logo_url || null)
-            primeiraCarga.current = true; // 👈 RESSETA PRA PODER CARREGAR
+            primeiraCarga.current = true;
         } else {
             setForm({ nome: "", sigla: "", nif: "", endereco: "", telefone: "", provincia: "", municipio: "" })
             setLogoPreview(null)
@@ -119,7 +116,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     }
 
     const handleChange = (field: string, value: string) => {
-        if(field === 'provincia') primeiraCarga.current = false; // 👈 marca que usuário trocou
+        if(field === 'provincia') primeiraCarga.current = false;
         setForm(prev => ({...prev, [field]: value }))
     }
 
@@ -130,20 +127,19 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <style>{`
-              .scroll-hidden::-webkit-scrollbar { display: none; }
-              .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+             .scroll-hidden::-webkit-scrollbar { display: none; }
+             .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
 
-            <div className="w-full max-w-3xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh]">
+            {/* overflow-hidden aqui pra cortar tudo que sair */}
+            <div className="w-full max-w-3xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div>
                         <div><h2 className="text-xl font-bold text-white">{escola? "Editar Escola" : "Cadastrar Escola"}</h2><p className="text-sm text-gray-400">{escola? "Altere os dados abaixo" : "Preencha os dados da nova escola"}</p></div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
 
-                {/* FORM AGORA INCLUI O FOOTER */}
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex-1 p-6 space-y-6 overflow-y-auto scroll-hidden">
                         <section>
@@ -207,11 +203,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                         </section>
                     </div>
 
-                    {/* FOOTER DENTRO DO FORM */}
                     <div className="p-6 border-t border-white/10 flex gap-3 shrink-0 bg-[#0F172A]/90">
-                        <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 transition">Cancelar</button>
-                        <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
-                            {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar Alterações" : "Criar Escola"}
+                        {/* Botão Cancelar Vermelho */}
+                        <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition">
+                            Cancelar
+                        </button>
+                        {/* Botão Salvar Primary */}
+                        <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#3B82F6]/20 transition">
+                            {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar" : "Salvar"}
                         </button>
                     </div>
                 </form>
