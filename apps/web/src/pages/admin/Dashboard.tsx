@@ -5,9 +5,10 @@ import {
     ChevronDown, Loader2, School
 } from 'lucide-react'
 import { toast } from 'sonner'
-import EscolaModal, { Escola } from './components/modal_escola'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
+import EscolaModal, { Escola } from './components/modal_escola'
+import ConfirmDeleteModal from './components/modal_confirmDelete'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -28,6 +29,11 @@ export default function Dashboard() {
     const [modalOpen, setModalOpen] = useState(false)
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
+
+    // 👇 ESTADOS NOVOS PRA MODAL DE DELETE
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
+
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -73,13 +79,24 @@ export default function Dashboard() {
 
     const handleOpenCreate = () => { setEscolaEditando(null); setModalOpen(true) }
     const handleOpenEdit = (escola: Escola) => { setEscolaEditando(escola); setModalOpen(true) }
-    const handleDelete = async (id: string) => {
-        if (confirm("Tem certeza que deseja desativar esta escola?")) {
-            try {
-                await api.delete(`/escolas/${id}`)
-                toast.success("Escola desativada")
-                fetchEscolas()
-            } catch { toast.error("Erro ao desativar") }
+
+    // 👇 TROQUEI O CONFIRM() POR ISSO
+    const handleDeleteClick = (id: string) => {
+        setEscolaParaDeletar(id)
+        setConfirmOpen(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!escolaParaDeletar) return
+        try {
+            await api.delete(`/escolas/${escolaParaDeletar}`)
+            toast.success("Escola desativada")
+            fetchEscolas()
+        } catch {
+            toast.error("Erro ao desativar")
+        } finally {
+            setConfirmOpen(false)
+            setEscolaParaDeletar(null)
         }
     }
 
@@ -97,15 +114,12 @@ export default function Dashboard() {
     ]
 
     return (
-        <div className="space-y-6">
-            <div><h2 className="text-3xl font-bold text-white">Painel Administrativo</h2><p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p></div>
-
+        <div className="space-y-6 mt-2">
+            <div><h2 className="text-3xl font-bold text-white">Painel</h2>
+            <p className="text-gray-400">Gerencie todas as escolas cadastradas</p></div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-
-                    {/* <label className="text-sm text-gray-400 mb-2 block">Filtrar por Status</label> */}
-
                     <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
@@ -128,46 +142,40 @@ export default function Dashboard() {
                 </div>
             </div>
 
-
-
-            {/* STATS: CARROSSEL NO MOBILE */}
+            {/* STATS */}
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {stats.map((stat, i) => (
-                    <div key={i} className="w-full flex-shrink-0">
-                        <StatCard {...stat} />
-                    </div>
-                ))}
+                {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
             </div>
-
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
             </div>
 
-
             <div>
-                {/* <label className="text-sm text-gray-400 mb-2 block">Filtrar por Status</label> */}
-            {/* <p className="font-bold text-white text-lg mb-4">Escolas Cadastradas <span className="text-sm font-normal text-gray-400 ml-2">({escolas.length} encontradas)</span></p> */}
-
                 {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
-                    escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
+                    escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
                         <>
-                            {/* ESCOLAS: CARROSSEL NO MOBILE */}
                             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
                                     <div key={escola.id} className="w-full flex-shrink-0">
-                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />
+                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} /> {/* 👈 MUDEI AQUI */}
                                     </div>
                                 ))}
                             </div>
-
                             <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />)}
+                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)} {/* 👈 E AQUI */}
                             </div>
                         </>
                 }
             </div>
 
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
+
+            {/* 👇 RENDERIZA A MODAL DE CONFIRMAÇÃO AQUI */}
+            <ConfirmDeleteModal
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     )
 }
