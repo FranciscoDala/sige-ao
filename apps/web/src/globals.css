@@ -1,15 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-    font-family: 'Bricolage Grotesque', sans-serif; /* <- FORÇA A FONTE EM TUDO */
+    font-family: "Zalando Sans Expanded", sans-serif; /* <- AGORA É ZALANDO */
+    font-optical-sizing: auto; /* <- melhor pra fonte variável */
 }
 
 body {
-    background-color: #F7F3EA; /* <- FUNDO BEGE IGUAL A PRINT */
-    color: #1f2937; /* <- TEXTO ESCURO */
+    background-color: #0F172A; /* <- teu fundo tava azul escuro. se quer bege usa #F7F3EA */
+    color: #E5E7EB; /* <- texto claro pra combinar com o fundo escuro */
     min-height: 100vh;
 }

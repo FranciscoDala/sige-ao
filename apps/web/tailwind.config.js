@@ -4,8 +4,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Zalando Sans"', 'ui-sans-serif', 'system-ui'],
-                bricolage: ['"Bricolage Grotesque"', 'sans-serif'],
+                sans: ['"Zalando Sans Expanded"', 'ui-sans-serif', 'system-ui'], // <- FONTE PADRÃO AGORA
             },
             colors: {
                 'primaria': '#0a4a8a',  // <- AZUL
