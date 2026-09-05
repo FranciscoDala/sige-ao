@@ -27,6 +27,14 @@ class NivelAcesso(str, enum.Enum):
     # 5. Apoio
     FUNCIONARIO = "FUNCIONARIO"
 
+class NivelEnsino(str, enum.Enum): # 👈 ADD
+    PRIMARIO = "PRIMARIO"
+    I_CICLO = "I_CICLO"
+    II_CICLO = "II_CICLO"
+    COMPLEXO = "COMPLEXO" # 7ª à 13ª
+    MEDIO_TECNICO = "MEDIO_TECNICO"
+    SUPERIOR = "SUPERIOR"
+
 class Escola(Base):
     __tablename__ = "escolas"
 
@@ -35,6 +43,14 @@ class Escola(Base):
     sigla: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     id_curto: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, index=True, comment='ESC001')
     nif: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    nivel_ensino: Mapped[NivelEnsino] = mapped_column( # 👈 ADD
+        SAEnum(NivelEnsino, name="nivelensino", native_enum=False, create_constraint=False),
+        nullable=False,
+        default=NivelEnsino.PRIMARIO,
+        server_default="PRIMARIO"
+    )
+
     endereco: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     provincia: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     municipio: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -108,7 +124,6 @@ class UsuarioEscola(Base):
             name='ck_nivel_escola_consistencia'
         ),
     )
-
 
 # ===== MODELS PREPARADAS PRO FUTURO =====
 class Turma(Base):

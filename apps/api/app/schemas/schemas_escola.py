@@ -2,13 +2,14 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
-from app.models.models_escola import NivelAcesso
+from app.models.models_escola import NivelAcesso, NivelEnsino # 👈 ADD NivelEnsino
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
     nif: Optional[str] = Field(None, max_length=50)
+    nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO) # 👈 ADD
     endereco: Optional[str] = Field(None, max_length=500)
     telefone: Optional[str] = Field(None, max_length=20)
     provincia: Optional[str] = Field(None, max_length=50)
