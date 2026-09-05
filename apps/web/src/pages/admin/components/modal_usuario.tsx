@@ -49,7 +49,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
 
     useEffect(() => {
         if (!open) return
-        document.body.style.overflow = 'hidden' // trava scroll da pagina
+        document.body.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = 'unset'
         }
@@ -118,7 +118,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
                     <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
@@ -143,13 +143,10 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     )
 
     return (
-        <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden" // 1. overflow-hidden para cortar tudo
-            onClick={onClose} // clique fora fecha
-        >
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden"> {/* 1. SEM onClick aqui */}
             <div
-                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} // 2. trava: impede fechar ao clicar dentro da modal
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 3. overflow-hidden na div principal
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 2. overflow-hidden + flex
             >
                 {/* HEADER */}
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
@@ -250,8 +247,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                     </div>
 
                     {/* FOOTER FIXO */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl">
-                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
+                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl"> {/* 3. e 5. flex + responsivo */}
+                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1">
                             Cancelar
                         </button>
                         <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">

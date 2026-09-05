@@ -114,7 +114,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     useEffect(() => {
         if (!open) return
-        document.body.style.overflow = 'hidden' // trava scroll da pagina
+        document.body.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = 'unset'
         }
@@ -167,8 +167,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide"> {/* scroll invisivel */}
+                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
                             const optionValue = isObject? op.value : op
@@ -192,13 +192,10 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     )
 
     return (
-        <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden" // 1. overflow-hidden no overlay
-            onClick={onClose} // clique fora fecha
-        >
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden"> {/* 1. SEM onClick aqui */}
             <div
-                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} // 2. trava: impede fechar ao clicar dentro
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 3. overflow-hidden na modal
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 2. overflow-hidden + flex
             >
                 {/* HEADER */}
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
@@ -213,7 +210,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
                     {/* BODY COM SCROLL INVISIVEL */}
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 scrollbar-hide">
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 scrollbar-hide"> {/* 4. scroll-y invisivel */}
 
                         {/* DADOS GERAIS */}
                         <div className="space-y-4">
@@ -290,15 +287,15 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><ImageIcon className="w-4 h-4" />Logo</label>
                                 <div className="sm:col-span-3 flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
-                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                                    <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* FOOTER FIXO */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl">
+                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl"> {/* 3. e 5. flex + responsivo */}
                         <button
                             type="button"
                             onClick={onClose}
