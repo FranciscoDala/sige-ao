@@ -12,6 +12,7 @@ class NivelAcesso(str, enum.Enum):
     # 1. Gestão Ministério
     MINISTERIO = "MINISTERIO"
     # 2. Gestão da Escola
+    DIRECAO = "DIRECAO" # TEMPORÁRIO: pra corrigir dado antigo
     DIRETOR = "DIRETOR"
     SUBDIRETOR_PEDAGOGICO = "SUBDIRETOR_PEDAGOGICO"
     SUBDIRETOR_ADMINISTRATIVO = "SUBDIRETOR_ADMINISTRATIVO"
@@ -32,7 +33,7 @@ class Escola(Base):
     id: Mapped[str] = mapped_column(String(20), primary_key=True, index=True)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     sigla: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
-    id_curto: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, index=True, comment='ESC001') # PARA EMAIL
+    id_curto: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, index=True, comment='ESC001')
     nif: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     endereco: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     provincia: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -61,7 +62,11 @@ class Escola(Base):
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, server_default='true')
     criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
+    # RELAÇÕES COM CASCADE TOTAL
     usuarios: Mapped[list["UsuarioEscola"]] = relationship("UsuarioEscola", back_populates="escola", cascade="all, delete-orphan")
+    turmas: Mapped[list["Turma"]] = relationship("Turma", back_populates="escola", cascade="all, delete-orphan")
+    alunos: Mapped[list["Aluno"]] = relationship("Aluno", back_populates="escola", cascade="all, delete-orphan")
+    professores: Mapped[list["Professor"]] = relationship("Professor", back_populates="escola", cascade="all, delete-orphan")
 
 class Usuario(Base):
     __tablename__ = "usuarios"
@@ -103,3 +108,38 @@ class UsuarioEscola(Base):
             name='ck_nivel_escola_consistencia'
         ),
     )
+
+
+# ===== MODELS PREPARADAS PRO FUTURO =====
+class Turma(Base):
+    __tablename__ = "turmas"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nome: Mapped[str] = mapped_column(String(100), nullable=False)
+    ano_letivo: Mapped[str] = mapped_column(String(10), nullable=False)
+    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    escola: Mapped["Escola"] = relationship("Escola", back_populates="turmas")
+
+class Aluno(Base):
+    __tablename__ = "alunos"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    matricula: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    escola: Mapped["Escola"] = relationship("Escola", back_populates="alunos")
+
+class Professor(Base):
+    __tablename__ = "professores"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    especialidade: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    escola: Mapped["Escola"] = relationship("Escola", back_populates="professores")
