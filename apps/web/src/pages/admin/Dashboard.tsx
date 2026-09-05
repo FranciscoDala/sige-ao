@@ -2,50 +2,24 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Eye, Edit, Trash2, Plus,
-    ChevronDown, Loader2, School, Phone, Mail, MapPinIcon
+    ChevronDown, Loader2, School, Phone, MapPinIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
-import EscolaModal, { Escola } from './components/modal_escola' // 👈 USA A INTERFACE EXPORTADA
+import EscolaModal, { Escola } from './components/modal_escola'
 
 const API_URL = import.meta.env.VITE_API_URL
-console.log('[INIT] API_URL:', API_URL) // 👈
 
-const getToken = (): string | null => {
-    const token = localStorage.getItem('access_token')
-    console.log('[DEBUG] Token no localStorage:', token? `ENCONTRADO ${token.substring(0, 20)}...` : 'NULL') // 👈
-    return token
-};
+const getToken = (): string | null => localStorage.getItem('access_token');
 
-// AXIOS COM INTERCEPTOR + LOG
-const api = axios.create({
-    baseURL: API_URL
-})
-
+const api = axios.create({ baseURL: API_URL })
 api.interceptors.request.use((config) => {
     const token = getToken()
-    console.log('[DEBUG] Fazendo request para:', config.method?.toUpperCase(), config.url) // 👈
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-        console.log('[DEBUG] Header Authorization adicionado') // 👈
-    } else {
-        console.error('[DEBUG] ERRO: Token é null! Não vai enviar Authorization') // 👈
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`
     return config
 })
 
-api.interceptors.response.use(
-  (res) => {
-    console.log('[DEBUG] Response OK:', res.status, res.config.url) // 👈
-    return res
-  },
-  (err) => {
-    console.error('[DEBUG] Response ERRO:', err.response?.status, err.response?.data, err.config?.url) // 👈
-    return Promise.reject(err)
-  }
-)
-
 const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300">
         <div className="flex justify-between items-start mb-4">
             <p className="text-sm text-gray-400">{title}</p>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
@@ -61,7 +35,7 @@ const StatCard = ({ title, value, icon: Icon, color }: any) => (
 )
 
 const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () => void, onDelete: () => void }) => (
-    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1">
+    <div className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 w-full snap-center shrink-0">
         <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0">
@@ -82,7 +56,6 @@ const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () =
                 <MapPinIcon className="w-4 h-4 text-[#3B82F6]" />
                 <span>{escola.provincia || 'N/A'} - {escola.municipio || 'N/A'}</span>
             </div>
-            {escola.email && <div className="flex items-center gap-2 text-sm text-gray-300"><Mail className="w-4 h-4 text-[#3B82F6]" /><span className="truncate">{escola.email}</span></div>}
             {escola.telefone && <div className="flex items-center gap-2 text-sm text-gray-300"><Phone className="w-4 h-4 text-[#3B82F6]" /><span>{escola.telefone}</span></div>}
         </div>
 
@@ -114,7 +87,6 @@ export default function Dashboard() {
 
     const fetchEscolas = async () => {
         setLoading(true)
-        console.log('[DEBUG] Buscando escolas...') // 👈
         try {
             const params: any = {}
             if (filtroStatus === 'ativa') params.ativo = true
@@ -132,20 +104,14 @@ export default function Dashboard() {
 
     const handleSaveEscola = async (data: FormData, id?: string) => {
         setSaving(true)
-        console.log('[DEBUG] handleSaveEscola chamado. ID:', id || 'CRIAR NOVO') // 👈
         try {
-            if (id) {
-                await api.put(`/escolas/${id}`, data)
-                toast.success("Escola atualizada com sucesso!")
-            } else {
-                await api.post(`/escolas`, data)
-                toast.success("Escola criada com sucesso!")
-            }
+            if (id) await api.put(`/escolas/${id}`, data)
+            else await api.post(`/escolas`, data)
+            toast.success(id? "Escola atualizada!" : "Escola criada!")
             setModalOpen(false)
             setEscolaEditando(null)
             fetchEscolas()
         } catch (err: any) {
-            console.error('[DEBUG] Erro no handleSave:', err) // 👈
             toast.error(err.response?.data?.detail || "Erro ao salvar escola")
         } finally {
             setSaving(false)
@@ -184,12 +150,12 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
                     <label className="text-sm text-gray-400 mb-2 block">Filtrar por Status</label>
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden">
                             <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
                                 <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
@@ -210,9 +176,21 @@ export default function Dashboard() {
                 <p className="font-bold text-white text-lg mb-4">Escolas Cadastradas <span className="text-sm font-normal text-gray-400 ml-2">({escolas.length} encontradas)</span></p>
                 {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
                     escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                            {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />)}
-                        </div>
+                        <>
+                            {/* MOBILE: CARROSSEL */}
+                            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                {escolas.map((escola) => (
+                                    <div key={escola.id} className="w-[85%] mx-auto">
+                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* DESKTOP: GRID */}
+                            <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />)}
+                            </div>
+                        </>
                 }
             </div>
 

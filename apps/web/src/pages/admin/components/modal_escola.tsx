@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, FormEvent, useMemo } from 'react'
-import { X, Upload, Loader2, School, Building2, Image as ImageIcon, MapPin, Phone, Mail, FileText, Home } from 'lucide-react'
+import { X, Upload, Loader2, School, Building2, Image as ImageIcon, MapPin, Phone, FileText, Home } from 'lucide-react'
 import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -15,7 +15,10 @@ const MUNICIPIOS_ANGOLA: Record<string, string[]> = {
   "Luanda": ["Luanda", "Belas", "Cazenga", "Cacuaco", "Viana", "Talatona", "Kilamba Kiaxi", "Icolo e Bengo", "Quiçama"],
   "Bengo": ["Caxito", "Ambriz", "Bula Atumba", "Dande", "Dembos", "Nambuangongo", "Pango Aluquém"],
   "Benguela": ["Benguela", "Baía Farta", "Balombo", "Bocoio", "Caimbambo", "Catumbela", "Chongoroi", "Cubal", "Ganda", "Lobito"],
-  // Adiciona o resto se quiser. Por agora deixei só 3 pra ficar leve
+  "Lunda Sul": ["Saurimo", "Dala", "Cacolo", "Cassai Sul", "Muangueji", "Cassengo", "Luma Cassai", "Muconda"],
+  "Huambo": ["Huambo", "Bailundo", "Caála", "Ecunha", "Londuimbali", "Mungo", "Cachiungo"],
+  "Huíla": ["Lubango", "Chibia", "Chicomba", "Chipindo", "Cuvango", "Humpata", "Jamba", "Matala"],
+  // Completa o resto depois
 };
 
 export interface Escola {
@@ -36,6 +39,7 @@ export interface Escola {
 
 export default function EscolaModal({ open, onClose, onSave, escola, saving }: { open: boolean, onClose: () => void, onSave: (data: FormData, id?: string) => Promise<void>, escola: Escola | null, saving: boolean }) {
     const fileRef = useRef<HTMLInputElement>(null)
+    const primeiraCarga = useRef(true) // 👈 NOVO: pra não zerar municipio ao carregar
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const [form, setForm] = useState({
         nome: "", sigla: "", nif: "", endereco: "", telefone: "", provincia: "", municipio: ""
@@ -47,17 +51,18 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     useEffect(() => {
         if (form.nome) {
             const siglaAuto = form.nome
-               .split(" ")
-               .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
-               .map(w => w[0]).join("").toUpperCase().slice(0, 4);
+              .split(" ")
+              .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
+              .map(w => w[0]).join("").toUpperCase().slice(0, 4);
             setForm(prev => ({...prev, sigla: siglaAuto }));
         } else {
             setForm(prev => ({...prev, sigla: "" }));
         }
     }, [form.nome]);
 
-    // Zera municipio quando troca provincia
+    // Zera municipio quando troca provincia manualmente
     useEffect(() => {
+        if (primeiraCarga.current) return; // 👈 IGNORA NA PRIMEIRA CARGA
         setForm(prev => ({...prev, municipio: "" }));
     }, [form.provincia]);
 
@@ -73,9 +78,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                 municipio: escola.municipio || ""
             })
             setLogoPreview(escola.logo_url || null)
+            primeiraCarga.current = true; // 👈 RESSETA PRA PODER CARREGAR
         } else {
             setForm({ nome: "", sigla: "", nif: "", endereco: "", telefone: "", provincia: "", municipio: "" })
             setLogoPreview(null)
+            primeiraCarga.current = true;
         }
     }, [escola, open])
 
@@ -111,18 +118,20 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
         onSave(formData, escola?.id)
     }
 
-    const handleChange = (field: string, value: string) => setForm(prev => ({...prev, [field]: value }))
+    const handleChange = (field: string, value: string) => {
+        if(field === 'provincia') primeiraCarga.current = false; // 👈 marca que usuário trocou
+        setForm(prev => ({...prev, [field]: value }))
+    }
 
-    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
+    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
     const selectClass = inputClass + " appearance-none"
-    const labelClass = "text-sm font-semibold text-gray-300 flex items-center gap-2"
+    const labelClass = "text-sm font-semibold text-gray-300 flex items-center gap-2 mb-2"
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            {/* Adiciona scrollbar invisivel */}
             <style>{`
-               .scroll-hidden::-webkit-scrollbar { display: none; }
-               .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+              .scroll-hidden::-webkit-scrollbar { display: none; }
+              .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
 
             <div className="w-full max-w-3xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh]">
@@ -134,74 +143,78 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto scroll-hidden">
-                    <section>
-                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className={labelClass}>Nome da Escola *</label>
-                                <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
+                {/* FORM AGORA INCLUI O FOOTER */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="flex-1 p-6 space-y-6 overflow-y-auto scroll-hidden">
+                        <section>
+                            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <label className={labelClass}>Nome da Escola *</label>
+                                    <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
+                                </div>
+                                <div>
+                                    <label className={labelClass}><FileText className="w-4 h-4" />Sigla</label>
+                                    <input value={form.sigla} readOnly className={inputClass + " bg-white/5 cursor-not-allowed"} placeholder="EM" />
+                                </div>
+                                 <div>
+                                    <label className={labelClass}><FileText className="w-4 h-4" />NIF</label>
+                                    <input value={form.nif} onChange={e => handleChange('nif', e.target.value)} className={inputClass} placeholder="5000000" />
+                                </div>
                             </div>
-                            <div>
-                                <label className={labelClass}><FileText className="w-4 h-4" />Sigla</label>
-                                <input value={form.sigla} onChange={e => handleChange('sigla', e.target.value)} className={inputClass + " bg-white/5"} placeholder="EM" readOnly />
-                            </div>
-                             <div>
-                                <label className={labelClass}><FileText className="w-4 h-4" />NIF</label>
-                                <input value={form.nif} onChange={e => handleChange('nif', e.target.value)} className={inputClass} placeholder="5000000" />
-                            </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <section>
-                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Home className="w-4 h-4 text-[#3B82F6]" />Contato e Endereço</h3>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
-                                <input value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={inputClass} placeholder="+244 923 000 000" />
+                        <section>
+                            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Home className="w-4 h-4 text-[#3B82F6]" />Contato e Endereço</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
+                                    <input value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={inputClass} placeholder="+244 923 000 000" />
+                                </div>
+                                 <div className="md:col-span-2">
+                                    <label className={labelClass}><MapPin className="w-4 h-4" />Endereço</label>
+                                    <input value={form.endereco} onChange={e => handleChange('endereco', e.target.value)} className={inputClass} placeholder="Rua, Bairro" />
+                                </div>
                             </div>
-                             <div className="md:col-span-2">
-                                <label className={labelClass}><MapPin className="w-4 h-4" />Endereço</label>
-                                <input value={form.endereco} onChange={e => handleChange('endereco', e.target.value)} className={inputClass} placeholder="Rua, Bairro" />
-                            </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <section>
-                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Província *</label>
-                                <select value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={selectClass} required>
-                                    <option value="">Selecione a Província</option>
-                                    {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="bg-[#0F172A]">{p}</option>)}
-                                </select>
+                        <section>
+                            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={labelClass}>Província *</label>
+                                    <select value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={selectClass} required>
+                                        <option value="">Selecione a Província</option>
+                                        {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="bg-[#0F172A]">{p}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Município</label>
+                                    <select value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={selectClass} disabled={!form.provincia}>
+                                        <option value="">Selecione o Município</option>
+                                        {municipios.map(m => <option key={m} value={m} className="bg-[#0F172A]">{m}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className={labelClass}>Município</label>
-                                <select value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={selectClass} disabled={!form.provincia}>
-                                    <option value="">Selecione o Município</option>
-                                    {municipios.map(m => <option key={m} value={m} className="bg-[#0F172A]">{m}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <section>
-                        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo</h3>
-                        <div className="flex flex-col md:flex-row items-center gap-4">
-                            <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
-                            <div className="flex-1 w-full"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
-                        </div>
-                    </section>
+                        <section>
+                            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo</h3>
+                            <div className="flex flex-col md:flex-row items-center gap-4">
+                                <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                <div className="flex-1 w-full"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* FOOTER DENTRO DO FORM */}
+                    <div className="p-6 border-t border-white/10 flex gap-3 shrink-0 bg-[#0F172A]/90">
+                        <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 transition">Cancelar</button>
+                        <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
+                            {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar Alterações" : "Criar Escola"}
+                        </button>
+                    </div>
                 </form>
-
-                <div className="p-6 border-t border-white/10 flex gap-3 shrink-0 bg-[#0F172A]/90">
-                    <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 transition">Cancelar</button>
-                    <button type="submit" onClick={handleSubmit} disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
-                        {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar Alterações" : "Criar Escola"}
-                    </button>
-                </div>
             </div>
         </div>
     )
