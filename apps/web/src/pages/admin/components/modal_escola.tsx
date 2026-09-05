@@ -49,9 +49,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     useEffect(() => {
         if (form.nome) {
             const siglaAuto = form.nome
-             .split(" ")
-             .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
-             .map(w => w[0]).join("").toUpperCase().slice(0, 4);
+            .split(" ")
+            .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
+            .map(w => w[0]).join("").toUpperCase().slice(0, 4);
             setForm(prev => ({...prev, sigla: siglaAuto }));
         } else {
             setForm(prev => ({...prev, sigla: "" }));
@@ -120,19 +120,18 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
         setForm(prev => ({...prev, [field]: value }))
     }
 
-    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
+    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
     const selectClass = inputClass + " appearance-none"
-    const labelClass = "text-sm font-semibold text-gray-300 flex items-center gap-2 mb-2"
+    const labelClass = "text-sm font-semibold text-gray-300 flex items-center gap-2 md:pt-3" // pt-3 pra alinhar com input
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <style>{`
-             .scroll-hidden::-webkit-scrollbar { display: none; }
-             .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+            .scroll-hidden::-webkit-scrollbar { display: none; }
+            .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
 
-            {/* overflow-hidden aqui pra cortar tudo que sair */}
-            <div className="w-full max-w-3xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="w-full max-w-4xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div><h2 className="text-xl font-bold text-white">{escola? "Editar Escola" : "Cadastrar Escola"}</h2><p className="text-sm text-gray-400">{escola? "Altere os dados abaixo" : "Preencha os dados da nova escola"}</p></div>
@@ -144,16 +143,19 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                     <div className="flex-1 p-6 space-y-6 overflow-y-auto scroll-hidden">
                         <section>
                             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
+                            <div className="space-y-4">
+                                {/* NOME */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}>Nome da Escola *</label>
                                     <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={inputClass} placeholder="Escola Mutamba" required />
                                 </div>
-                                <div>
+                                {/* SIGLA */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}><FileText className="w-4 h-4" />Sigla</label>
                                     <input value={form.sigla} readOnly className={inputClass + " bg-white/5 cursor-not-allowed"} placeholder="EM" />
                                 </div>
-                                 <div>
+                                {/* NIF */}
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}><FileText className="w-4 h-4" />NIF</label>
                                     <input value={form.nif} onChange={e => handleChange('nif', e.target.value)} className={inputClass} placeholder="5000000" />
                                 </div>
@@ -162,12 +164,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
 
                         <section>
                             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Home className="w-4 h-4 text-[#3B82F6]" />Contato e Endereço</h3>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
+                             <div className="space-y-4">
+                                {/* TELEFONE */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
                                     <input value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={inputClass} placeholder="+244 923 000 000" />
                                 </div>
-                                 <div className="md:col-span-2">
+                                {/* ENDERECO */}
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}><MapPin className="w-4 h-4" />Endereço</label>
                                     <input value={form.endereco} onChange={e => handleChange('endereco', e.target.value)} className={inputClass} placeholder="Rua, Bairro" />
                                 </div>
@@ -176,15 +180,17 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
 
                         <section>
                             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
+                            <div className="space-y-4">
+                                {/* PROVINCIA */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}>Província *</label>
                                     <select value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={selectClass} required>
                                         <option value="">Selecione a Província</option>
                                         {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="bg-[#0F172A]">{p}</option>)}
                                     </select>
                                 </div>
-                                <div>
+                                {/* MUNICIPIO */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
                                     <label className={labelClass}>Município</label>
                                     <select value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={selectClass} disabled={!form.provincia}>
                                         <option value="">Selecione o Município</option>
@@ -196,9 +202,12 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
 
                         <section>
                             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo</h3>
-                            <div className="flex flex-col md:flex-row items-center gap-4">
-                                <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
-                                <div className="flex-1 w-full"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 items-center">
+                                <label className={labelClass}><ImageIcon className="w-4 h-4" />Logo</label>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                    <div className="flex-1 w-full"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                                </div>
                             </div>
                         </section>
                     </div>

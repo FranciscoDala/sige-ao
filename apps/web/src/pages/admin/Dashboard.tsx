@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School
+    ChevronDown, Loader2, School, Menu, X, ShieldCheck, LayoutGrid, Settings, LogOut
 } from 'lucide-react'
 import { toast } from 'sonner'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
 import EscolaModal, { Escola } from './components/modal_escola'
 import ConfirmDeleteModal from './components/modal_confirmDelete'
-import Sidebar from './components/sidebar' // 👈 SÓ IMPORTEI
+import ConfirmLogoutModal from './components/modal_confirmLogout' // 👈 IMPORTEI
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 })
 
 export default function Dashboard() {
-    const [sidebarOpen, setSidebarOpen] = useState(false) // 👈 SÓ ADICIONEI ESSE STATE
+    const [sidebarOpen, setSidebarOpen] = useState(false)
     const [filtroStatus, setFiltroStatus] = useState('todas')
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [escolas, setEscolas] = useState<Escola[]>([])
@@ -32,9 +32,12 @@ export default function Dashboard() {
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
 
-    // 👇 ESTADOS NOVOS PRA MODAL DE DELETE
+    // 👇 ESTADOS MODAL DELETE
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
+
+    // 👇 ESTADOS NOVOS MODAL LOGOUT
+    const [logoutOpen, setLogoutOpen] = useState(false)
 
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -82,7 +85,6 @@ export default function Dashboard() {
     const handleOpenCreate = () => { setEscolaEditando(null); setModalOpen(true) }
     const handleOpenEdit = (escola: Escola) => { setEscolaEditando(escola); setModalOpen(true) }
 
-    // 👇 TROQUEI O CONFIRM() POR ISSO
     const handleDeleteClick = (id: string) => {
         setEscolaParaDeletar(id)
         setConfirmOpen(true)
@@ -102,6 +104,13 @@ export default function Dashboard() {
         }
     }
 
+    // 👇 FUNÇÃO NOVA DE LOGOUT
+    const handleConfirmLogout = () => {
+        localStorage.removeItem('access_token') // limpa token
+        toast.success("Sessão terminada")
+        window.location.href = '/login' // redireciona
+    }
+
     const opcoesFiltro = [
         { value: 'todas', label: 'Todas as Escolas', icon: Building2 },
         { value: 'ativa', label: 'Apenas Ativas', icon: TrendingUp },
@@ -115,26 +124,74 @@ export default function Dashboard() {
         { title: "Províncias", value: new Set(escolas.map(e => e.provincia)).size, icon: MapPin, color: "bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" },
     ]
 
-    return (
-        <div className="flex bg-[#0F172A] min-h-screen"> {/* 👈 SÓ WRAP FLEX */}
-            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} /> {/* 👈 SÓ CHAMEI O SIDEBAR */}
+    const menu = [
+        { label: 'Visão Geral', icon: LayoutGrid, active: true },
+        { label: 'Gerenciar Escolas', icon: Building2 },
+        { label: 'Configurações', icon: Settings },
+        { label: 'Sair', icon: LogOut, action: () => setLogoutOpen(true) }, // 👈 BOTÃO SAIR
+    ]
 
-            <main className="flex-1 md:ml-64 p-4"> {/* 👈 SÓ ADICIONEI MARGIN NO DESKTOP */}
-                <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="md:hidden mb-4 p-2 rounded-lg bg-white/5" // 👈 BOTÃO PRA ABRIR NO MOBILE
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+    return (
+        <div className="flex bg-[#0F172A] min-h-screen text-white">
+            {/* ===== SIDEBAR ===== */}
+            {sidebarOpen && (
+                <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" />
+            )}
+
+            <aside className={`
+                fixed top-0 left-0 z-50 h-full
+                w-[80%] max-w-sm md:w-64
+                bg-[#0F172A]/95 backdrop-blur-2xl border-r border-white/10
+                transition-transform duration-300 ease-in-out
+                ${sidebarOpen? 'translate-x-0' : '-translate-x-full'}
+                md:translate-x-0
+            `}>
+                <div className="p-5 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-8 h-8 text-[#3B82F6]" />
+                        <h1 className="text-xl font-bold text-white">SIGE</h1>
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-[#3B82F6]/20 text-[#3B82F6] rounded-md">Admin</span>
+                    </div>
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/10 rounded-lg">
+                        <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+
+                <nav className="p-4 space-y-1">
+                    {menu.map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={() => {
+                                setSidebarOpen(false)
+                                item.action?.() // 👈 executa action se tiver
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition
+                                ${item.active
+                                  ? 'bg-white/10 text-white font-semibold'
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                }
+                            `}
+                        >
+                            <item.icon className="w-5 h-5 flex-shrink-0" />
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+            </aside>
+
+            {/* CONTEUDO PRINCIPAL */}
+            <main className="flex-1 md:ml-64 p-4">
+                <button onClick={() => setSidebarOpen(true)} className="md:hidden mb-4 p-2 rounded-lg bg-white/5 hover:bg-white/10">
+                    <Menu className="w-6 h-6" />
                 </button>
 
-                {/* DAQUI PRA BAIXO É 100% IGUAL AO TEU CÓDIGO */}
                 <div className="space-y-6 mt-2">
                     <div><h2 className="text-3xl font-bold text-white">Painel</h2>
                     <p className="text-gray-400">Gerencie todas as escolas cadastradas</p></div>
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full">
                         <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
+                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
                                 <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                                 <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                             </button>
@@ -150,7 +207,7 @@ export default function Dashboard() {
                         </div>
 
                         <div className="w-full sm:w-1/2 flex items-end">
-                            <button onClick={handleOpenCreate} className="w-full h-12 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
+                            <button onClick={handleOpenCreate} className="w-full h-11 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
                                 <Plus className="w-5 h-5" /> Nova Escola
                             </button>
                         </div>
@@ -183,12 +240,13 @@ export default function Dashboard() {
                     </div>
 
                     <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
+                    <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
 
-                    {/* 👇 RENDERIZA A MODAL DE CONFIRMAÇÃO AQUI */}
-                    <ConfirmDeleteModal
-                        open={confirmOpen}
-                        onClose={() => setConfirmOpen(false)}
-                        onConfirm={handleConfirmDelete}
+                    {/* 👇 RENDERIZA A MODAL DE LOGOUT AQUI */}
+                    <ConfirmLogoutModal
+                        open={logoutOpen}
+                        onClose={() => setLogoutOpen(false)}
+                        onConfirm={handleConfirmLogout}
                     />
                 </div>
             </main>
