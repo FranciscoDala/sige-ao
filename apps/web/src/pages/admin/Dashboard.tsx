@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
-    Building2, Users, MapPin, TrendingUp, Eye, Edit, Trash2, Plus,
-    ChevronDown, Loader2, School, Phone, MapPinIcon
+    Building2, Users, MapPin, TrendingUp, Trash2, Plus,
+    ChevronDown, Loader2, School
 } from 'lucide-react'
 import { toast } from 'sonner'
 import EscolaModal, { Escola } from './components/modal_escola'
+import StatCard from './components/card_stat'
+import EscolaCard from './components/card_escolas'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -17,55 +19,6 @@ api.interceptors.request.use((config) => {
     if (token) config.headers.Authorization = `Bearer ${token}`
     return config
 })
-
-const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300 w-full snap-center shrink-0">
-        <div className="flex justify-between items-start mb-4">
-            <p className="text-sm text-gray-400">{title}</p>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
-                <Icon className="w-6 h-6 text-white" />
-            </div>
-        </div>
-        <p className="text-4xl font-bold text-white mb-1">{value}</p>
-        <div className="flex items-center gap-1 text-xs text-green-400">
-            <TrendingUp className="w-4 h-4" />
-            <span>+12% este mês</span>
-        </div>
-    </div>
-)
-
-const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () => void, onDelete: () => void }) => (
-    <div className="group bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/50 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 w-full snap-center shrink-0">
-        <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0">
-                    {escola.logo_url? <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-xl" /> : <School className="w-6 h-6 text-white" />}
-                </div>
-                <div>
-                    <h3 className="font-bold text-white text-lg leading-tight">{escola.nome}</h3>
-                    <p className="text-xs text-gray-400">{escola.sigla || `ID: ${escola.id}`}</p>
-                </div>
-            </div>
-            <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${escola.ativo? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                {escola.ativo? 'Ativa' : 'Inativa'}
-            </span>
-        </div>
-
-        <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-300">
-                <MapPinIcon className="w-4 h-4 text-[#3B82F6]" />
-                <span>{escola.provincia || 'N/A'} - {escola.municipio || 'N/A'}</span>
-            </div>
-            {escola.telefone && <div className="flex items-center gap-2 text-sm text-gray-300"><Phone className="w-4 h-4 text-[#3B82F6]" /><span>{escola.telefone}</span></div>}
-        </div>
-
-        <div className="flex gap-2 pt-3 border-t border-white/10">
-            <button className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#3B82F6]/20 rounded-lg text-sm transition"><Eye className="w-4 h-4" /> Ver</button>
-            <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-[#8B5CF6]/20 rounded-lg text-sm transition"><Edit className="w-4 h-4" /> Editar</button>
-            <button onClick={onDelete} className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-lg transition"><Trash2 className="w-4 h-4 text-red-400" /></button>
-        </div>
-    </div>
-)
 
 export default function Dashboard() {
     const [filtroStatus, setFiltroStatus] = useState('todas')
@@ -158,7 +111,6 @@ export default function Dashboard() {
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
             </div>
-
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
