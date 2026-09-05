@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
-from app.models_escola import NivelAcesso
+from app.models.models_escola import NivelAcesso
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):

@@ -5,7 +5,7 @@ from typing import List, Optional
 import uuid
 
 from app.db.database import get_db
-from app.models_escola import Usuario, UsuarioEscola, Escola, NivelAcesso
+from app.models.models_escola import Usuario, UsuarioEscola, Escola, NivelAcesso
 from app.schemas.schemas_escola import UsuarioVinculoCreate, UsuarioVinculoResponse, UsuarioUpdate
 from app.core.security import get_current_user, get_password_hash
 
