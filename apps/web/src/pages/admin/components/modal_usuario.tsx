@@ -3,14 +3,10 @@ import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight, Eye, EyeO
 import { toast } from 'sonner'
 import { UsuarioMinisterio } from '../../types/usuario'
 
-
-
-// 👈 DECLARA AQUI MESMO
 interface Escola {
     id: string
     nome: string
 }
-
 
 interface Props {
     open: boolean
@@ -34,15 +30,14 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     })
     const [showPassword, setShowPassword] = useState(false)
 
-    const [dropdownNivel, setDropdownNivel] = useState(false) // 👈 ADD
-    const [dropdownEscola, setDropdownEscola] = useState(false) // 👈 ADD
-    const dropdownNivelRef = useRef<HTMLDivElement>(null) // 👈 ADD
-    const dropdownEscolaRef = useRef<HTMLDivElement>(null) // 👈 ADD
+    const [dropdownNivel, setDropdownNivel] = useState(false)
+    const [dropdownEscola, setDropdownEscola] = useState(false)
+    const dropdownNivelRef = useRef<HTMLDivElement>(null)
+    const dropdownEscolaRef = useRef<HTMLDivElement>(null)
 
     const isEdit =!!usuario
     const mostrarSelectEscola = form.nivel === "DIRETOR"
 
-    // TRANCAR MODAL + FECHAR DROPDOWN AO CLICAR FORA
     useEffect(() => {
         const handleClickOutside = (event: Event) => {
             if (dropdownNivelRef.current &&!dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false)
@@ -106,16 +101,15 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
         }
     }
 
-    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => { // 👈 TRANCAR CLIQUE FORA
+    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) onClose()
     }
 
     const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
-    // MESMO PADRAO DO ESCOLAMODAL
     const CustomSelect = ({
-        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv, isObject = true // 👈 padrao object
+        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv, isObject = true
     }: any) => (
         <div ref={refDiv} className="relative sm:col-span-3">
             <button
@@ -156,10 +150,10 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     )
 
     return (
-        <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 👈 TRANCAR */}
+        <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
-                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} // 👈 TRANCAR
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl" // 👈 CORRIGIDO: ADD FLEX
             >
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
@@ -188,7 +182,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Shield className="w-4 h-4" />Nível de Acesso *</label>
                                 <CustomSelect
-                                    refDiv={dropdownNivelRef} // 👈 PADRAO ESCOLA
+                                    refDiv={dropdownNivelRef}
                                     value={form.nivel}
                                     onSelect={(val: string) => handleChange('nivel', val)}
                                     options={NIVEIS_USUARIO}
@@ -204,10 +198,10 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4 animate-in fade-in-0">
                                     <label className={labelClass}><Building2 className="w-4 h-4" />Escola *</label>
                                     <CustomSelect
-                                        refDiv={dropdownEscolaRef} // 👈 PADRAO ESCOLA
+                                        refDiv={dropdownEscolaRef}
                                         value={form.escola_id}
                                         onSelect={(val: string) => handleChange('escola_id', val)}
-                                        options={escolas.map(e => ({ value: e.id, label: e.nome }))} // 👈 PADRAO OBJECT
+                                        options={escolas.map(e => ({ value: e.id, label: e.nome }))}
                                         placeholder="Selecione a Escola"
                                         isOpen={dropdownEscola}
                                         setIsOpen={setDropdownEscola}
@@ -263,6 +257,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
 
                     </div>
 
+                    {/* FOOTER FIXO IGUAL ESCOLA MODAL */}
                     <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
                         <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
                             {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
