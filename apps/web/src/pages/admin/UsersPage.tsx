@@ -5,10 +5,10 @@ import {
     ChevronDown, Loader2, Building
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { UsuarioMinisterio } from '../types/usuario' // 👈 1. IMPORT DA INTERFACE AQUI
+import { UsuarioMinisterio } from '../types/usuario'
 import StatCard from './components/card_stat'
 import UsuarioCard from './components/card_usuario'
-import UsuarioModal from './components/modal_usuario' // 👈 2. TIREI O { UsuarioMinisterio } daqui
+import UsuarioModal from './components/modal_usuario'
 import UsuarioViewModal from './components/modal_usuarioView'
 import ConfirmDeleteModal from './components/modal_confirmDelete'
 
@@ -23,13 +23,19 @@ api.interceptors.request.use((config) => {
     return config
 })
 
+// 👈 MAPEADOR: Converte nivel do back pra perfil do front
+const mapNivelToPerfil = (nivel: string): 'super_admin' | 'admin' | 'suporte' => {
+    if (nivel === 'MINISTERIO') return 'super_admin'
+    if (nivel === 'DIRECAO') return 'admin'
+    return 'suporte'
+}
+
 export default function UsersPage() {
     const [filtroStatus, setFiltroStatus] = useState('todos')
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [usuarios, setUsuarios] = useState<UsuarioMinisterio[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
-    const [usuarioEditando, setUsuarioEditando] = useState<UsuarioMinisterio | null>(null)
     const [saving, setSaving] = useState(false)
 
     const [viewModalOpen, setViewModalOpen] = useState(false)
@@ -55,8 +61,21 @@ export default function UsersPage() {
             if (filtroStatus === 'ativo') params.ativo = true
             if (filtroStatus === 'inativo') params.ativo = false
             if (filtroStatus === 'admin') params.perfil = 'admin'
-            const res = await api.get<UsuarioMinisterio[]>(`/usuarios`, { params })
-            setUsuarios(res.data)
+            if (filtroStatus === 'super_admin') params.perfil = 'super_admin'
+
+            const res = await api.get<any[]>(`/usuarios`, { params }) // 👈 back retorna array cru
+
+            // 👈 CONVERTE a resposta do back pro formato do front
+            const usuariosMapeados: UsuarioMinisterio[] = res.data.map(u => ({
+                id: u.id,
+                nome: u.nome,
+                email: u.email,
+                perfil: mapNivelToPerfil(u.nivel), // 👈 Converte MINISTERIO -> super_admin
+                ativo: true, // 👈 Back não retorna ativo ainda. Se retornar, usa u.ativo
+                departamento: u.escola?.nome || 'Ministério',
+                created_at: new Date().toISOString()
+            }))
+            setUsuarios(usuariosMapeados)
         } catch (err: any) {
             toast.error(`Erro ao carregar usuários: ${err.response?.data?.detail || err.message}`)
         } finally {
@@ -66,12 +85,26 @@ export default function UsersPage() {
 
     useEffect(() => { fetchUsuarios() }, [filtroStatus])
 
-    const handleSaveUsuario = async (data: FormData) => { // 👈 3. REMOVI O id pq a modal só cria
+    const handleSaveUsuario = async (data: { nome: string, email: string, senha: string, perfil: 'super_admin' | 'admin' | 'suporte' }) => {
         setSaving(true)
         try {
-            data.append('tipo', 'ministerio')
-            await api.post(`/usuarios`, data) // 👈 só POST
-            toast.success("Usuário criado!")
+            // 👈 MAPEADOR REVERSO: Converte perfil do front pra nivel do back
+            const nivelMap = {
+                super_admin: 'MINISTERIO',
+                admin: 'DIRECAO',
+                suporte: 'SECRETARIO'
+            }
+
+            const payload = {
+                nome: data.nome,
+                email: data.email,
+                senha: data.senha,
+                nivel: nivelMap[data.perfil],
+                escola_id: null // 👈 Usuario do ministerio não tem escola
+            }
+
+            await api.post(`/usuarios`, payload) // 👈 Envia JSON, não FormData
+            toast.success("Usuário do Ministério criado!")
             setModalOpen(false)
             fetchUsuarios()
         } catch (err: any) {
@@ -81,8 +114,8 @@ export default function UsersPage() {
         }
     }
 
-    const handleOpenCreate = () => { setUsuarioEditando(null); setModalOpen(true) }
-    const handleOpenEdit = (usuario: UsuarioMinisterio) => { toast.info("Edição de usuário do ministério desativada") } // 👈 4. DESATIVEI EDIT
+    const handleOpenCreate = () => { setModalOpen(true) }
+    const handleOpenEdit = () => { toast.info("Edição desativada para usuários do Ministério") }
     const handleOpenView = (usuario: UsuarioMinisterio) => { setUsuarioVisualizando(usuario); setViewModalOpen(true) }
     const handleDeleteClick = (id: string) => { setUsuarioParaDeletar(id); setConfirmOpen(true) }
 
@@ -105,6 +138,7 @@ export default function UsersPage() {
         { value: 'ativo', label: 'Apenas Ativos', icon: UserCheck },
         { value: 'inativo', label: 'Apenas Inativos', icon: UserX },
         { value: 'admin', label: 'Apenas Admins', icon: ShieldCheck },
+        { value: 'super_admin', label: 'Apenas Super Admins', icon: ShieldCheck },
     ]
     const opcaoSelecionada = opcoesFiltro.find(o => o.value === filtroStatus)
 
@@ -128,7 +162,7 @@ export default function UsersPage() {
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
                             <div className="max-h-60 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{opcoesFiltro.map(op => (
                                 <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
@@ -146,7 +180,6 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            {/* STATS */}
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
             </div>
@@ -164,7 +197,7 @@ export default function UsersPage() {
                                         <UsuarioCard
                                             usuario={usuario}
                                             onView={() => handleOpenView(usuario)}
-                                            onEdit={() => handleOpenEdit(usuario)}
+                                            onEdit={handleOpenEdit}
                                             onDelete={() => handleDeleteClick(usuario.id)}
                                         />
                                     </div>
@@ -176,7 +209,7 @@ export default function UsersPage() {
                                         key={usuario.id}
                                         usuario={usuario}
                                         onView={() => handleOpenView(usuario)}
-                                        onEdit={() => handleOpenEdit(usuario)}
+                                        onEdit={handleOpenEdit}
                                         onDelete={() => handleDeleteClick(usuario.id)}
                                     />
                                 )}
@@ -185,7 +218,8 @@ export default function UsersPage() {
                 }
             </div>
 
-            <UsuarioModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveUsuario} usuario={usuarioEditando} saving={saving} />
+            <UsuarioModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveUsuario} saving={saving} />
+                
             <UsuarioViewModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} usuario={usuarioVisualizando} />
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
         </div>

@@ -1,13 +1,12 @@
 import { useState, useEffect, FormEvent, MouseEvent } from 'react'
 import { X, Loader2, ShieldCheck, User, Mail, Lock, Building } from 'lucide-react'
 import { toast } from 'sonner'
-import { UsuarioMinisterio } from '../../types/usuario'
 
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: FormData, id?: string) => Promise<void>
-    usuario: UsuarioMinisterio | null // vamos ignorar a edição
+    // 👈 Troca FormData por objeto. Não tem mais edição
+    onSave: (data: { nome: string, email: string, senha: string, perfil: 'super_admin' | 'admin' | 'suporte', departamento?: string }) => Promise<void>
     saving: boolean
 }
 
@@ -23,9 +22,9 @@ const DEPARTAMENTOS = [
     "Direção de Inspeção", "Gabinete Jurídico", "Outro"
 ]
 
-export default function UsuarioModal({ open, onClose, onSave, usuario, saving }: Props) {
+export default function UsuarioModal({ open, onClose, onSave, saving }: Props) {
     const [form, setForm] = useState({
-        nome: "", email: "", senha: "", perfil: "admin" as UsuarioMinisterio['perfil'], departamento: ""
+        nome: "", email: "", senha: "", perfil: "admin" as 'super_admin' | 'admin' | 'suporte', departamento: ""
     })
     const [dropdownPerfil, setDropdownPerfil] = useState(false)
     const [dropdownDepto, setDropdownDepto] = useState(false)
@@ -42,7 +41,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario, saving }:
     }, [open, onClose])
 
     useEffect(() => {
-        if (open) { // sempre limpa ao abrir. Não tem edição
+        if (open) {
             setForm({ nome: "", email: "", senha: "", perfil: "admin", departamento: "" })
         }
     }, [open])
@@ -56,12 +55,8 @@ export default function UsuarioModal({ open, onClose, onSave, usuario, saving }:
         if (!form.senha || form.senha.length < 6) { toast.error("A senha deve ter no mínimo 6 caracteres"); return }
         if (!form.perfil) { toast.error("Selecione um perfil"); return }
 
-        const formData = new FormData()
-        Object.entries(form).forEach(([k, v]) => formData.append(k, v))
-        formData.append("tipo", "ministerio") // 👈 GARANTE QUE É DO MINISTERIO
-        formData.append("ativo", "true")
-
-        onSave(formData)
+        // 👈 ENVIA OBJETO JSON em vez de FormData
+        onSave(form)
     }
 
     const handleChange = (field: string, value: string) => {
@@ -133,7 +128,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario, saving }:
 
     return (
         <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
-            <div onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+            <div onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl">
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
@@ -190,7 +185,7 @@ export default function UsuarioModal({ open, onClose, onSave, usuario, saving }:
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                    <div className="p-4 border-t border-white/10 flex gap-2 shrink-0 bg-[#0F172A]/90">
                         <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition">
                             Cancelar
                         </button>

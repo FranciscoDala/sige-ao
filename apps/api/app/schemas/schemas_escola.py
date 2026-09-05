@@ -54,18 +54,18 @@ class UsuarioVinculoCreate(BaseModel):
     senha: str = Field(..., min_length=6)
     telefone: Optional[str] = None
     nivel: NivelAcesso
-    escola_id: str
+    escola_id: Optional[str] = None # 👈 DEIXA OPCIONAL
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
+
 
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
     nome: str
     email: EmailStr
     nivel: NivelAcesso
-    escola: EscolaResponse
+    escola: Optional[EscolaResponse] = None # 👈 PODE SER NONE
     model_config = ConfigDict(from_attributes=True)
-
 # ================== AUTH / LOGIN ==================
 class LoginRequest(BaseModel):
     escola_id: Optional[str] = Field(None, description="Código da escola. Deixar vazio para Super Admin")
