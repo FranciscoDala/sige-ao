@@ -5,42 +5,44 @@ import {
     ChevronDown, Loader2, School, Phone, Mail, MapPinIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
-import EscolaModal from './components/modal_escola' // 👈 IMPORTA A MODAL SEPARADA
+import EscolaModal, { Escola } from './components/modal_escola' // 👈 USA A INTERFACE EXPORTADA
 
 const API_URL = import.meta.env.VITE_API_URL
+console.log('[INIT] API_URL:', API_URL) // 👈
 
-// PEGA DO LOCALSTORAGE
 const getToken = (): string | null => {
-    return localStorage.getItem('access_token')
+    const token = localStorage.getItem('access_token')
+    console.log('[DEBUG] Token no localStorage:', token? `ENCONTRADO ${token.substring(0, 20)}...` : 'NULL') // 👈
+    return token
 };
 
-// AXIOS COM INTERCEPTOR
+// AXIOS COM INTERCEPTOR + LOG
 const api = axios.create({
     baseURL: API_URL
 })
 
 api.interceptors.request.use((config) => {
     const token = getToken()
+    console.log('[DEBUG] Fazendo request para:', config.method?.toUpperCase(), config.url) // 👈
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
+        console.log('[DEBUG] Header Authorization adicionado') // 👈
+    } else {
+        console.error('[DEBUG] ERRO: Token é null! Não vai enviar Authorization') // 👈
     }
     return config
 })
 
-interface Escola {
-    id: string
-    nome: string
-    sigla?: string
-    provincia?: string
-    municipio?: string
-    telefone?: string
-    email?: string
-    logo_url?: string
-    ativo: boolean
-    cor_primaria: string
-    cor_secundaria: string
-    tema: string
-}
+api.interceptors.response.use(
+  (res) => {
+    console.log('[DEBUG] Response OK:', res.status, res.config.url) // 👈
+    return res
+  },
+  (err) => {
+    console.error('[DEBUG] Response ERRO:', err.response?.status, err.response?.data, err.config?.url) // 👈
+    return Promise.reject(err)
+  }
+)
 
 const StatCard = ({ title, value, icon: Icon, color }: any) => (
     <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6 hover:border-white/20 hover:scale-[1.02] transition-all duration-300">
@@ -112,6 +114,7 @@ export default function Dashboard() {
 
     const fetchEscolas = async () => {
         setLoading(true)
+        console.log('[DEBUG] Buscando escolas...') // 👈
         try {
             const params: any = {}
             if (filtroStatus === 'ativa') params.ativo = true
@@ -129,6 +132,7 @@ export default function Dashboard() {
 
     const handleSaveEscola = async (data: FormData, id?: string) => {
         setSaving(true)
+        console.log('[DEBUG] handleSaveEscola chamado. ID:', id || 'CRIAR NOVO') // 👈
         try {
             if (id) {
                 await api.put(`/escolas/${id}`, data)
@@ -141,6 +145,7 @@ export default function Dashboard() {
             setEscolaEditando(null)
             fetchEscolas()
         } catch (err: any) {
+            console.error('[DEBUG] Erro no handleSave:', err) // 👈
             toast.error(err.response?.data?.detail || "Erro ao salvar escola")
         } finally {
             setSaving(false)
@@ -211,7 +216,6 @@ export default function Dashboard() {
                 }
             </div>
 
-            {/* 👇 SÓ CHAMA A MODAL SEPARADA AQUI */}
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
         </div>
     )

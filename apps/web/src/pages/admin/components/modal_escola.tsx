@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
 import { X, Upload, Loader2, School, Building2, Image as ImageIcon, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
-import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL
 
-export interface Escola { // 👈 EXPORTA
+export interface Escola {
     id: string
     nome: string
     sigla?: string | null
@@ -20,13 +19,6 @@ export interface Escola { // 👈 EXPORTA
     tema: string
 }
 
-
-
-
-
-
-
-// MODAL COM LAYOUT LABEL ESQUERDA
 export default function EscolaModal({ open, onClose, onSave, escola, saving }: { open: boolean, onClose: () => void, onSave: (data: FormData, id?: string) => Promise<void>, escola: Escola | null, saving: boolean }) {
     const fileRef = useRef<HTMLInputElement>(null)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -59,13 +51,15 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
         if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
+        console.log('[DEBUG MODAL] Dados do form:', form) // 👈
         const formData = new FormData()
-        if(!escola) formData.append("id", `ESC${Date.now().toString().slice(-3)}`) // Gera ID automático se for criar
+        if(!escola) formData.append("id", `ESC${Date.now().toString().slice(-3)}`)
         Object.entries(form).forEach(([k, v]) => formData.append(k, v))
         formData.append("cor_primaria", "#3B82F6")
         formData.append("cor_secundaria", "#8B5CF6")
         formData.append("tema", "escuro")
         if (fileRef.current?.files?.[0]) formData.append("logo", fileRef.current.files[0])
+        console.log('[DEBUG MODAL] Chamando onSave...') // 👈
         onSave(formData, escola?.id)
     }
 
@@ -75,7 +69,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in-0">
-            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div>
@@ -122,55 +116,4 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
             </div>
         </div>
     )
-}
-
-// DASHBOARD - SÓ A LÓGICA DE SALVAR E DELETAR
-export function useEscolasLogic() {
-    const [escolas, setEscolas] = useState<Escola[]>([])
-    const [modalOpen, setModalOpen] = useState(false)
-    const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
-    const [saving, setSaving] = useState(false)
-
-    const fetchEscolas = async () => {
-        try {
-            const res = await axios.get<Escola[]>(`${API_URL}/escolas`)
-            setEscolas(res.data)
-        } catch (err: any) {
-            toast.error(`Erro ao carregar escolas: ${err.message}`)
-        }
-    }
-
-    useEffect(() => { fetchEscolas() }, [])
-
-    const handleSaveEscola = async (data: FormData, id?: string) => {
-        setSaving(true)
-        const token = localStorage.getItem('access_token') // 👈 CORRIGIDO AQUI
-        const headers = { 'Authorization': `Bearer ${token}` }
-
-        try {
-            if (id) {
-                await axios.put(`${API_URL}/escolas/${id}`, data, { headers })
-                toast.success("Escola atualizada com sucesso!")
-            } else {
-                await axios.post(`${API_URL}/escolas`, data, { headers })
-                toast.success("Escola criada com sucesso!")
-            }
-            setModalOpen(false); setEscolaEditando(null); fetchEscolas()
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Erro ao salvar escola")
-        } finally { setSaving(false) }
-    }
-
-    const handleDelete = async (id: string) => {
-        if (confirm("Tem certeza que deseja desativar esta escola?")) {
-            const token = localStorage.getItem('access_token') // 👈 E CORRIGIDO AQUI
-            try {
-                await axios.delete(`${API_URL}/escolas/${id}`, { headers: { 'Authorization': `Bearer ${token}` }})
-                toast.success("Escola desativada")
-                fetchEscolas()
-            } catch { toast.error("Erro ao desativar") }
-        }
-    }
-
-    return { escolas, modalOpen, setModalOpen, escolaEditando, setEscolaEditando, saving, handleSaveEscola, handleDelete, fetchEscolas }
 }
