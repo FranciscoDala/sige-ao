@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users
+    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp // 👈 ADD CircleHelp
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -12,8 +12,10 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
+    { icon: Building2, label: 'Escolas', path: '/dashboard/schools', type: 'Definição' }, // 👈 ADD Escolas
     { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
-    { icon: Settings, label: 'Ajuda', path: '/dashboard/settings', type: 'Definição' },
+    { icon: CircleHelp, label: 'Ajuda', path: '/dashboard/ajuda', type: 'Definição' }, // 👈 AJUSTA: CircleHelp + /ajuda
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' }, // 👈 ADD Configurações
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
@@ -35,21 +37,19 @@ export default function MainLayout() {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([])
     const [searching, setSearching] = useState(false)
 
-    // 👈 AGORA É STATE E ATUALIZA SOZINHO
     const [user, setUser] = useState(() => authService.getUser() || { nome: 'Super Admin', email: 'admin@sige.ao' })
 
     const searchInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
     const location = useLocation()
 
-    // 👈 ESCUTA MUDANÇA NO LOCALSTORAGE PRA ATUALIZAR HEADER/SIDEBAR
     useEffect(() => {
         const updateUser = () => {
             const u = authService.getUser()
             if (u) setUser(u)
         }
         window.addEventListener('storage', updateUser)
-        window.addEventListener('user-updated', updateUser) // evento custom
+        window.addEventListener('user-updated', updateUser)
         return () => {
             window.removeEventListener('storage', updateUser)
             window.removeEventListener('user-updated', updateUser)
@@ -158,7 +158,6 @@ export default function MainLayout() {
                         <div className="flex items-center gap-3 px-1">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div>
                             <div className="min-w-0 flex-1">
-                                {/* 👈 AGORA PEGA DO STATE */}
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                             </div>
@@ -182,7 +181,7 @@ export default function MainLayout() {
                                 className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
-                                <div className="absolute top-14 w-full bg-[#1E293B]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
+                                <div className="absolute top-14 w-full bg-[#1E293B]/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
                                     {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]" /></div>}
                                     {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="p-4 text-gray-400 text-sm">Nenhum resultado</p>}
                                     {searchResults.map(item => (
@@ -204,7 +203,6 @@ export default function MainLayout() {
                             </button>
                             <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
                             <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
-                                {/* 👈 AGORA PEGA DO STATE */}
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
                             <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">

@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/auth/Login'
 import MainLayout from './layouts/MainLayout'
-import SchoolsPage from './pages/admin/SchoolsPage' // 👈 renomeia pra ficar igual
-import UsersPage from './pages/admin/UsersPage' // 👈 1. IMPORTA A PAGE NOVA
+import SchoolsPage from './pages/admin/SchoolsPage'
+import UsersPage from './pages/admin/UsersPage'
+import AjudaPage from './pages/admin/AjudaPage' // 👈 ADD
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
 import './globals.css'
@@ -42,10 +43,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         </PrivateRoute>
                     }
                 >
-                    <Route index element={<SchoolsPage />} /> {/* /dashboard - default é escolas */}
-                    <Route path="schools" element={<SchoolsPage />} /> {/* /dashboard/schools */}
-                    <Route path="users" element={<UsersPage />} /> {/* 👈 2. ADICIONA ESSA LINHA */}
-                    <Route path="settings" element={<div>Configurações</div>} /> {/* /dashboard/settings */}
+                    <Route index element={<SchoolsPage />} />
+                    <Route path="schools" element={<SchoolsPage />} />
+                    <Route path="users" element={<UsersPage />} />
+                    <Route path="ajuda" element={<AjudaPage />} /> {/* 👈 ADD */}
+                    <Route path="settings" element={<div>Configurações</div>} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
