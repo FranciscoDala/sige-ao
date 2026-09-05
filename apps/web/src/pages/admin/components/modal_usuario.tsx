@@ -49,7 +49,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
 
     useEffect(() => {
         if (!open) return
-        document.body.style.overflow = 'hidden' // 👈 TRANCAR SCROLL
+        document.body.style.overflow = 'hidden'
         return () => {
             document.body.style.overflow = 'unset'
         }
@@ -98,9 +98,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
         }
     }
 
-    // 👈 REMOVIDO: handleOverlayClick. Não fecha mais ao clicar fora
-
-    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
+    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
     const CustomSelect = ({
@@ -120,8 +118,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
             </button>
 
             {isOpen && (
-                <div className="absolute z-20 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
                             const optionValue = isObject? op.value : op
@@ -145,11 +143,13 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     )
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 👈 REMOVIDO onClick */}
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
+            {/* 👇 ADICIONEI 'flex' aqui e tirei overflow-hidden */}
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] shadow-2xl"
             >
+                {/* HEADER */}
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
@@ -160,8 +160,9 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+                    {/* BODY COM SCROLL */}
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0">
 
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
@@ -173,7 +174,6 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="nome@minedu.gov.ao" required />
                             </div>
 
-                            {/* NIVEL DE ACESSO */}
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Shield className="w-4 h-4" />Nível de Acesso *</label>
                                 <CustomSelect
@@ -188,7 +188,6 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 />
                             </div>
 
-                            {/* ESCOLA - SÓ APARECE SE FOR DIRETOR */}
                             {mostrarSelectEscola && (
                                 <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4 animate-in fade-in-0">
                                     <label className={labelClass}><Building2 className="w-4 h-4" />Escola *</label>
@@ -205,7 +204,6 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 </div>
                             )}
 
-                            {/* SENHA COM EYE */}
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Lock className="w-4 h-4" />Senha {isEdit? '' : '*'}</label>
                                 <div className="relative sm:col-span-3">
@@ -231,7 +229,6 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 <input type="tel" value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="+244 9xx xxx" />
                             </div>
 
-                            {/* TOGGLE DE ATIVO SOMENTE NO EDIT */}
                             {isEdit && (
                                 <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                     <label className={labelClass}>Status</label>
@@ -247,20 +244,17 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                     </button>
                                 </div>
                             )}
-
                         </div>
-
                     </div>
 
-                    {/* FOOTER FIXO */}
-                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                    {/* FOOTER FIXO - AGORA APARECE */}
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl">
+                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
+                            Cancelar
+                        </button>
                         <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
                             {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                            {saving? "Salvando..." : isEdit? "Salvar" : "Salvar"}
-                        </button>
-
-                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1">
-                            Cancelar
+                            {saving? "Salvando..." : isEdit? "Salvar" : "Cadastrar"}
                         </button>
                     </div>
                 </form>

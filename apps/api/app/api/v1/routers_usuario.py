@@ -51,7 +51,11 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
         NivelAcesso.PROFESSOR: "suporte",
         NivelAcesso.SUBDIRETOR_PEDAGOGICO: "admin",
         NivelAcesso.SUBDIRETOR_ADMINISTRATIVO: "admin",
-        NivelAcesso.FUNCIONARIO: "suporte"
+        NivelAcesso.FUNCIONARIO: "suporte",
+        NivelAcesso.COORDENADOR_CURSO: "admin",
+        NivelAcesso.COORDENADOR_CLASSE: "admin",
+        NivelAcesso.ALUNO: "aluno",
+        NivelAcesso.ENCARREGADO: "encarregado",
     }
 
     return {
@@ -61,7 +65,7 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
         "telefone": usuario.telefone,
         "ativo": usuario.ativo,
         "criado_em": usuario.criado_em,
-        "nivel": vinculo.nivel.value, # 👈 DIRETO
+        "nivel": vinculo.nivel.value,
         "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None,
         "perfil": mapa_perfil.get(vinculo.nivel, "suporte"),
         "departamento": escola.nome if escola else "Ministério",
@@ -100,9 +104,9 @@ async def listar_usuarios(
     if perfil:
         mapa_perfil = {
             "super_admin": [NivelAcesso.MINISTERIO],
-            "admin": [NivelAcesso.SECRETARIO, NivelAcesso.SUBDIRETOR_PEDAGOGICO, NivelAcesso.SUBDIRETOR_ADMINISTRATIVO],
+            "admin": [NivelAcesso.SECRETARIO, NivelAcesso.SUBDIRETOR_PEDAGOGICO, NivelAcesso.SUBDIRETOR_ADMINISTRATIVO, NivelAcesso.COORDENADOR_CURSO, NivelAcesso.COORDENADOR_CLASSE],
             "suporte": [NivelAcesso.PROFESSOR, NivelAcesso.FUNCIONARIO],
-            "diretor": [NivelAcesso.DIRETOR] # 👈 SÓ DIRETOR
+            "diretor": [NivelAcesso.DIRETOR]
         }
         if perfil in mapa_perfil:
             filtros.append(UsuarioEscola.nivel.in_(mapa_perfil[perfil]))
@@ -132,6 +136,8 @@ async def criar_usuario(
         check_permissao_criar_usuario(current_user, dados.escola_id)
         if not dados.escola_id:
             raise HTTPException(status_code=400, detail="escola_id é obrigatório para DIRETOR")
+
+        # 👇 VALIDA ESCOLA ANTES
         result = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
         escola = result.scalar_one_or_none()
         if not escola:
@@ -156,7 +162,7 @@ async def criar_usuario(
         id=uuid.uuid4(),
         usuario_id=novo_usuario.id,
         escola_id=dados.escola_id,
-        nivel=dados.nivel # 👈 DIRETO
+        nivel=dados.nivel
     )
     db.add(novo_vinculo)
     await db.commit()
@@ -201,14 +207,25 @@ async def atualizar_usuario(
     if dados.ativo is not None:
         usuario.ativo = dados.ativo
 
-    if dados.nivel is not None:
-        vinculo.nivel = dados.nivel # 👈 DIRETO
-        if dados.nivel == NivelAcesso.MINISTERIO:
-            vinculo.escola_id = None
-    if dados.escola_id is not None and dados.nivel!= NivelAcesso.MINISTERIO:
-        vinculo.escola_id = dados.escola_id
-        result_escola = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
-        escola = result_escola.scalar_one_or_none()
+    # 👇 ORDEM IMPORTANTE: valida escola antes de setar pra não quebrar o CHECK
+    novo_nivel = dados.nivel if dados.nivel is not None else vinculo.nivel
+
+    if novo_nivel == NivelAcesso.MINISTERIO:
+        vinculo.nivel = novo_nivel
+        vinculo.escola_id = None
+        escola = None
+    else:
+        if dados.escola_id is not None:
+            result_escola = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
+            escola = result_escola.scalar_one_or_none()
+            if not escola:
+                raise HTTPException(status_code=404, detail="Escola não encontrada")
+            vinculo.escola_id = dados.escola_id
+        elif vinculo.escola_id is None:
+            raise HTTPException(status_code=400, detail="escola_id é obrigatório para este nível")
+
+        if dados.nivel is not None:
+            vinculo.nivel = dados.nivel
 
     await db.commit()
     await db.refresh(usuario)
