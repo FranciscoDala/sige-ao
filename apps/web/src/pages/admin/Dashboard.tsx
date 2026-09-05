@@ -8,26 +8,26 @@ import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// 👇 FUNÇÃO PRA PEGAR COOKIE IGUAL STOCKBOT
-const getCookie = (name: string): string | undefined => {
-    return document.cookie.split('; ').reduce((r, v) => {
-        const parts = v.split('=');
-        return parts[0] === name? decodeURIComponent(parts[1]) : r;
-    }, '');
+// MUDA AQUI: pega do localStorage igual o authService faz
+const getToken = (): string | null => {
+    return localStorage.getItem('access_token') // nome que vem do backend
 };
 
-// 👇 AXIOS COM INTERCEPTOR - JÁ MANDA TOKEN EM TUDO
+// AXIOS COM INTERCEPTOR - JÁ MANDA TOKEN EM TUDO
 const api = axios.create({
     baseURL: API_URL
 })
 
 api.interceptors.request.use((config) => {
-    const token = getCookie('token')
+    const token = getToken() // trocou
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }
     return config
 })
+
+
+
 
 interface Escola {
     id: string
