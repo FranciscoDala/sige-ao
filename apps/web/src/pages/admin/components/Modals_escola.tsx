@@ -62,7 +62,7 @@ function EscolaModal({ open, onClose, onSave, escola, saving }: { open: boolean,
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
             <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3"><div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div><div><h2 className="text-xl font-bold text-white">{escola? "Editar Escola" : "Cadastrar Nova Escola"}</h2></div></div>
+                    <div className="flex items-center gap-3"><div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div><div><h2 className="text-xl font-bold text-white">{escola? "Editar Escola" : "Cadastrar Escola"}</h2></div></div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
