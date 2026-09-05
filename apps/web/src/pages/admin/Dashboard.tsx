@@ -284,7 +284,7 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div><h2 className="text-3xl font-bold text-white">Painel do Super Admin</h2><p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p></div>
+            <div><h2 className="text-3xl font-bold text-white">Painel Adminstrativo</h2><p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p></div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard title="Total de Escolas" value={escolas.length} icon={Building2} color="bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" />
