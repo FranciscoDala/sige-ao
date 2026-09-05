@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School, AlertTriangle, X
+    ChevronDown, Loader2, School
 } from 'lucide-react'
 import { toast } from 'sonner'
 import EscolaModal, { Escola } from './components/modal_escola'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
+import ConfirmDeleteModal from './components/modal_confirmDelete'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -26,8 +27,8 @@ export default function Dashboard() {
     const [escolas, setEscolas] = useState<Escola[]>([])
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
-    const [confirmOpen, setConfirmOpen] = useState(false) // 👈 NOVO
-    const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null) // 👈 NOVO
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -76,21 +77,19 @@ export default function Dashboard() {
     const handleOpenCreate = () => { setEscolaEditando(null); setModalOpen(true) }
     const handleOpenEdit = (escola: Escola) => { setEscolaEditando(escola); setModalOpen(true) }
 
-    // Abre o modal de confirmação
     const handleDeleteClick = (id: string) => {
         setEscolaParaDeletar(id)
         setConfirmOpen(true)
     }
 
-    // Confirma e executa a desativação
     const handleConfirmDelete = async () => {
         if (!escolaParaDeletar) return
         try {
             await api.delete(`/escolas/${escolaParaDeletar}`)
-            toast.success("Escola desativada com sucesso")
+            toast.success("Escola apagada com sucesso") // 👈 TEXTO MUDOU
             fetchEscolas()
         } catch {
-            toast.error("Erro ao desativar escola")
+            toast.error("Erro ao apagar escola") // 👈 TEXTO MUDOU
         } finally {
             setConfirmOpen(false)
             setEscolaParaDeletar(null)
@@ -116,7 +115,7 @@ export default function Dashboard() {
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
@@ -139,11 +138,7 @@ export default function Dashboard() {
             </div>
 
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {stats.map((stat, i) => (
-                    <div key={i} className="w-full flex-shrink-0">
-                        <StatCard {...stat} />
-                    </div>
-                ))}
+                {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
             </div>
 
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,13 +152,13 @@ export default function Dashboard() {
                             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
                                     <div key={escola.id} className="w-full flex-shrink-0">
-                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} /> {/* 👈 CHAMA O NOVO */}
+                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />
                                     </div>
                                 ))}
                             </div>
 
                             <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)} {/* 👈 CHAMA O NOVO */}
+                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)}
                             </div>
                         </>
                 }
@@ -171,37 +166,12 @@ export default function Dashboard() {
 
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
 
-            {/* MODAL DE CONFIRMAÇÃO PROFISSIONAL */}
-            {confirmOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[60] p-4">
-                    <div className="w-full max-w-md bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-400" />
-                                </div>
-                                <h2 className="text-lg font-bold text-white">Confirmar Ação</h2>
-                            </div>
-                            <button onClick={() => setConfirmOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-gray-300 leading-relaxed">
-                                Tem certeza que deseja <span className="font-bold text-red-400">desativar</span> esta escola?
-                                <br />
-                                <span className="text-sm text-gray-400">Você poderá reativá-la depois nas configurações.</span>
-                            </p>
-                        </div>
-                        <div className="p-6 border-t border-white/10 flex gap-3 bg-[#0F172A]/50">
-                            <button onClick={() => setConfirmOpen(false)} className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition">
-                                Cancelar
-                            </button>
-                            <button onClick={handleConfirmDelete} className="w-full h-11 font-bold rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 transition">
-                                <Trash2 className="w-4 h-4" /> Desativar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* MODAL SEPARADA */}
+            <ConfirmDeleteModal
+                open={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     )
 }
