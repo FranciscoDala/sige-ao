@@ -10,7 +10,7 @@ export default function ConfirmDeleteModal({ open, onClose, onConfirm }: Confirm
     if (!open) return null
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 👈 AQUI */}
             <div className="w-full max-w-md bg-[#0F172A]/90 backdrop-blur-2xl border-2 border-[#3B82F6]/40 rounded-2xl shadow-2xl shadow-[#3B82F6]/10 overflow-hidden">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">

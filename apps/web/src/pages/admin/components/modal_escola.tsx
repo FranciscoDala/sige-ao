@@ -125,7 +125,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     const labelClass = "text-sm font-semibold text-gray-300 flex items-center gap-2 mb-2"
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <style>{`
              .scroll-hidden::-webkit-scrollbar { display: none; }
              .scroll-hidden { -ms-overflow-style: none; scrollbar-width: none; }
