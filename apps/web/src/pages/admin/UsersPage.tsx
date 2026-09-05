@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
-    Users, UserCheck, UserX, ShieldCheck, Trash2, Plus,
+    Users, UserCheck, UserX, ShieldCheck, Plus,
     ChevronDown, Loader2, Building
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -23,13 +23,6 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// 👈 MAPEADOR: Converte nivel do back pra perfil do front
-const mapNivelToPerfil = (nivel: string): 'super_admin' | 'admin' | 'suporte' => {
-    if (nivel === 'MINISTERIO') return 'super_admin'
-    if (nivel === 'DIRECAO') return 'admin'
-    return 'suporte'
-}
-
 export default function UsersPage() {
     const [filtroStatus, setFiltroStatus] = useState('todos')
     const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -37,6 +30,7 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true)
     const [modalOpen, setModalOpen] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [usuarioEditando, setUsuarioEditando] = useState<UsuarioMinisterio | null>(null) // 👈 NOVO
 
     const [viewModalOpen, setViewModalOpen] = useState(false)
     const [usuarioVisualizando, setUsuarioVisualizando] = useState<UsuarioMinisterio | null>(null)
@@ -60,20 +54,18 @@ export default function UsersPage() {
             const params: any = { tipo: 'ministerio' }
             if (filtroStatus === 'ativo') params.ativo = true
             if (filtroStatus === 'inativo') params.ativo = false
-            if (filtroStatus === 'admin') params.perfil = 'admin'
-            if (filtroStatus === 'super_admin') params.perfil = 'super_admin'
 
-            const res = await api.get<any[]>(`/usuarios`, { params }) // 👈 back retorna array cru
+            const res = await api.get<any[]>(`/usuarios`, { params })
 
-            // 👈 CONVERTE a resposta do back pro formato do front
             const usuariosMapeados: UsuarioMinisterio[] = res.data.map(u => ({
                 id: u.id,
                 nome: u.nome,
                 email: u.email,
-                perfil: mapNivelToPerfil(u.nivel), // 👈 Converte MINISTERIO -> super_admin
-                ativo: true, // 👈 Back não retorna ativo ainda. Se retornar, usa u.ativo
-                departamento: u.escola?.nome || 'Ministério',
-                created_at: new Date().toISOString()
+                telefone: u.telefone || '',
+                perfil: 'super_admin',
+                ativo: u.ativo?? true,
+                departamento: 'Ministério',
+                created_at: u.criado_em || new Date().toISOString()
             }))
             setUsuarios(usuariosMapeados)
         } catch (err: any) {
@@ -85,27 +77,29 @@ export default function UsersPage() {
 
     useEffect(() => { fetchUsuarios() }, [filtroStatus])
 
-    const handleSaveUsuario = async (data: { nome: string, email: string, senha: string, perfil: 'super_admin' | 'admin' | 'suporte' }) => {
+    const handleSaveUsuario = async (data: { nome: string, email: string, senha?: string, telefone?: string }) => {
         setSaving(true)
         try {
-            // 👈 MAPEADOR REVERSO: Converte perfil do front pra nivel do back
-            const nivelMap = {
-                super_admin: 'MINISTERIO',
-                admin: 'DIRECAO',
-                suporte: 'SECRETARIO'
-            }
-
-            const payload = {
+            const payload: any = {
                 nome: data.nome,
                 email: data.email,
-                senha: data.senha,
-                nivel: nivelMap[data.perfil],
-                escola_id: null // 👈 Usuario do ministerio não tem escola
+                telefone: data.telefone,
+                nivel: 'MINISTERIO',
+                escola_id: null
+            }
+            if (data.senha) payload.senha = data.senha // 👈 só envia senha se preencher
+
+            if (usuarioEditando) {
+                await api.put(`/usuarios/${usuarioEditando.id}`, payload) // 👈 UPDATE
+                toast.success("Usuário atualizado!")
+            } else {
+                payload.senha = data.senha // 👈 senha obrigatória no create
+                await api.post(`/usuarios`, payload) // 👈 CREATE
+                toast.success("Super Admin do Ministério criado!")
             }
 
-            await api.post(`/usuarios`, payload) // 👈 Envia JSON, não FormData
-            toast.success("Usuário do Ministério criado!")
             setModalOpen(false)
+            setUsuarioEditando(null)
             fetchUsuarios()
         } catch (err: any) {
             toast.error(err.response?.data?.detail || "Erro ao salvar usuário")
@@ -114,8 +108,14 @@ export default function UsersPage() {
         }
     }
 
-    const handleOpenCreate = () => { setModalOpen(true) }
-    const handleOpenEdit = () => { toast.info("Edição desativada para usuários do Ministério") }
+    const handleOpenCreate = () => {
+        setUsuarioEditando(null)
+        setModalOpen(true)
+    }
+    const handleOpenEdit = (usuario: UsuarioMinisterio) => {
+        setUsuarioEditando(usuario)
+        setModalOpen(true)
+    }
     const handleOpenView = (usuario: UsuarioMinisterio) => { setUsuarioVisualizando(usuario); setViewModalOpen(true) }
     const handleDeleteClick = (id: string) => { setUsuarioParaDeletar(id); setConfirmOpen(true) }
 
@@ -137,32 +137,30 @@ export default function UsersPage() {
         { value: 'todos', label: 'Todos do Ministério', icon: Users },
         { value: 'ativo', label: 'Apenas Ativos', icon: UserCheck },
         { value: 'inativo', label: 'Apenas Inativos', icon: UserX },
-        { value: 'admin', label: 'Apenas Admins', icon: ShieldCheck },
-        { value: 'super_admin', label: 'Apenas Super Admins', icon: ShieldCheck },
     ]
     const opcaoSelecionada = opcoesFiltro.find(o => o.value === filtroStatus)
 
     const stats = [
         { title: "Total Ministério", value: usuarios.length, icon: Users, color: "bg-gradient-to-br from-[#3B82F6] to-[#2563EB]" },
         { title: "Usuários Ativos", value: usuarios.filter(u => u.ativo).length, icon: UserCheck, color: "bg-gradient-to-br from-[#10B981] to-[#059669]" },
-        { title: "Super Admins", value: usuarios.filter(u => u.perfil === 'super_admin').length, icon: ShieldCheck, color: "bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" },
+        { title: "Super Admins", value: usuarios.length, icon: ShieldCheck, color: "bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" },
     ]
 
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-3xl font-bold text-white">Usuários Ministério</h2>
-                <p className="text-gray-400">Gerencie quem pode acessar o painel administrativo</p>
+                <h2 className="text-3xl font-bold text-white">Usuários</h2>
+                <p className="text-gray-400">Gerencie quem pode acessar o painel</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
                             <div className="max-h-60 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{opcoesFiltro.map(op => (
                                 <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
@@ -197,7 +195,7 @@ export default function UsersPage() {
                                         <UsuarioCard
                                             usuario={usuario}
                                             onView={() => handleOpenView(usuario)}
-                                            onEdit={handleOpenEdit}
+                                            onEdit={() => handleOpenEdit(usuario)} // 👈 AGORA PASSA USUARIO
                                             onDelete={() => handleDeleteClick(usuario.id)}
                                         />
                                     </div>
@@ -209,7 +207,7 @@ export default function UsersPage() {
                                         key={usuario.id}
                                         usuario={usuario}
                                         onView={() => handleOpenView(usuario)}
-                                        onEdit={handleOpenEdit}
+                                        onEdit={() => handleOpenEdit(usuario)} // 👈 AGORA PASSA USUARIO
                                         onDelete={() => handleDeleteClick(usuario.id)}
                                     />
                                 )}
@@ -218,8 +216,13 @@ export default function UsersPage() {
                 }
             </div>
 
-            <UsuarioModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveUsuario} saving={saving} />
-                
+            <UsuarioModal
+                open={modalOpen}
+                onClose={() => { setModalOpen(false); setUsuarioEditando(null) }}
+                onSave={handleSaveUsuario}
+                saving={saving}
+                usuario={usuarioEditando} // 👈 NOVO
+            />
             <UsuarioViewModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} usuario={usuarioVisualizando} />
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
         </div>
