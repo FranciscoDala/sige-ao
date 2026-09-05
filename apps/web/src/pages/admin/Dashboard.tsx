@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School
+    ChevronDown, Loader2, School, LogOut // 👈 importei o LogOut
 } from 'lucide-react'
 import { toast } from 'sonner'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
 import EscolaModal, { Escola } from './components/modal_escola'
 import ConfirmDeleteModal from './components/modal_confirmDelete'
+import ConfirmLogoutModal from './components/modal_confirmLogout' // 👈 importei a modal
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -30,9 +31,10 @@ export default function Dashboard() {
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
 
-    // 👇 ESTADOS NOVOS PRA MODAL DE DELETE
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
+
+    const [logoutOpen, setLogoutOpen] = useState(false) // 👈 ESTADO DA MODAL LOGOUT
 
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -79,12 +81,7 @@ export default function Dashboard() {
 
     const handleOpenCreate = () => { setEscolaEditando(null); setModalOpen(true) }
     const handleOpenEdit = (escola: Escola) => { setEscolaEditando(escola); setModalOpen(true) }
-
-    // 👇 TROQUEI O CONFIRM() POR ISSO
-    const handleDeleteClick = (id: string) => {
-        setEscolaParaDeletar(id)
-        setConfirmOpen(true)
-    }
+    const handleDeleteClick = (id: string) => { setEscolaParaDeletar(id); setConfirmOpen(true) }
 
     const handleConfirmDelete = async () => {
         if (!escolaParaDeletar) return
@@ -98,6 +95,12 @@ export default function Dashboard() {
             setConfirmOpen(false)
             setEscolaParaDeletar(null)
         }
+    }
+
+    const handleConfirmLogout = () => { // 👈 FUNÇÃO LOGOUT
+        localStorage.removeItem('access_token')
+        toast.success("Sessão terminada")
+        window.location.href = '/login'
     }
 
     const opcoesFiltro = [
@@ -115,8 +118,19 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6 mt-2">
-            <div><h2 className="text-3xl font-bold text-white">Painel</h2>
-            <p className="text-gray-400">Gerencie todas as escolas cadastradas</p></div>
+            {/* 👇 HEADER COM BTN SAIR */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold text-white">Painel</h2>
+                    <p className="text-gray-400">Gerencie todas as escolas cadastradas</p>
+                </div>
+                <button
+                    onClick={() => setLogoutOpen(true)} // 👈 CHAMA A MODAL AQUI
+                    className="p-2 rounded-lg bg-red-500/15 hover:bg-red-500/30 transition"
+                >
+                    <LogOut className="w-5 h-5 text-red-400" />
+                </button>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
@@ -157,24 +171,25 @@ export default function Dashboard() {
                             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
                                     <div key={escola.id} className="w-full flex-shrink-0">
-                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} /> {/* 👈 MUDEI AQUI */}
+                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />
                                     </div>
                                 ))}
                             </div>
                             <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)} {/* 👈 E AQUI */}
+                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)}
                             </div>
                         </>
                 }
             </div>
 
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
+            <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
 
-            {/* 👇 RENDERIZA A MODAL DE CONFIRMAÇÃO AQUI */}
-            <ConfirmDeleteModal
-                open={confirmOpen}
-                onClose={() => setConfirmOpen(false)}
-                onConfirm={handleConfirmDelete}
+            {/* 👇 MODAL DE LOGOUT */}
+            <ConfirmLogoutModal
+                open={logoutOpen}
+                onClose={() => setLogoutOpen(false)}
+                onConfirm={handleConfirmLogout}
             />
         </div>
     )
