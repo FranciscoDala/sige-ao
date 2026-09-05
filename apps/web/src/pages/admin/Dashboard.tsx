@@ -100,17 +100,6 @@ export default function Dashboard() {
         <div className="space-y-6">
             <div><h2 className="text-3xl font-bold text-white">Painel Administrativo</h2><p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p></div>
 
-            {/* STATS: CARROSSEL NO MOBILE */}
-            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {stats.map((stat, i) => (
-                    <div key={i} className="w-full flex-shrink-0">
-                        <StatCard {...stat} />
-                    </div>
-                ))}
-            </div>
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
-            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
@@ -136,6 +125,22 @@ export default function Dashboard() {
                     </button>
                 </div>
             </div>
+
+
+
+            {/* STATS: CARROSSEL NO MOBILE */}
+            <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {stats.map((stat, i) => (
+                    <div key={i} className="w-full flex-shrink-0">
+                        <StatCard {...stat} />
+                    </div>
+                ))}
+            </div>
+            
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
+            </div>
+
 
             <div>
                 <p className="font-bold text-white text-lg mb-4">Escolas Cadastradas <span className="text-sm font-normal text-gray-400 ml-2">({escolas.length} encontradas)</span></p>
