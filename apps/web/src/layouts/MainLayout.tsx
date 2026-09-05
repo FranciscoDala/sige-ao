@@ -1,89 +1,99 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
-    LayoutDashboard, Building2, Settings, LogOut, Search, Bell, ShieldCheck, Menu, X, User
+    LayoutDashboard, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, FileText
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
-import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout' // 1. IMPORT
+import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 
 const menuItems = [
-    { icon: LayoutDashboard, label: 'Visão Geral', path: '/dashboard' },
-    { icon: Building2, label: 'Gerenciar Escolas', path: '/dashboard/schools' },
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings' },
+    { icon: LayoutDashboard, label: 'Visão Geral', path: '/dashboard', type: 'Definição' },
+    { icon: Building2, label: 'Gerenciar Escolas', path: '/dashboard/schools', type: 'Escola' },
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' },
+]
+
+// MOCK - depois trocas pelo fetch da API
+const mockEscolas = [
+    { id: '1', nome: 'Escola 1234', path: '/dashboard/schools/1' },
+    { id: '2', nome: 'Escola Mutamba', path: '/dashboard/schools/2' },
+]
+const mockUsers = [
+    { id: '1', nome: 'João Silva', email: 'joao@sige.ao', path: '/dashboard/users/1' },
 ]
 
 export default function MainLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
-    const [logoutOpen, setLogoutOpen] = useState(false) // 2. ESTADO
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false) // 1. NOVA MODAL
+    const [logoutOpen, setLogoutOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('') // 2. ESTADO PESQUISA
     const searchInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
     const location = useLocation()
     const user = authService.getUser() || { nome: 'Super Admin', email: 'admin@sige.ao' }
 
     useEffect(() => {
-        if (isSearchOpen) {
-            searchInputRef.current?.focus()
-        }
-    }, [isSearchOpen])
+        if (isSearchOpen) searchInputRef.current?.focus()
+        if (isSearchModalOpen) setTimeout(() => searchInputRef.current?.focus(), 100)
+    }, [isSearchOpen, isSearchModalOpen])
 
     const handleNavigate = (path: string) => {
         navigate(path)
         setIsMobileMenuOpen(false)
+        setIsSearchModalOpen(false)
     }
 
-    const handleConfirmLogout = () => { // 3. FUNÇÃO
+    const handleConfirmLogout = () => {
         authService.logout()
         toast.success("Sessão terminada")
         navigate('/login')
     }
 
+    // 3. LÓGICA DE PESQUISA EM TEMPO REAL
+    const searchResults = useMemo(() => {
+        if (!searchQuery.trim()) return []
+        const q = searchQuery.toLowerCase()
+
+        const escolas = mockEscolas.filter(e => e.nome.toLowerCase().includes(q)).map(e => ({...e, type: 'Escola', Icon: Building2}))
+        const users = mockUsers.filter(u => u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)).map(u => ({...u, type: 'Usuário', Icon: User}))
+        const defs = menuItems.filter(m => m.label.toLowerCase().includes(q)).map(m => ({id: m.path, nome: m.label, path: m.path, type: m.type, Icon: m.icon}))
+
+        return [...escolas,...users,...defs]
+    }, [searchQuery])
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] relative">
-            {/* BACKGROUND GLOW */}
             <div className="fixed top-0 left-1/4 w-96 h-96 bg-[#3B82F6]/20 rounded-full blur-[120px] -z-10"></div>
             <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-[#8B5CF6]/20 rounded-full blur-[120px] -z-10"></div>
 
-            {/* MOBILE MENU OVERLAY */}
-            {isMobileMenuOpen && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
-            )}
+            {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            {/* SIDEBAR FIXO - 80% no mobile, 260px no desktop */}
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[300px] lg:w-[260px] p-4 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
                     <div className="flex items-center justify-between mb-8 px-2">
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-8 h-8 text-[#3B82F6]" />
-                            <h1 className="text-xl font-bold text-white">SIGE</h1>
-                            <span className="text-xs bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md">Admin</span>
+                        <div className="flex items-center gap-3">
+                            <ShieldCheck className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
+                            <h1 className="text-xl font-bold text-white whitespace-nowrap">SIGE</h1>
+                            <span className="text-xs bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">Admin</span>
                         </div>
-                        <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}>
-                            <X className="w-5 h-5 text-gray-400" />
-                        </button>
+                        <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
-
                     <nav className="space-y-1 flex-1">
                         {menuItems.map(item => {
                             const isActive = location.pathname === item.path
                             return (
                                 <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border border-[#3B82F6]/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-                                    <item.icon className="w-5 h-5" />
-                                    {item.label}
+                                    <item.icon className="w-5 h-5" />{item.label}
                                 </button>
                             )
                         })}
                     </nav>
-
-                    {/* User info no final do sidebar */}
                     <div className="border-t border-white/10 pt-4 mt-4">
                         <div className="flex items-center gap-3 px-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center">
-                                <User className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-white truncate whitespace-nowrap">{user.nome}</p>
                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                             </div>
                         </div>
@@ -91,64 +101,75 @@ export default function MainLayout() {
                 </div>
             </aside>
 
-            {/* CONTEUDO COM MARGIN DO SIDEBAR */}
             <div className="lg:ml-[260px]">
-                {/* HEADER FIXO */}
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-4 lg:p-8">
-                    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3 shadow-lg shadow-black/10">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between gap-3 shadow-lg shadow-black/10">
+                        <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-white" /></button>
 
-                        <button className="lg:hidden p-2" onClick={() => setIsMobileMenuOpen(true)}>
-                            <Menu className="w-6 h-6 text-white" />
-                        </button>
-
-                        {/* BARRA DE BUSCA - APARECE E SOME */}
+                        {/* BARRA DE BUSCA DESKTOP */}
                         <div className={`flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
                             <div className="relative">
                                 <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
-                                <input
-                                    ref={searchInputRef}
-                                    placeholder="Buscar escola..."
-                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
-                                    onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
-                                />
+                                <input ref={searchInputRef} placeholder="Buscar escola, usuário..." className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400" onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)} />
                             </div>
                         </div>
 
-                        {/* AÇÕES DIREITA */}
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2.5 lg:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+                            {/* 4. BOTAO PESQUISAR: DESKTOP ABRE BARRA, MOBILE ABRE MODAL */}
+                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 lg:p-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition">
                                 <Search className="w-5 h-5 text-white" />
                             </button>
 
-                            <button className="p-2.5 lg:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
-                                <Bell className="w-5 h-5 text-white" />
+                            <button className="p-2.5 lg:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition"><Bell className="w-5 h-5 text-white" /></button>
+                            <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+                                <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
-
-                            <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition">
-                                <User className="w-5 h-5 text-white" />
-                                <span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
-                            </button>
-
-                            {/* 4. BOTAO LOGOUT AGORA ABRE A MODAL */}
-                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 lg:p-3 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition">
-                                <LogOut className="w-5 h-5 text-red-400" />
+                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 lg:p-3 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group" title="Sair">
+                                <Power className="w-5 h-5 text-red-400 group-hover:text-red-300 transition" />
                             </button>
                         </div>
                     </div>
                 </header>
 
-                {/* CONTEUDO */}
-                <main className="pt-[88px] lg:pt-[112px] p-4 lg:p-8 min-h-screen">
-                    <Outlet />
-                </main>
+                <main className="pt-[88px] lg:pt-[112px] p-4 lg:p-8 min-h-screen"><Outlet /></main>
             </div>
 
-            {/* 5. RENDER DA MODAL */}
-            <ConfirmLogoutModal
-                open={logoutOpen}
-                onClose={() => setLogoutOpen(false)}
-                onConfirm={handleConfirmLogout}
-            />
+            {/* 5. MODAL DE PESQUISA MOBILE */}
+            {isSearchModalOpen && (
+                <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex-col p-4 md:hidden animate-in fade-in">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                            <input
+                                ref={searchInputRef}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Pesquisar escolas, usuários..."
+                                className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400"
+                            />
+                        </div>
+                        <button onClick={() => {setIsSearchModalOpen(false); setSearchQuery('')}} className="p-2.5"><X className="w-6 h-6 text-white" /></button>
+                    </div>
+
+                    {/* RESULTADOS */}
+                    <div className="flex-1 overflow-y-auto bg-white/5 rounded-2xl border border-white/10 p-2">
+                        {searchQuery.length === 0 && <p className="text-center text-gray-400 pt-10">Digite para pesquisar...</p>}
+                        {searchQuery.length > 0 && searchResults.length === 0 && <p className="text-center text-gray-400 pt-10">Nenhum resultado encontrado</p>}
+
+                        {searchResults.map(item => (
+                            <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
+                                <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <p className="text-white font-medium truncate">{item.nome}</p>
+                                    <p className="text-xs text-gray-400">{item.type}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} />
         </div>
     )
 }
