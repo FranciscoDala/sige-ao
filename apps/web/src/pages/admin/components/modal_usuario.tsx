@@ -125,7 +125,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                             Cancelar
                         </button>
                         <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition">
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : isEdit? "Salvar Alterações" : "Cadastrar Usuário"}
+                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : isEdit? "Salvar" : "Salvar"}
                         </button>
                     </div>
                 </form>

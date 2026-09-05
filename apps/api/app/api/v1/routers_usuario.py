@@ -205,7 +205,7 @@ async def atualizar_usuario(
         "escola": escola
     }
 
-@router.delete("/{usuario_id}", status_code=204) # 👈 HARD DELETE AGORA
+@router.delete("/{usuario_id}", status_code=204) # 👈 HARD DELETE
 async def deletar_usuario(
     usuario_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -223,8 +223,11 @@ async def deletar_usuario(
     usuario, vinculo = row
     check_permissao_editar(current_user, vinculo)
 
+    # 👈 CORRIGIDO: pegar o id do token. Pode ser 'id', 'user_id' ou 'sub'
+    current_user_id = current_user.get("id") or current_user.get("user_id") or current_user.get("sub")
+    
     # Impedir auto-exclusão
-    if str(usuario.id) == current_user["id"]:
+    if str(usuario.id) == str(current_user_id):
         raise HTTPException(status_code=400, detail="Você não pode apagar a si mesmo")
 
     # Apaga vinculo primeiro por causa da FK
@@ -232,6 +235,8 @@ async def deletar_usuario(
     await db.delete(usuario)
     await db.commit()
     return
+
+
 
 @router.get("/minha-escola", response_model=List[UsuarioVinculoResponse])
 async def listar_usuarios_da_minha_escola(
