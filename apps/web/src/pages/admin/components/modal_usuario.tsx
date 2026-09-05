@@ -49,7 +49,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
 
     useEffect(() => {
         if (!open) return
-        document.body.style.overflow = 'hidden'
+        document.body.style.overflow = 'hidden' // trava scroll da pagina
         return () => {
             document.body.style.overflow = 'unset'
         }
@@ -109,7 +109,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                 type="button"
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
                 <span className="truncate">
                     {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
@@ -118,8 +118,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1">
+                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
                             const optionValue = isObject? op.value : op
@@ -143,11 +143,13 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     )
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
-            {/* 👇 ADICIONEI 'flex' aqui e tirei overflow-hidden */}
+        <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden" // 1. overflow-hidden para cortar tudo
+            onClick={onClose} // clique fora fecha
+        >
             <div
-                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] shadow-2xl"
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} // 2. trava: impede fechar ao clicar dentro da modal
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 3. overflow-hidden na div principal
             >
                 {/* HEADER */}
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
@@ -161,8 +163,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                    {/* BODY COM SCROLL */}
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0">
+                    {/* BODY COM SCROLL INVISIVEL */}
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 scrollbar-hide"> {/* 4. scroll-y invisivel */}
 
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
@@ -247,8 +249,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                         </div>
                     </div>
 
-                    {/* FOOTER FIXO - AGORA APARECE */}
-                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl">
+                    {/* FOOTER FIXO */}
+                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl">
                         <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
                             Cancelar
                         </button>

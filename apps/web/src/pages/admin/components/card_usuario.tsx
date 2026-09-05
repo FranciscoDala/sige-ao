@@ -1,4 +1,4 @@
-import { Eye, Edit, Trash2, ShieldCheck, Mail, Phone, Building } from 'lucide-react' // 👈 ADD Building AQUI
+import { Eye, Edit, Trash2, ShieldCheck, Mail, Phone, Building, GraduationCap } from 'lucide-react'
 import { UsuarioMinisterio } from '../../types/usuario'
 
 interface UsuarioCardProps {
@@ -8,21 +8,39 @@ interface UsuarioCardProps {
     onDelete: () => void
 }
 
+const getNivelLabel = (nivel: string) => {
+    if (nivel === 'MINISTERIO') return 'Super Admin'
+    if (nivel === 'DIRETOR') return 'Diretor'
+    return 'Usuário'
+}
+
+const getNivelColor = (nivel: string) => {
+    if (nivel === 'MINISTERIO') return 'bg-red-500/20 text-red-400 border-red-500/30'
+    if (nivel === 'DIRETOR') return 'bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/30'
+    return 'bg-white/10 text-gray-300 border-white/20'
+}
+
 export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: UsuarioCardProps) {
+    const isDiretor = usuario.nivel === 'DIRETOR'
+
     return (
         <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
             <div className="flex items-start gap-4 mb-5">
-                <div className="w-16 h-16 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B82F6]/20 mt-1 overflow-hidden">
-                    <ShieldCheck className="w-8 h-8 text-white" />
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg mt-1 overflow-hidden ${
+                    isDiretor ? 'bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] shadow-[#8B5CF6]/20' : 'bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-[#3B82F6]/20'
+                }`}>
+                    {isDiretor ? <GraduationCap className="w-8 h-8 text-white" /> : <ShieldCheck className="w-8 h-8 text-white" />}
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="min-w-0">
                             <h3 className="font-bold text-white text-lg leading-tight break-words">{usuario.nome}</h3>
-                            <span className="text-xs px-3 py-1 rounded-full font-semibold bg-red-500/20 text-red-400 border-red-500/30">Super Admin</span>
+                            <span className={`text-xs px-3 py-1 rounded-full font-semibold border ${getNivelColor(usuario.nivel)}`}>
+                                {getNivelLabel(usuario.nivel)}
+                            </span>
                         </div>
-                        <div className={`w-3 h-3 rounded-full ${usuario.ativo? 'bg-green-400' : 'bg-gray-500'}`} />
+                        <div className={`w-3 h-3 rounded-full ${usuario.ativo ? 'bg-green-400' : 'bg-gray-500'}`} />
                     </div>
 
                     <div className="space-y-1.5 mt-2">
@@ -31,12 +49,12 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                             <span className="break-words">{usuario.email}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-300">
-                            <Building className="w-4 h-4 text-[#3B82F6] flex-shrink-0" /> {/* 👈 AGORA VAI FUNCIONAR */}
-                            <span>Ministério</span>
+                            <Building className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                            <span>{usuario.departamento || (isDiretor ? 'Escola' : 'Ministério')}</span> {/* 👈 AQUI PEGA O NOME CERTO */}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-300">
                             <ShieldCheck className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
-                            <span>{usuario.ativo? 'Ativo' : 'Inativo'}</span>
+                            <span>{usuario.ativo ? 'Ativo' : 'Inativo'}</span>
                         </div>
                         {usuario.telefone && (
                             <div className="flex items-center gap-2 text-sm text-gray-300">
