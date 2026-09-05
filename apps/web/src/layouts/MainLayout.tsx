@@ -12,8 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Building2, label: 'Gerenciar Escolas', path: '/dashboard/schools', type: 'Definição' },
-    { icon: Users, label: 'Gerenciar Usuários', path: '/dashboard/users', type: 'Definição' }, // 👈 ADD NOVO
+    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' }, // 👈 ADD NOVO
     { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' },
 ]
 
@@ -91,7 +90,7 @@ export default function MainLayout() {
                 ]
                 setSearchResults(results)
             } catch (err: any) {
-                if(err.response?.status !== 404) {
+                if (err.response?.status !== 404) {
                     toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
                 }
                 setSearchResults([])
@@ -119,9 +118,19 @@ export default function MainLayout() {
                     </div>
                     <nav className="space-y-1 flex-1">
                         {menuItems.map(item => {
-                            const isActive = location.pathname.startsWith(item.path) // 👈 startsWith pra pegar /users/:id
+                            const isActive = item.path === '/dashboard'
+                                ? location.pathname === '/dashboard' // 👈 Painel só ativo se for exato
+                                : location.pathname.startsWith(item.path) // 👈 Os outros usam startsWith pra pegar /users/:id
+
                             return (
-                                <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                                <button
+                                    key={item.path}
+                                    onClick={() => handleNavigate(item.path)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
+                                            ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                        }`}
+                                >
                                     <item.icon className="w-5 h-5 flex-shrink-0" />
                                     <span className="whitespace-nowrap">{item.label}</span>
                                 </button>
