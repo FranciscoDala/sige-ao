@@ -1,4 +1,4 @@
-import { AlertTriangle, X, LogOut } from 'lucide-react'
+import { AlertTriangle, X, Power } from 'lucide-react'
 
 interface ConfirmLogoutModalProps {
     open: boolean
@@ -33,7 +33,7 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }: Confirm
                         Cancelar
                     </button>
                     <button onClick={onConfirm} className="w-full h-11 font-bold rounded-xl bg-yellow-500 hover:bg-yellow-600 text-black flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 transition">
-                        <LogOut className="w-4 h-4" /> Sair
+                        <Power className="w-4 h-4" /> Sair
                     </button>
                 </div>
             </div>
