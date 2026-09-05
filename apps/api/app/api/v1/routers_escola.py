@@ -3,33 +3,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 import logging
-import os
 import uuid
 
 from app.db.database import get_db
 from app.models.models_escola import Escola
-from app.schemas.schemas_escola import EscolaCreate, EscolaUpdate, EscolaResponse
+from app.schemas.schemas_escola import EscolaResponse
 from app.core.security import get_current_user
+from app.cloudinaryUploads import upload_to_cloudinary # 👈 1. import correto e função correta
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
-UPLOAD_DIR = "static/logos"
 
 def check_ministerio(current_user: dict):
     if current_user["nivel"]!= "MINISTERIO":
         raise HTTPException(status_code=403, detail="Apenas MINISTERIO pode fazer isso")
-
-async def save_logo(file: Optional[UploadFile]) -> Optional[str]: # <- ACEITA NONE
-    if not file or not file.filename: # <- VERIFICA SE VEIO
-        return None
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    ext = file.filename.split(".")[-1]
-    filename = f"{uuid.uuid4()}.{ext}"
-    path = os.path.join(UPLOAD_DIR, filename)
-    with open(path, "wb") as f:
-        f.write(await file.read())
-    return f"/{UPLOAD_DIR}/{filename}" # <- retorna o caminho pra servir
 
 @router.get("", response_model=List[EscolaResponse])
 @router.get("/", response_model=List[EscolaResponse])
@@ -50,17 +38,27 @@ async def obter_escola(escola_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("", response_model=EscolaResponse, status_code=201)
 @router.post("/", response_model=EscolaResponse, status_code=201)
 async def criar_escola(
-    id: str = Form(...), nome: str = Form(...), sigla: Optional[str] = Form(None),
-    provincia: Optional[str] = Form(None), municipio: Optional[str] = Form(None),
-    cor_primaria: str = Form("#3B82F6"), cor_secundaria: str = Form("#8B5CF6"), tema: str = Form("escuro"),
-    logo: Optional[UploadFile] = File(None), # <- ACEITA UPLOAD
-    db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)
+    id: str = Form(...),
+    nome: str = Form(...),
+    sigla: Optional[str] = Form(None),
+    provincia: Optional[str] = Form(None),
+    municipio: Optional[str] = Form(None),
+    cor_primaria: str = Form("#3B82F6"),
+    cor_secundaria: str = Form("#8B5CF6"),
+    tema: str = Form("escuro"),
+    logo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == id))
     if result.scalar_one_or_none(): raise HTTPException(status_code=400, detail="Já existe uma escola com este código")
 
-    logo_url = await save_logo(logo)
+    logo_url = None
+    if logo:
+        upload_data = await upload_to_cloudinary(logo, folder="logos") # 👈 2. usa a função correta
+        logo_url = upload_data["optimized_url"]
+
     id_curto = f"ESC{str(uuid.uuid4().int)[:3]}"
 
     nova_escola = Escola(
@@ -75,11 +73,17 @@ async def criar_escola(
 
 @router.put("/{escola_id}", response_model=EscolaResponse)
 async def atualizar_escola(
-    escola_id: str, nome: str = Form(...), sigla: Optional[str] = Form(None),
-    provincia: Optional[str] = Form(None), municipio: Optional[str] = Form(None),
-    cor_primaria: str = Form(...), cor_secundaria: str = Form(...), tema: str = Form(...),
+    escola_id: str,
+    nome: str = Form(...),
+    sigla: Optional[str] = Form(None),
+    provincia: Optional[str] = Form(None),
+    municipio: Optional[str] = Form(None),
+    cor_primaria: str = Form(...),
+    cor_secundaria: str = Form(...),
+    tema: str = Form(...),
     logo: Optional[UploadFile] = File(None),
-    db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
@@ -87,7 +91,8 @@ async def atualizar_escola(
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
 
     if logo:
-        escola.logo_url = await save_logo(logo)
+        upload_data = await upload_to_cloudinary(logo, folder="logos") # 👈
+        escola.logo_url = upload_data["optimized_url"]
 
     escola.nome = nome
     escola.sigla = sigla
