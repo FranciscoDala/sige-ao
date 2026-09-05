@@ -301,6 +301,15 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
                     {/* FOOTER IGUAL AO USUARIOMODAL */}
                     <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1"
+                        >
+                            Cancelar
+                        </button>
+
                         <button
                             type="submit"
                             disabled={saving}
@@ -310,13 +319,6 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                             {saving? "Salvando..." : escola? "Salvar" : "Salvar"}
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1"
-                        >
-                            Cancelar
-                        </button>
                     </div>
                 </form>
             </div>
