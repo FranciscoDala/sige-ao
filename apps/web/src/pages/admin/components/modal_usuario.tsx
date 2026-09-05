@@ -1,19 +1,19 @@
 import { useState, useEffect, FormEvent } from 'react'
-import { X, Loader2, User, Mail, Lock, Phone } from 'lucide-react'
+import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight } from 'lucide-react' // 👈 ADD
 import { toast } from 'sonner'
 import { UsuarioMinisterio } from '../../types/usuario'
 
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string }) => Promise<void>
+    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean }) => Promise<void> // 👈 ADD ativo
     saving: boolean
-    usuario: UsuarioMinisterio | null // 👈 NOVO
+    usuario: UsuarioMinisterio | null
 }
 
 export default function UsuarioModal({ open, onClose, onSave, saving, usuario }: Props) {
     const [form, setForm] = useState({
-        nome: "", email: "", senha: "", telefone: ""
+        nome: "", email: "", senha: "", telefone: "", ativo: true // 👈 ADD
     })
 
     const isEdit =!!usuario
@@ -36,10 +36,11 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                     nome: usuario.nome,
                     email: usuario.email,
                     senha: "", // 👈 senha vazia no edit
-                    telefone: usuario.telefone || ""
+                    telefone: usuario.telefone || "",
+                    ativo: usuario.ativo // 👈 CARREGA STATUS
                 })
             } else {
-                setForm({ nome: "", email: "", senha: "", telefone: "" })
+                setForm({ nome: "", email: "", senha: "", telefone: "", ativo: true }) // 👈 default ativo
             }
         }
     }, [open, usuario, isEdit])
@@ -52,10 +53,12 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
         if (!form.email) { toast.error("O email é obrigatório"); return }
         if (!isEdit && (!form.senha || form.senha.length < 6)) { toast.error("A senha deve ter no mínimo 6 caracteres"); return }
 
-        onSave(form)
+        const payload: any = {...form }
+        if (isEdit &&!payload.senha) delete payload.senha // 👈 não envia senha vazia
+        onSave(payload)
     }
 
-    const handleChange = (field: string, value: string) => {
+    const handleChange = (field: string, value: string | boolean) => { // 👈 ACEITA BOOL
         setForm(prev => ({...prev, [field]: value }))
     }
 
@@ -95,6 +98,24 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                                 <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
                                 <input type="tel" value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="+244 9xx xxx" />
                             </div>
+
+                            {/* 👈 NOVO: TOGGLE DE ATIVO SOMENTE NO EDIT */}
+                            {isEdit && (
+                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                                    <label className={labelClass}>Status</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('ativo',!form.ativo)}
+                                        className={`sm:col-span-3 w-full h-11 px-4 rounded-xl flex items-center justify-between transition border ${form.ativo? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}
+                                    >
+                                        <span className={`font-semibold ${form.ativo? 'text-green-400' : 'text-red-400'}`}>
+                                            {form.ativo? 'Ativo' : 'Inativo'}
+                                        </span>
+                                        {form.ativo? <ToggleRight className="w-6 h-6 text-green-400" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
+                                    </button>
+                                </div>
+                            )}
+
                         </div>
 
                     </div>

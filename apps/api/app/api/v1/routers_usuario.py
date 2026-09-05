@@ -92,9 +92,9 @@ async def listar_usuarios(
             "id": usuario.id,
             "nome": usuario.nome,
             "email": usuario.email,
-            "telefone": usuario.telefone, # 👈 ADD
-            "ativo": usuario.ativo, # 👈 ADD
-            "criado_em": usuario.criado_em, # 👈 ADD
+            "telefone": usuario.telefone,
+            "ativo": usuario.ativo,
+            "criado_em": usuario.criado_em,
             "nivel": vinculo.nivel,
             "escola": escola
         })
@@ -146,14 +146,14 @@ async def criar_usuario(
         "id": novo_usuario.id,
         "nome": novo_usuario.nome,
         "email": novo_usuario.email,
-        "telefone": novo_usuario.telefone, # 👈 ADD
-        "ativo": novo_usuario.ativo, # 👈 ADD
-        "criado_em": novo_usuario.criado_em, # 👈 ADD
+        "telefone": novo_usuario.telefone,
+        "ativo": novo_usuario.ativo,
+        "criado_em": novo_usuario.criado_em,
         "nivel": novo_vinculo.nivel,
         "escola": escola
     }
 
-@router.put("/{usuario_id}", response_model=UsuarioVinculoResponse) # 👈 NOVO ENDPOINT
+@router.put("/{usuario_id}", response_model=UsuarioVinculoResponse)
 async def atualizar_usuario(
     usuario_id: uuid.UUID,
     dados: UsuarioUpdate,
@@ -179,7 +179,6 @@ async def atualizar_usuario(
     if dados.nome is not None:
         usuario.nome = dados.nome
     if dados.email is not None:
-        # Checar se email novo já existe
         if dados.email!= usuario.email:
             result_email = await db.execute(select(Usuario).where(Usuario.email == dados.email))
             if result_email.scalar_one_or_none():
@@ -189,6 +188,8 @@ async def atualizar_usuario(
         usuario.telefone = dados.telefone
     if dados.senha is not None and dados.senha!= "":
         usuario.senha = get_password_hash(dados.senha)
+    if dados.ativo is not None: # 👈 NOVO: PARA DESATIVAR PELO EDIT
+        usuario.ativo = dados.ativo
 
     await db.commit()
     await db.refresh(usuario)
@@ -204,8 +205,8 @@ async def atualizar_usuario(
         "escola": escola
     }
 
-@router.delete("/{usuario_id}", status_code=204) # 👈 Soft delete
-async def desativar_usuario(
+@router.delete("/{usuario_id}", status_code=204) # 👈 HARD DELETE AGORA
+async def deletar_usuario(
     usuario_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -222,7 +223,13 @@ async def desativar_usuario(
     usuario, vinculo = row
     check_permissao_editar(current_user, vinculo)
 
-    usuario.ativo = False
+    # Impedir auto-exclusão
+    if str(usuario.id) == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Você não pode apagar a si mesmo")
+
+    # Apaga vinculo primeiro por causa da FK
+    await db.delete(vinculo)
+    await db.delete(usuario)
     await db.commit()
     return
 
@@ -250,9 +257,9 @@ async def listar_usuarios_da_minha_escola(
             "id": usuario.id,
             "nome": usuario.nome,
             "email": usuario.email,
-            "telefone": usuario.telefone, # 👈 ADD
-            "ativo": usuario.ativo, # 👈 ADD
-            "criado_em": usuario.criado_em, # 👈 ADD
+            "telefone": usuario.telefone,
+            "ativo": usuario.ativo,
+            "criado_em": usuario.criado_em,
             "nivel": vinculo.nivel,
             "escola": escola
         })

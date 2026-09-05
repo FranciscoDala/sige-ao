@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users // 👈 ADD Users
+    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -12,7 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' }, // 👈 ADD NOVO
+    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
     { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' },
 ]
 
@@ -34,10 +34,27 @@ export default function MainLayout() {
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState<SearchResult[]>([])
     const [searching, setSearching] = useState(false)
+
+    // 👈 AGORA É STATE E ATUALIZA SOZINHO
+    const [user, setUser] = useState(() => authService.getUser() || { nome: 'Super Admin', email: 'admin@sige.ao' })
+
     const searchInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
     const location = useLocation()
-    const user = authService.getUser() || { nome: 'Super Admin', email: 'admin@sige.ao' }
+
+    // 👈 ESCUTA MUDANÇA NO LOCALSTORAGE PRA ATUALIZAR HEADER/SIDEBAR
+    useEffect(() => {
+        const updateUser = () => {
+            const u = authService.getUser()
+            if (u) setUser(u)
+        }
+        window.addEventListener('storage', updateUser)
+        window.addEventListener('user-updated', updateUser) // evento custom
+        return () => {
+            window.removeEventListener('storage', updateUser)
+            window.removeEventListener('user-updated', updateUser)
+        }
+    }, [])
 
     useEffect(() => {
         if (isSearchOpen || isSearchModalOpen) setTimeout(() => searchInputRef.current?.focus(), 100)
@@ -119,8 +136,8 @@ export default function MainLayout() {
                     <nav className="space-y-1 flex-1">
                         {menuItems.map(item => {
                             const isActive = item.path === '/dashboard'
-                                ? location.pathname === '/dashboard' // 👈 Painel só ativo se for exato
-                                : location.pathname.startsWith(item.path) // 👈 Os outros usam startsWith pra pegar /users/:id
+                                ? location.pathname === '/dashboard'
+                                : location.pathname.startsWith(item.path)
 
                             return (
                                 <button
@@ -141,6 +158,7 @@ export default function MainLayout() {
                         <div className="flex items-center gap-3 px-1">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div>
                             <div className="min-w-0 flex-1">
+                                {/* 👈 AGORA PEGA DO STATE */}
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
                             </div>
@@ -151,7 +169,7 @@ export default function MainLayout() {
 
             <div className="flex-1 w-full lg:ml-[260px]">
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
+                    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-white" /></button>
 
                         <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen ? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
@@ -186,6 +204,7 @@ export default function MainLayout() {
                             </button>
                             <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
                             <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                                {/* 👈 AGORA PEGA DO STATE */}
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
                             <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">

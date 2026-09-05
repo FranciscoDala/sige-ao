@@ -8,9 +8,9 @@ from app.models.models_escola import NivelAcesso
 class EscolaBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
-    nif: Optional[str] = Field(None, max_length=50) # 👈 NOVO
-    endereco: Optional[str] = Field(None, max_length=500) # 👈 NOVO
-    telefone: Optional[str] = Field(None, max_length=20) # 👈 NOVO
+    nif: Optional[str] = Field(None, max_length=50)
+    endereco: Optional[str] = Field(None, max_length=500)
+    telefone: Optional[str] = Field(None, max_length=20)
     provincia: Optional[str] = Field(None, max_length=50)
     municipio: Optional[str] = Field(None, max_length=50)
     cor_primaria: str = "#3B82F6"
@@ -27,7 +27,7 @@ class EscolaUpdate(EscolaBase):
 
 class EscolaResponse(EscolaBase):
     id: str
-    id_curto: str # 👈 NOVO: pra retornar o ESC001
+    id_curto: str
     criado_em: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,25 +54,26 @@ class UsuarioVinculoCreate(BaseModel):
     senha: str = Field(..., min_length=6)
     telefone: Optional[str] = None
     nivel: NivelAcesso
-    escola_id: Optional[str] = None # 👈 DEIXA OPCIONAL
+    escola_id: Optional[str] = None
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
 
-class UsuarioUpdate(BaseModel): # 👈 NOVO: PRA USAR NO PUT
+class UsuarioUpdate(BaseModel): # 👈 PRA USAR NO PUT
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
     email: Optional[EmailStr] = None
     senha: Optional[str] = Field(None, min_length=6)
     telefone: Optional[str] = None
+    ativo: Optional[bool] = None # 👈 ADD: PRA DESATIVAR/ATIVAR NO EDIT
 
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
     nome: str
     email: EmailStr
-    telefone: Optional[str] = None # 👈 ADD PRA BATER COM FRONT
-    ativo: bool # 👈 ADD PRA BATER COM FRONT
-    criado_em: datetime # 👈 ADD PRA BATER COM FRONT
+    telefone: Optional[str] = None
+    ativo: bool
+    criado_em: datetime
     nivel: NivelAcesso
-    escola: Optional[EscolaResponse] = None # 👈 PODE SER NONE
+    escola: Optional[EscolaResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 # ================== AUTH / LOGIN ==================
