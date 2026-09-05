@@ -6,9 +6,10 @@ interface Props {
     open: boolean
     onClose: () => void
     escola: Escola | null
+    onEdit: (escola: Escola) => void // 👈 1. RECEBE ONEDIT PRA ABRIR A OUTRA MODAL
 }
 
-export default function EscolaViewModal({ open, onClose, escola }: Props) {
+export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props) {
     useEffect(() => {
         if (!open) return
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -26,7 +27,11 @@ export default function EscolaViewModal({ open, onClose, escola }: Props) {
         if (e.target === e.currentTarget) onClose()
     }
 
-    // Stats mock - depois tu liga com a API real
+    const handleEditClick = () => {
+        onEdit(escola) // chama a função do pai pra abrir a modal de editar
+        onClose() // fecha a modal de ver
+    }
+
     const stats = [
         { label: "Alunos", value: "1,240", icon: Users, color: "text-[#3B82F6]" },
         { label: "Professores", value: "86", icon: GraduationCap, color: "text-[#10B981]" },
@@ -38,7 +43,7 @@ export default function EscolaViewModal({ open, onClose, escola }: Props) {
         <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[720px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                className="w-full max-w-[720px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
             >
                 {/* HEADER */}
                 <div className="p-5 pb-4 border-b border-white/10 shrink-0">
@@ -74,7 +79,7 @@ export default function EscolaViewModal({ open, onClose, escola }: Props) {
                         {/* STATS */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                             {stats.map((stat, i) => (
-                                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                <div key={i} className="bg-white/5 border-white/10 rounded-xl p-3">
                                     <div className="flex items-center gap-2 mb-2">
                                         <stat.icon className={`w-4 h-4 ${stat.color}`} />
                                         <p className="text-xs text-gray-400">{stat.label}</p>
@@ -86,7 +91,7 @@ export default function EscolaViewModal({ open, onClose, escola }: Props) {
 
                         {/* DADOS */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                            <div className="bg-white/5 border-white/10 rounded-xl p-4 space-y-3">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
                                 <div className="space-y-1 text-sm">
                                     <p className="text-gray-300"><span className="text-gray-500">Província:</span> {escola.provincia || '-'}</p>
@@ -129,34 +134,18 @@ export default function EscolaViewModal({ open, onClose, escola }: Props) {
                             </div>
                         </div>
 
-                        {/* AÇÕES RÁPIDAS */}
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                            <h3 className="text-sm font-bold text-white mb-3">Ações Rápidas</h3>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button className="flex items-center justify-center gap-2 h-10 bg-white/5 hover:bg-white/10 border-white/10 rounded-xl text-sm font-semibold text-gray-300 transition">
-                                    <Users className="w-4 h-4" /> Usuários
-                                </button>
-                                <button className="flex items-center justify-center gap-2 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-gray-300 transition">
-                                    <BookOpen className="w-4 h-4" /> Turmas
-                                </button>
-                                <button className="flex items-center justify-center gap-2 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-gray-300 transition">
-                                    <FileText className="w-4 h-4" /> Relatórios
-                                </button>
-                                <button className="flex items-center justify-center gap-2 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-semibold text-gray-300 transition">
-                                    <Building2 className="w-4 h-4" /> Configurações
-                                </button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
-                {/* FOOTER */}
-                <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
-                    <button className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition flex items-center justify-center gap-2">
+                {/* FOOTER - BOTOES CENTRALIZADOS NA DIREITA IGUAL IMAGEM */}
+                <div className="p-4 border-t border-white/10 flex justify-end gap-3 shrink-0 bg-[#0F172A]/90"> {/* 👈 justify-end */}
+                    <button
+                        onClick={handleEditClick} // 👈 2. CHAMA EDITAR
+                        className="px-6 h-11 font-semibold rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6]/30 border border-[#3B82F6]/20 text-[#3B82F6] transition flex items-center justify-center gap-2"
+                    >
                         <Edit className="w-4 h-4" /> Editar Escola
                     </button>
-                    <button className="w-full px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition flex items-center justify-center gap-2">
+                    <button className="px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition flex items-center justify-center gap-2">
                         <Trash2 className="w-4 h-4" /> {escola.ativo? 'Desativar' : 'Ativar'}
                     </button>
                 </div>

@@ -43,7 +43,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const handleClickOutside = (event: Event) => { // corrigido
-            if (dropdownRef.current &&!dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false)
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false)
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -71,7 +71,7 @@ export default function Dashboard() {
         try {
             if (id) await api.put(`/escolas/${id}`, data)
             else await api.post(`/escolas`, data)
-            toast.success(id? "Escola atualizada!" : "Escola criada!")
+            toast.success(id ? "Escola atualizada!" : "Escola criada!")
             setModalOpen(false)
             setEscolaEditando(null)
             fetchEscolas()
@@ -131,12 +131,12 @@ export default function Dashboard() {
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
                     <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
-                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
                         <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
                             <div className="max-h-60 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{opcoesFiltro.map(op => (
-                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
+                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
                                     {filtroStatus === op.value && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
                                 </button>
@@ -161,8 +161,8 @@ export default function Dashboard() {
             </div>
 
             <div>
-                {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
-                    escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
+                {loading ? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
+                    escolas.length === 0 ? <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
                         <>
                             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
@@ -192,7 +192,12 @@ export default function Dashboard() {
             </div>
 
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
-            <EscolaViewModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} escola={escolaVisualizando} /> {/* 👈 5. RENDER MODAL VER */}
+            <EscolaViewModal
+                open={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                escola={escolaVisualizando}
+                onEdit={handleOpenEdit} // 👈 PASSA A FUNÇÃO DE EDITAR
+            />
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
             <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} />
         </div>
