@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
-from app.models.models_escola import NivelAcesso
+from app.models_escola import NivelAcesso
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):
@@ -58,14 +58,23 @@ class UsuarioVinculoCreate(BaseModel):
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
 
+class UsuarioUpdate(BaseModel): # 👈 NOVO: PRA USAR NO PUT
+    nome: Optional[str] = Field(None, min_length=3, max_length=255)
+    email: Optional[EmailStr] = None
+    senha: Optional[str] = Field(None, min_length=6)
+    telefone: Optional[str] = None
 
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
     nome: str
     email: EmailStr
+    telefone: Optional[str] = None # 👈 ADD PRA BATER COM FRONT
+    ativo: bool # 👈 ADD PRA BATER COM FRONT
+    criado_em: datetime # 👈 ADD PRA BATER COM FRONT
     nivel: NivelAcesso
     escola: Optional[EscolaResponse] = None # 👈 PODE SER NONE
     model_config = ConfigDict(from_attributes=True)
+
 # ================== AUTH / LOGIN ==================
 class LoginRequest(BaseModel):
     escola_id: Optional[str] = Field(None, description="Código da escola. Deixar vazio para Super Admin")
