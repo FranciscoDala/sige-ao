@@ -116,8 +116,7 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6 mt-2">
-            {/* 👇 4. HEADER COM OS 4 BOTOES QUE JA EXISTEM NA IMAGEM */}
-            
+
 
             <div>
                 <h2 className="text-3xl font-bold text-white">Painel</h2>
