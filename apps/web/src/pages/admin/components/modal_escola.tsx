@@ -38,7 +38,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
         if (!open) return
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
         document.addEventListener('keydown', handleKeyDown)
-        return () => document.removeEventListener('keydown', handleKeyDown)
+        document.body.style.overflow = 'hidden' // 👈 TRAVA SCROLL DO FUNDO
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+            document.body.style.overflow = 'unset' // 👈 DESTRAVA
+        }
     }, [open, onClose])
 
     if (!open) return null
@@ -51,7 +55,6 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
         if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
-        console.log('[DEBUG MODAL] Dados do form:', form) // 👈
         const formData = new FormData()
         if(!escola) formData.append("id", `ESC${Date.now().toString().slice(-3)}`)
         Object.entries(form).forEach(([k, v]) => formData.append(k, v))
@@ -59,7 +62,6 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
         formData.append("cor_secundaria", "#8B5CF6")
         formData.append("tema", "escuro")
         if (fileRef.current?.files?.[0]) formData.append("logo", fileRef.current.files[0])
-        console.log('[DEBUG MODAL] Chamando onSave...') // 👈
         onSave(formData, escola?.id)
     }
 
@@ -68,8 +70,10 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
     const labelClass = "text-sm font-semibold text-gray-300 flex items-center"
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in-0">
-            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-2xl bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh]"> {/* 👈 max-h aqui */}
+
+                {/* HEADER FIXO */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div>
@@ -78,7 +82,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {/* FORM COM SCROLL */}
+                <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-6 overflow-y-auto"> {/* 👈 overflow aqui */}
                     <section>
                         <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</h3>
                         <div className="space-y-4">
@@ -107,7 +112,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: {
                     </section>
                 </form>
 
-                <div className="p-6 border-t border-white/10 flex gap-3 shrink-0">
+                {/* FOOTER FIXO */}
+                <div className="p-6 border-t border-white/10 flex gap-3 shrink-0 bg-[#0F172A]/90"> {/* 👈 shrink-0 e bg */}
                     <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 transition">Cancelar</button>
                     <button type="submit" onClick={handleSubmit} disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
                         {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar Alterações" : "Criar Escola"}
