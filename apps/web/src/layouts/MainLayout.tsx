@@ -12,10 +12,10 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Building2, label: 'Escolas', path: '/dashboard/schools', type: 'Definição' }, // 👈 ADD Escolas
+    { icon: Building2, label: 'Escolas', path: '/dashboard/schools', type: 'Definição' },
     { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
-    { icon: CircleHelp, label: 'Ajuda', path: '/dashboard/ajuda', type: 'Definição' }, // 👈 AJUSTA: CircleHelp + /ajuda
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' }, // 👈 ADD Configurações
+    { icon: CircleHelp, label: 'Ajuda', path: '/dashboard/ajuda', type: 'Definição' },
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true }, // 👈 OCULTO
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
@@ -134,7 +134,7 @@ export default function MainLayout() {
                         <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
                     <nav className="space-y-1 flex-1">
-                        {menuItems.map(item => {
+                        {menuItems.filter(item => !item.hidden).map(item => { // 👈 FILTRA AQUI
                             const isActive = item.path === '/dashboard'
                                 ? location.pathname === '/dashboard'
                                 : location.pathname.startsWith(item.path)
@@ -144,8 +144,8 @@ export default function MainLayout() {
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
-                                            ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
-                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                        ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5 flex-shrink-0" />

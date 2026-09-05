@@ -33,8 +33,8 @@ export default function AjudaPage() {
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl hover:bg-white/10 hover:border-white/20 transition">
                     <Phone className="w-8 h-8 text-[#10B981] mb-3" />
                     <h3 className="text-white font-semibold mb-1">WhatsApp Suporte</h3>
-                    <p className="text-sm text-gray-400 mb-3">+244 923 000 000</p>
-                    <a href="https://wa.me/244923000" target="_blank" className="text-[#10B981] text-sm font-semibold hover:underline flex items-center gap-1">Falar no WhatsApp <ChevronRight className="w-4 h-4"/></a>
+                    <p className="text-sm text-gray-400 mb-3">+244 930438947</p>
+                    <a href="https://wa.me/+244930438947" target="_blank" className="text-[#10B981] text-sm font-semibold hover:underline flex items-center gap-1">Falar no WhatsApp <ChevronRight className="w-4 h-4"/></a>
                 </div>
             </div>
 
