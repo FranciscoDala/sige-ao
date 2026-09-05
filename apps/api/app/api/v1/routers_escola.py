@@ -119,16 +119,23 @@ async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), cur
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
 
-    # 1. Apaga a logo do Cloudinary se existir
+    # 1. Apaga a logo do Cloudinary
     if escola.logo_url and "cloudinary.com" in escola.logo_url:
         try:
-            # pega o public_id da URL: sige/logos/abc123_nome
             public_id = escola.logo_url.split("/upload/")[-1].rsplit(".", 1)[0]
             cloudinary.uploader.destroy(public_id)
+            logger.info(f"Logo apagada do cloudinary: {public_id}")
         except Exception as e:
             logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
 
-    # 2. HARD DELETE - apaga do banco de vez
-    await db.delete(escola)
-    await db.commit()
+    # 2. HARD DELETE com cascade
+    try:
+        await db.delete(escola)
+        await db.commit()
+        logger.info(f"Escola {escola_id} apagada com sucesso")
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Erro ao deletar escola: {e}")
+        raise HTTPException(status_code=400, detail="Não foi possível apagar. Verifique se não existem dados vinculados.")
+
     return None
