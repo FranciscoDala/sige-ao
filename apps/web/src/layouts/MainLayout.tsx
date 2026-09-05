@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2
+    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users // 👈 ADD Users
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -13,6 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
     { icon: Building2, label: 'Gerenciar Escolas', path: '/dashboard/schools', type: 'Definição' },
+    { icon: Users, label: 'Gerenciar Usuários', path: '/dashboard/users', type: 'Definição' }, // 👈 ADD NOVO
     { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' },
 ]
 
@@ -118,9 +119,9 @@ export default function MainLayout() {
                     </div>
                     <nav className="space-y-1 flex-1">
                         {menuItems.map(item => {
-                            const isActive = location.pathname === item.path
+                            const isActive = location.pathname.startsWith(item.path) // 👈 startsWith pra pegar /users/:id
                             return (
-                                <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border border-[#3B82F6]/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                                <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                                     <item.icon className="w-5 h-5 flex-shrink-0" />
                                     <span className="whitespace-nowrap">{item.label}</span>
                                 </button>
@@ -139,9 +140,7 @@ export default function MainLayout() {
                 </div>
             </aside>
 
-            {/* CONTEUDO + HEADER FIXO */}
             <div className="flex-1 w-full lg:ml-[260px]">
-                {/* 👈 HEADER AGORA FIXED */}
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
                     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-white" /></button>
@@ -153,7 +152,7 @@ export default function MainLayout() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar escola, usuário..."
-                                className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
+                                className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
                                 <div className="absolute top-14 w-full bg-[#1E293B]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
@@ -187,7 +186,6 @@ export default function MainLayout() {
                     </div>
                 </header>
 
-                {/* 👈 PT-32 PRA NÃO FICAR POR BAIXO DO HEADER FIXO */}
                 <main className="pt-28 lg:pt-32 p-3 lg:p-6 w-full">
                     <Outlet />
                 </main>

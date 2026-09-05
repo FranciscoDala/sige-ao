@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
 import EscolaModal, { Escola } from './components/modal_escola'
-import EscolaViewModal from './components/modal_verEscola' // 👈 1. IMPORT DA MODAL VER
+import EscolaViewModal from './components/modal_escolaView' // 👈 1. IMPORT DA MODAL VER
 import ConfirmDeleteModal from './components/modal_confirmDelete'
 import ConfirmLogoutModal from './components/modal_confirmLogout'
 

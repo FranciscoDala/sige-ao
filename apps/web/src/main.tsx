@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/auth/Login'
 import MainLayout from './layouts/MainLayout' // <- NOVO: Layout principal
-import Dashboard from './pages/admin/Dashboard'
+import Dashboard from './pages/admin/SchoolsPage'
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
 import './globals.css'
