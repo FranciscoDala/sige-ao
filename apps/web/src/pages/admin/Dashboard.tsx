@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Header from './components/Header'
+import Sidebar from './components/sidebar' // 👈 IMPORTA A SIDEBAR
 import EscolaModal, { Escola } from './components/modal_escola'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
@@ -32,6 +33,7 @@ export default function Dashboard() {
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
+    const [sidebarOpen, setSidebarOpen] = useState(false) // 👈 NOVO STATE PRA SIDEBAR
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     const handleLogout = () => {
@@ -40,7 +42,7 @@ export default function Dashboard() {
     }
 
     const handleOpenMenu = () => {
-        toast.info("Abrir menu lateral")
+        setSidebarOpen(true) // 👈 AGORA ABRE A SIDEBAR DE VERDADE
     }
 
     useEffect(() => {
@@ -120,66 +122,69 @@ export default function Dashboard() {
     ]
 
     return (
-        <div className="min-h-screen bg-[#0F172A]">
-            <Header onLogout={handleLogout} onOpenMenu={handleOpenMenu} />
+        <div className="min-h-screen bg-[#0F172A] flex"> {/* 👈 FLEX PRA SIDEBAR */}
+            <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} /> {/* 👈 RENDERIZA A SIDEBAR */}
 
-            <div className="p-4 md:p-6 space-y-6">
-                {/* TITULO REMOVIDO - AGORA SÓ FICA NO HEADER */}
-                <div className="mt-2">
-                    <p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p>
-                </div>
+            <div className="flex-1 flex flex-col"> {/* 👈 CONTEUDO AO LADO */}
+                <Header onLogout={handleLogout} onOpenMenu={handleOpenMenu} />
 
-                {/* FILTRO + BOTÃO */}
-                <div className="flex flex-col sm:flex-row gap-4 w-full">
-                    <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                        <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
-                            <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
-                            <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
-                        </button>
-                        {dropdownOpen && (
-                            <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                                <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
-                                    <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
-                                        <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
-                                    </button>
-                                ))}</div>
-                            </div>
-                        )}
+                <div className="p-4 md:p-6 space-y-6 flex-1 overflow-y-auto">
+                    <div className="mt-2">
+                        <p className="text-gray-400">Gerencie todas as escolas cadastradas no SIGE</p>
                     </div>
 
-                    <div className="w-full sm:w-1/2 flex items-end">
-                        <button onClick={handleOpenCreate} className="w-full h-12 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
-                            <Plus className="w-5 h-5" /> Nova Escola
-                        </button>
+                    {/* FILTRO + BOTÃO */}
+                    <div className="flex flex-col sm:flex-row gap-4 w-full">
+                        <div ref={dropdownRef} className="relative w-full sm:w-1/2">
+                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
+                                <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
+                                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
+                            </button>
+                            {dropdownOpen && (
+                                <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                                    <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
+                                        <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
+                                            <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
+                                        </button>
+                                    ))}</div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="w-full sm:w-1/2 flex items-end">
+                            <button onClick={handleOpenCreate} className="w-full h-12 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
+                                <Plus className="w-5 h-5" /> Nova Escola
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                {/* STATS */}
-                <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
-                </div>
-                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
-                </div>
+                    {/* STATS */}
+                    <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
+                    </div>
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
+                    </div>
 
-                {/* LISTA */}
-                <div>
-                    {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
-                        escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
-                            <>
-                                <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    {escolas.map((escola) => <div key={escola.id} className="w-full flex-shrink-0"><EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} /></div>)}
-                                </div>
-                                <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                    {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)}
-                                </div>
-                            </>
-                    }
-                </div>
+                    {/* LISTA */}
+                    <div>
+                        {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
+                            escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
+                                <>
+                                    <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                        {escolas.map((escola) => <div key={escola.id} className="w-full flex-shrink-0"><EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} /></div>)}
+                                    </div>
+                                    <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)}
+                                    </div>
+                                </>
+                        }
+                    </div>
 
-                {/* MODAIS */}
-                <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
-                <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
+                    {/* MODAIS */}
+                    <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
+                    <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
+                </div>
             </div>
         </div>
     )
