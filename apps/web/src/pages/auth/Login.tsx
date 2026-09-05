@@ -132,7 +132,7 @@ export default function Login() {
 
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Email</label>
-                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="admin@sige.com" required /></div>
+                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="E-mail" required /></div>
                     </div>
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Senha</label>

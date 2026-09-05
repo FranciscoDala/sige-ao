@@ -1,20 +1,21 @@
 import { useState, useEffect, FormEvent } from 'react'
-import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight } from 'lucide-react' // 👈 ADD
+import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight, Eye, EyeOff } from 'lucide-react' // 👈 ADD Eye, EyeOff
 import { toast } from 'sonner'
 import { UsuarioMinisterio } from '../../types/usuario'
 
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean }) => Promise<void> // 👈 ADD ativo
+    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean }) => Promise<void>
     saving: boolean
     usuario: UsuarioMinisterio | null
 }
 
 export default function UsuarioModal({ open, onClose, onSave, saving, usuario }: Props) {
     const [form, setForm] = useState({
-        nome: "", email: "", senha: "", telefone: "", ativo: true // 👈 ADD
+        nome: "", email: "", senha: "", telefone: "", ativo: true
     })
+    const [showPassword, setShowPassword] = useState(false) // 👈 NOVO
 
     const isEdit =!!usuario
 
@@ -37,11 +38,12 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                     email: usuario.email,
                     senha: "", // 👈 senha vazia no edit
                     telefone: usuario.telefone || "",
-                    ativo: usuario.ativo // 👈 CARREGA STATUS
+                    ativo: usuario.ativo
                 })
             } else {
-                setForm({ nome: "", email: "", senha: "", telefone: "", ativo: true }) // 👈 default ativo
+                setForm({ nome: "", email: "", senha: "", telefone: "", ativo: true })
             }
+            setShowPassword(false) // 👈 reseta ao abrir
         }
     }, [open, usuario, isEdit])
 
@@ -58,7 +60,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
         onSave(payload)
     }
 
-    const handleChange = (field: string, value: string | boolean) => { // 👈 ACEITA BOOL
+    const handleChange = (field: string, value: string | boolean) => {
         setForm(prev => ({...prev, [field]: value }))
     }
 
@@ -90,16 +92,34 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                                 <label className={labelClass}><Mail className="w-4 h-4" />Email *</label>
                                 <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="nome@minedu.gov.ao" required />
                             </div>
+
+                            {/* 👈 SENHA COM EYE */}
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Lock className="w-4 h-4" />Senha {isEdit? '' : '*'}</label>
-                                <input type="password" value={form.senha} onChange={e => handleChange('senha', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder={isEdit? "Deixe em branco para não alterar" : "Mínimo 6 caracteres"} />
+                                <div className="relative sm:col-span-3">
+                                    <input
+                                        type={showPassword? "text" : "password"}
+                                        value={form.senha}
+                                        onChange={e => handleChange('senha', e.target.value)}
+                                        className={`${inputClass} pr-12`}
+                                        placeholder={isEdit? "Deixe em branco para não alterar" : "Mínimo 6 caracteres"}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition"
+                                    >
+                                        {showPassword? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
                                 <input type="tel" value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="+244 9xx xxx" />
                             </div>
 
-                            {/* 👈 NOVO: TOGGLE DE ATIVO SOMENTE NO EDIT */}
+                            {/* TOGGLE DE ATIVO SOMENTE NO EDIT */}
                             {isEdit && (
                                 <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                     <label className={labelClass}>Status</label>
@@ -125,7 +145,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                             Cancelar
                         </button>
                         <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition">
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : isEdit? "Salvar" : "Salvar"}
+                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : isEdit? "Salvar Alterações" : "Cadastrar Usuário"}
                         </button>
                     </div>
                 </form>

@@ -13,7 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
     { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição' },
+    { icon: Settings, label: 'Ajuda', path: '/dashboard/settings', type: 'Definição' },
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
