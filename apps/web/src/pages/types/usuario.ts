@@ -1,10 +1,12 @@
-export interface UsuarioMinisterio { // 👈 renomeei pra não confundir
+export interface UsuarioMinisterio {
     id: string
     nome: string
     email: string
-    perfil: 'super_admin' | 'admin' | 'suporte' // 👈 perfis do ministério
+    telefone?: string | null
+    nivel: 'MINISTERIO' | 'DIRETOR' | 'DIRECAO'
+    escola_id?: string | null
+    perfil: 'super_admin' | 'admin' | 'diretor' | 'suporte'
     ativo: boolean
-    departamento?: string // 👈 troquei escola por departamento
-    telefone?: string
+    departamento: string
     created_at: string
 }

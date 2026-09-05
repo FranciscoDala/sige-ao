@@ -1,15 +1,15 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
 from uuid import UUID
-from app.models.models_escola import NivelAcesso, NivelEnsino # 👈 ADD NivelEnsino
+from app.models.models_escola import NivelAcesso, NivelEnsino
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
     nif: Optional[str] = Field(None, max_length=50)
-    nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO) # 👈 ADD
+    nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO)
     endereco: Optional[str] = Field(None, max_length=500)
     telefone: Optional[str] = Field(None, max_length=20)
     provincia: Optional[str] = Field(None, max_length=50)
@@ -59,12 +59,14 @@ class UsuarioVinculoCreate(BaseModel):
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
 
-class UsuarioUpdate(BaseModel): # 👈 PRA USAR NO PUT
+class UsuarioUpdate(BaseModel):
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
     email: Optional[EmailStr] = None
     senha: Optional[str] = Field(None, min_length=6)
     telefone: Optional[str] = None
-    ativo: Optional[bool] = None # 👈 ADD: PRA DESATIVAR/ATIVAR NO EDIT
+    ativo: Optional[bool] = None
+    nivel: Optional[NivelAcesso] = None
+    escola_id: Optional[str] = None
 
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
@@ -73,7 +75,12 @@ class UsuarioVinculoResponse(BaseModel):
     telefone: Optional[str] = None
     ativo: bool
     criado_em: datetime
+
     nivel: NivelAcesso
+    escola_id: Optional[str] = None
+    perfil: Literal['super_admin', 'admin', 'diretor', 'suporte']
+    departamento: Optional[str] = None
+
     escola: Optional[EscolaResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
@@ -87,6 +94,7 @@ class UserInToken(BaseModel):
     id: UUID
     email: EmailStr
     nome: str
+    nivel: NivelAcesso
     escola_id: Optional[str] = None
 
 class TokenResponse(BaseModel):

@@ -1,23 +1,56 @@
-import { useState, useEffect, FormEvent } from 'react'
-import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight, Eye, EyeOff } from 'lucide-react' // 👈 ADD Eye, EyeOff
+import { useState, useRef, useEffect, FormEvent, MouseEvent } from 'react'
+import { X, Loader2, User, Mail, Lock, Phone, ToggleLeft, ToggleRight, Eye, EyeOff, Building2, Shield, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { UsuarioMinisterio } from '../../types/usuario'
+
+
+
+// 👈 DECLARA AQUI MESMO
+interface Escola {
+    id: string
+    nome: string
+}
+
 
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean }) => Promise<void>
+    onSave: (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean, nivel: string, escola_id?: string }) => Promise<void>
     saving: boolean
     usuario: UsuarioMinisterio | null
+    escolas: Escola[]
 }
 
-export default function UsuarioModal({ open, onClose, onSave, saving, usuario }: Props) {
+const NIVEIS_USUARIO = [
+    { value: "MINISTERIO", label: "Ministério - Admin Geral" },
+    { value: "DIRETOR", label: "Diretor - Gerente da Escola" },
+]
+
+export default function UsuarioModal({ open, onClose, onSave, saving, usuario, escolas }: Props) {
     const [form, setForm] = useState({
-        nome: "", email: "", senha: "", telefone: "", ativo: true
+        nome: "", email: "", senha: "", telefone: "", ativo: true,
+        nivel: "DIRETOR",
+        escola_id: ""
     })
-    const [showPassword, setShowPassword] = useState(false) // 👈 NOVO
+    const [showPassword, setShowPassword] = useState(false)
+
+    const [dropdownNivel, setDropdownNivel] = useState(false) // 👈 ADD
+    const [dropdownEscola, setDropdownEscola] = useState(false) // 👈 ADD
+    const dropdownNivelRef = useRef<HTMLDivElement>(null) // 👈 ADD
+    const dropdownEscolaRef = useRef<HTMLDivElement>(null) // 👈 ADD
 
     const isEdit =!!usuario
+    const mostrarSelectEscola = form.nivel === "DIRETOR"
+
+    // TRANCAR MODAL + FECHAR DROPDOWN AO CLICAR FORA
+    useEffect(() => {
+        const handleClickOutside = (event: Event) => {
+            if (dropdownNivelRef.current &&!dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false)
+            if (dropdownEscolaRef.current &&!dropdownEscolaRef.current.contains(event.target as Node)) setDropdownEscola(false)
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     useEffect(() => {
         if (!open) return
@@ -36,14 +69,16 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                 setForm({
                     nome: usuario.nome,
                     email: usuario.email,
-                    senha: "", // 👈 senha vazia no edit
+                    senha: "",
                     telefone: usuario.telefone || "",
-                    ativo: usuario.ativo
+                    ativo: usuario.ativo,
+                    nivel: usuario.nivel || "DIRETOR",
+                    escola_id: usuario.escola_id || ""
                 })
             } else {
-                setForm({ nome: "", email: "", senha: "", telefone: "", ativo: true })
+                setForm({ nome: "", email: "", senha: "", telefone: "", ativo: true, nivel: "DIRETOR", escola_id: "" })
             }
-            setShowPassword(false) // 👈 reseta ao abrir
+            setShowPassword(false)
         }
     }, [open, usuario, isEdit])
 
@@ -54,22 +89,78 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
         if (!form.nome) { toast.error("O nome é obrigatório"); return }
         if (!form.email) { toast.error("O email é obrigatório"); return }
         if (!isEdit && (!form.senha || form.senha.length < 6)) { toast.error("A senha deve ter no mínimo 6 caracteres"); return }
+        if (mostrarSelectEscola &&!form.escola_id) { toast.error("Selecione a escola do Diretor"); return }
 
         const payload: any = {...form }
-        if (isEdit &&!payload.senha) delete payload.senha // 👈 não envia senha vazia
+        if (isEdit &&!payload.senha) delete payload.senha
+        if (form.nivel === "MINISTERIO") delete payload.escola_id
+
         onSave(payload)
     }
 
     const handleChange = (field: string, value: string | boolean) => {
-        setForm(prev => ({...prev, [field]: value }))
+        if (field === 'nivel' && value === "MINISTERIO") {
+            setForm(prev => ({...prev, [field]: value, escola_id: "" }))
+        } else {
+            setForm(prev => ({...prev, [field]: value }))
+        }
+    }
+
+    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => { // 👈 TRANCAR CLIQUE FORA
+        if (e.target === e.currentTarget) onClose()
     }
 
     const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
+    // MESMO PADRAO DO ESCOLAMODAL
+    const CustomSelect = ({
+        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv, isObject = true // 👈 padrao object
+    }: any) => (
+        <div ref={refDiv} className="relative sm:col-span-3">
+            <button
+                type="button"
+                disabled={disabled}
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+                <span className="truncate">
+                    {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
+                </span>
+                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-20 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
+                        {options.map((op: any) => {
+                            const optionValue = isObject? op.value : op
+                            const optionLabel = isObject? op.label : op
+                            return (
+                                <button
+                                    key={optionValue}
+                                    type="button"
+                                    onClick={() => { onSelect(optionValue); setIsOpen(false) }}
+                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
+                                >
+                                    <span>{optionLabel}</span>
+                                    {value === optionValue && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
-            <div className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+        <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 👈 TRANCAR */}
+            <div
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} // 👈 TRANCAR
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+            >
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
@@ -93,7 +184,39 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
                                 <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="nome@minedu.gov.ao" required />
                             </div>
 
-                            {/* 👈 SENHA COM EYE */}
+                            {/* NIVEL DE ACESSO */}
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                                <label className={labelClass}><Shield className="w-4 h-4" />Nível de Acesso *</label>
+                                <CustomSelect
+                                    refDiv={dropdownNivelRef} // 👈 PADRAO ESCOLA
+                                    value={form.nivel}
+                                    onSelect={(val: string) => handleChange('nivel', val)}
+                                    options={NIVEIS_USUARIO}
+                                    placeholder="Selecione o Nível"
+                                    isOpen={dropdownNivel}
+                                    setIsOpen={setDropdownNivel}
+                                    isObject={true}
+                                />
+                            </div>
+
+                            {/* ESCOLA - SÓ APARECE SE FOR DIRETOR */}
+                            {mostrarSelectEscola && (
+                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4 animate-in fade-in-0">
+                                    <label className={labelClass}><Building2 className="w-4 h-4" />Escola *</label>
+                                    <CustomSelect
+                                        refDiv={dropdownEscolaRef} // 👈 PADRAO ESCOLA
+                                        value={form.escola_id}
+                                        onSelect={(val: string) => handleChange('escola_id', val)}
+                                        options={escolas.map(e => ({ value: e.id, label: e.nome }))} // 👈 PADRAO OBJECT
+                                        placeholder="Selecione a Escola"
+                                        isOpen={dropdownEscola}
+                                        setIsOpen={setDropdownEscola}
+                                        isObject={true}
+                                    />
+                                </div>
+                            )}
+
+                            {/* SENHA COM EYE */}
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Lock className="w-4 h-4" />Senha {isEdit? '' : '*'}</label>
                                 <div className="relative sm:col-span-3">
@@ -140,13 +263,13 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario }:
 
                     </div>
 
-                    <div className="p-4 border-t border-white/10 flex gap-2 shrink-0 bg-[#0F172A]/90">
-
-                        <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition">
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : isEdit? "Salvar" : "Salvar"}
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                        <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
+                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            {saving? "Salvando..." : isEdit? "Salvar" : "Salvar"}
                         </button>
-                        
-                        <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition">
+
+                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1">
                             Cancelar
                         </button>
                     </div>
