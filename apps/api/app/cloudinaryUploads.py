@@ -3,7 +3,7 @@ import cloudinary
 import cloudinary.uploader
 from cloudinary import CloudinaryImage
 from fastapi import UploadFile
-from .core.config import settings
+from app.core.config import settings
 
 cloudinary.config(
     cloud_name = settings.CLOUDINARY_CLOUD_NAME,
@@ -12,16 +12,13 @@ cloudinary.config(
 )
 
 async def upload_to_cloudinary(file: UploadFile, folder: str = "logos") -> dict:
-    """Recebe UploadFile do FastAPI e retorna dados otimizados. Padrão stockbot"""
-
-    # 👇 CORREÇÃO: trata filename None e pega só o nome sem extensão
-    original_name = file.filename or "arquivo"
-    name_without_ext = original_name.split(".")[0]
+    filename = file.filename or f"upload_{uuid.uuid4().hex[:4]}"
+    name_without_ext = filename.rsplit(".", 1)[0]
 
     upload_result = cloudinary.uploader.upload(
         file.file,
         folder=f"sige/{folder}",
-        public_id=f"{uuid.uuid4().hex[:8]}_{name_without_ext}", # 👈 usa a var tratada
+        public_id=f"{uuid.uuid4().hex[:8]}_{name_without_ext}",
         resource_type="image",
         overwrite=True
     )

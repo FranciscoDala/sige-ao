@@ -11,6 +11,10 @@ from app.schemas.schemas_escola import EscolaResponse
 from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary # 👈 1. import correto e função correta
 
+import cloudinary.uploader # 👈 adiciona no topo
+from cloudinary import CloudinaryImage
+
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
@@ -106,12 +110,25 @@ async def atualizar_escola(
     await db.refresh(escola)
     return escola
 
+
+
 @router.delete("/{escola_id}", status_code=204)
 async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
-    escola.ativo = False # Soft delete
+
+    # 1. Apaga a logo do Cloudinary se existir
+    if escola.logo_url and "cloudinary.com" in escola.logo_url:
+        try:
+            # pega o public_id da URL: sige/logos/abc123_nome
+            public_id = escola.logo_url.split("/upload/")[-1].rsplit(".", 1)[0]
+            cloudinary.uploader.destroy(public_id)
+        except Exception as e:
+            logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
+
+    # 2. HARD DELETE - apaga do banco de vez
+    await db.delete(escola)
     await db.commit()
     return None
