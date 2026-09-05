@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School, LogOut // 👈 importei o LogOut
+    ChevronDown, Loader2, School, Search, Bell, User, LogOut
 } from 'lucide-react'
 import { toast } from 'sonner'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
 import EscolaModal, { Escola } from './components/modal_escola'
 import ConfirmDeleteModal from './components/modal_confirmDelete'
-import ConfirmLogoutModal from './components/modal_confirmLogout' // 👈 importei a modal
+import ConfirmLogoutModal from './components/modal_confirmLogout' // 👈 1. IMPORT
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -30,11 +30,9 @@ export default function Dashboard() {
     const [modalOpen, setModalOpen] = useState(false)
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
-
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
-
-    const [logoutOpen, setLogoutOpen] = useState(false) // 👈 ESTADO DA MODAL LOGOUT
+    const [logoutOpen, setLogoutOpen] = useState(false) // 👈 2. ESTADO
 
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -97,7 +95,7 @@ export default function Dashboard() {
         }
     }
 
-    const handleConfirmLogout = () => { // 👈 FUNÇÃO LOGOUT
+    const handleConfirmLogout = () => { // 👈 3. FUNÇÃO
         localStorage.removeItem('access_token')
         toast.success("Sessão terminada")
         window.location.href = '/login'
@@ -118,18 +116,29 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6 mt-2">
-            {/* 👇 HEADER COM BTN SAIR */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold text-white">Painel</h2>
-                    <p className="text-gray-400">Gerencie todas as escolas cadastradas</p>
-                </div>
+            {/* 👇 4. HEADER COM OS 4 BOTOES QUE JA EXISTEM NA IMAGEM */}
+            <div className="bg-[#1E293B]/50 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex items-center justify-end gap-2">
+                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition">
+                    <Search className="w-5 h-5 text-gray-300" />
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition">
+                    <Bell className="w-5 h-5 text-gray-300" />
+                </button>
+                <button className="h-10 flex items-center gap-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                    <User className="w-5 h-5 text-gray-300" />
+                    <span className="font-semibold text-white text-sm">Super</span>
+                </button>
                 <button
-                    onClick={() => setLogoutOpen(true)} // 👈 CHAMA A MODAL AQUI
-                    className="p-2 rounded-lg bg-red-500/15 hover:bg-red-500/30 transition"
+                    onClick={() => setLogoutOpen(true)} // 👈 5. AQUI CHAMA A MODAL
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/20 hover:bg-red-500/30 transition"
                 >
                     <LogOut className="w-5 h-5 text-red-400" />
                 </button>
+            </div>
+
+            <div>
+                <h2 className="text-3xl font-bold text-white">Painel</h2>
+                <p className="text-gray-400">Gerencie todas as escolas cadastradas</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
@@ -139,7 +148,7 @@ export default function Dashboard() {
                         <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
                             <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
                                 <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
@@ -185,7 +194,7 @@ export default function Dashboard() {
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
 
-            {/* 👇 MODAL DE LOGOUT */}
+            {/* 👇 6. RENDER DA MODAL LOGOUT */}
             <ConfirmLogoutModal
                 open={logoutOpen}
                 onClose={() => setLogoutOpen(false)}
