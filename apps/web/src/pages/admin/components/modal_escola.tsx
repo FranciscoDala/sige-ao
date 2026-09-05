@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, FormEvent, useMemo, MouseEvent } from 'react'
-import { X, Upload, Loader2, Building2, Image as ImageIcon, MapPin, Phone, FileText, Home } from 'lucide-react'
+import { X, Upload, Loader2, Building2, Image as ImageIcon, MapPin, Phone, FileText, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -51,14 +51,18 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         nome: "", sigla: "", nif: "", endereco: "", telefone: "", provincia: "", municipio: ""
     })
 
+    const [dropdownProv, setDropdownProv] = useState(false)
+    const [dropdownMun, setDropdownMun] = useState(false)
+    const dropdownProvRef = useRef<HTMLDivElement>(null)
+    const dropdownMunRef = useRef<HTMLDivElement>(null)
+
     const municipios = useMemo(() => MUNICIPIOS_ANGOLA[form.provincia] || [], [form.provincia]);
+
+    
 
     useEffect(() => {
         if (form.nome) {
-            const siglaAuto = form.nome
-         .split(" ")
-         .filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase()))
-         .map(w => w[0]).join("").toUpperCase().slice(0, 4);
+            const siglaAuto = form.nome.split(" ").filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase())).map(w => w[0]).join("").toUpperCase().slice(0, 4);
             setForm(prev => ({...prev, sigla: siglaAuto }));
         } else {
             setForm(prev => ({...prev, sigla: "" }));
@@ -73,13 +77,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     useEffect(() => {
         if (escola) {
             setForm({
-                nome: escola.nome || "",
-                sigla: escola.sigla || "",
-                nif: escola.nif || "",
-                endereco: escola.endereco || "",
-                telefone: escola.telefone || "",
-                provincia: escola.provincia || "",
-                municipio: escola.municipio || ""
+                nome: escola.nome || "", sigla: escola.sigla || "", nif: escola.nif || "",
+                endereco: escola.endereco || "", telefone: escola.telefone || "",
+                provincia: escola.provincia || "", municipio: escola.municipio || ""
             })
             setLogoPreview(escola.logo_url || null)
             primeiraCarga.current = true;
@@ -92,7 +92,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     useEffect(() => {
         if (!open) return
-        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() } // 👈 CORRIGIDO
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
         document.addEventListener('keydown', handleKeyDown)
         document.body.style.overflow = 'hidden'
         return () => {
@@ -131,13 +131,52 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         if (e.target === e.currentTarget) onClose()
     }
 
-    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
-    const selectClass = inputClass + " appearance-none"
+    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
+
+    const CustomSelect = ({
+        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv
+    }: any) => (
+        <div ref={refDiv} className="relative sm:col-span-3">
+            <button
+                type="button"
+                disabled={disabled}
+                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+                <span className="truncate">{value || placeholder}</span>
+                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-20 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> {/* SCROLL INVISIVEL */}
+                        {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Selecione uma província primeiro</p>}
+                        {options.map((op: string) => (
+                            <button
+                                key={op}
+                                type="button"
+                                onClick={() => { onSelect(op); setIsOpen(false) }}
+                                className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${
+                                    value === op? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'
+                                }`}
+                            >
+                                <span>{op}</span>
+                                {value === op && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 
     return (
         <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
-            <div onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+            <div
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl" // overflow-hidden aqui
+            >
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
@@ -149,9 +188,10 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0">
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> {/* SCROLL INVISIVEL */}
+
+                        {/* DADOS GERAIS */}
                         <div className="space-y-4">
-                            <p className="text-sm font-bold flex items-center gap-2 text-white"><Building2 className="w-4 h-4 text-[#3B82F6]" />Dados Gerais</p>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}>Nome da Escola *</label>
                                 <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="Escola Mutamba" required />
@@ -165,8 +205,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                                 <input value={form.nif} onChange={e => handleChange('nif', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="5000000" />
                             </div>
                         </div>
+
+                        {/* SEM TITULO "Contato e Endereço" */}
                         <div className="space-y-4">
-                            <p className="text-sm font-bold flex items-center gap-2 text-white"><Home className="w-4 h-4 text-[#3B82F6]" />Contato e Endereço</p>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
                                 <input value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="+244 923 000 000" />
@@ -176,30 +217,43 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                                 <input value={form.endereco} onChange={e => handleChange('endereco', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="Rua, Bairro" />
                             </div>
                         </div>
+
+                        {/* SEM TITULO "Localização" */}
                         <div className="space-y-4">
-                            <p className="text-sm font-bold flex items-center gap-2 text-white"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</p>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}>Província *</label>
-                                <select value={form.provincia} onChange={e => handleChange('provincia', e.target.value)} className={`${selectClass} sm:col-span-3`} required>
-                                    <option value="" className="bg-[#0F172A]">Selecione a Província</option>
-                                    {PROVINCIAS_ANGOLA.map(p => <option key={p} value={p} className="bg-[#0F172A]">{p}</option>)}
-                                </select>
+                                <CustomSelect
+                                    refDiv={dropdownProvRef}
+                                    value={form.provincia}
+                                    onSelect={(val: string) => handleChange('provincia', val)}
+                                    options={PROVINCIAS_ANGOLA}
+                                    placeholder="Selecione a Província"
+                                    isOpen={dropdownProv}
+                                    setIsOpen={setDropdownProv}
+                                />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}>Município</label>
-                                <select value={form.municipio} onChange={e => handleChange('municipio', e.target.value)} className={`${selectClass} sm:col-span-3`} disabled={!form.provincia}>
-                                    <option value="" className="bg-[#0F172A]">Selecione o Município</option>
-                                    {municipios.map(m => <option key={m} value={m} className="bg-[#0F172A]">{m}</option>)}
-                                </select>
+                                <CustomSelect
+                                    refDiv={dropdownMunRef}
+                                    value={form.municipio}
+                                    onSelect={(val: string) => handleChange('municipio', val)}
+                                    options={municipios}
+                                    placeholder="Selecione o Município"
+                                    disabled={!form.provincia}
+                                    isOpen={dropdownMun}
+                                    setIsOpen={setDropdownMun}
+                                />
                             </div>
                         </div>
+
+                        {/* SEM TITULO "Logo" */}
                         <div className="space-y-4">
-                            <p className="text-sm font-bold flex items-center gap-2 text-white"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo</p>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><ImageIcon className="w-4 h-4" />Logo</label>
                                 <div className="sm:col-span-3 flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
-                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                                    <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
                                 </div>
                             </div>
                         </div>

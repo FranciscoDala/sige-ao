@@ -115,7 +115,7 @@ export default function Dashboard() {
     ]
 
     return (
-        <div className="space-y-6 mt-2">
+        <div className="space-y-6">
 
 
             <div>
