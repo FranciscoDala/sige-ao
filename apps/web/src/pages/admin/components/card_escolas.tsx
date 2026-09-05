@@ -8,7 +8,7 @@ interface EscolaCardProps {
     onDelete: () => void
 }
 
-export default function EscolaCard({ escola, onView, onEdit, onDelete }: EscolaCardProps) { // 👈 1. RECEBENDO ONVIEW
+export default function EscolaCard({ escola, onView, onEdit, onDelete }: EscolaCardProps) {
     return (
         <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
             <div className="flex items-start gap-4 mb-5">
@@ -51,17 +51,18 @@ export default function EscolaCard({ escola, onView, onEdit, onDelete }: EscolaC
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
+            {/* FOOTER COM 2 BOTOES 50% */}
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10"> {/* 👈 MUDEI PRA 2 COLUNAS */}
                 {/* BOTAO VER OCULTO */}
                 {/*
                 <button onClick={onView} className="flex items-center justify-center gap-2 p-2.5 bg-[#3B82F6]/15 hover:bg-[#3B82F6]/30 border border-[#3B82F6]/20 rounded-lg text-sm text-[#3B82F6] font-semibold transition">
                     <Eye className="w-4 h-4" /> Ver
                 </button>
                 */}
-                <button onClick={onEdit} className="flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
+                <button onClick={onEdit} className="w-full flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
                     <Edit className="w-4 h-4" /> Editar
                 </button>
-                <button onClick={onDelete} className="flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
+                <button onClick={onDelete} className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
                     <Trash2 className="w-4 h-4" /> Apagar
                 </button>
             </div>
