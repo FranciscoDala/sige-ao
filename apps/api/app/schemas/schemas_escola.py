@@ -8,6 +8,9 @@ from app.models.models_escola import NivelAcesso
 class EscolaBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
+    nif: Optional[str] = Field(None, max_length=50) # 👈 NOVO
+    endereco: Optional[str] = Field(None, max_length=500) # 👈 NOVO
+    telefone: Optional[str] = Field(None, max_length=20) # 👈 NOVO
     provincia: Optional[str] = Field(None, max_length=50)
     municipio: Optional[str] = Field(None, max_length=50)
     cor_primaria: str = "#3B82F6"
@@ -24,6 +27,7 @@ class EscolaUpdate(EscolaBase):
 
 class EscolaResponse(EscolaBase):
     id: str
+    id_curto: str # 👈 NOVO: pra retornar o ESC001
     criado_em: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,7 +66,7 @@ class UsuarioVinculoResponse(BaseModel):
     escola: EscolaResponse
     model_config = ConfigDict(from_attributes=True)
 
-# ================== AUTH / LOGIN ================== <- VOLTOU
+# ================== AUTH / LOGIN ==================
 class LoginRequest(BaseModel):
     escola_id: Optional[str] = Field(None, description="Código da escola. Deixar vazio para Super Admin")
     email: EmailStr

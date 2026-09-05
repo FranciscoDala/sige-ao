@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text # 👈 adiciona text
+from sqlalchemy import select, text
 from typing import List, Optional
 import logging
 import uuid
@@ -12,7 +12,6 @@ from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary
 
 import cloudinary.uploader
-from cloudinary import CloudinaryImage
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +43,9 @@ async def criar_escola(
     id: str = Form(...),
     nome: str = Form(...),
     sigla: Optional[str] = Form(None),
+    nif: Optional[str] = Form(None), # 👈 NOVO
+    endereco: Optional[str] = Form(None), # 👈 NOVO
+    telefone: Optional[str] = Form(None), # 👈 NOVO
     provincia: Optional[str] = Form(None),
     municipio: Optional[str] = Form(None),
     cor_primaria: str = Form("#3B82F6"),
@@ -65,7 +67,8 @@ async def criar_escola(
     id_curto = f"ESC{str(uuid.uuid4().int)[:3]}"
 
     nova_escola = Escola(
-        id=id, nome=nome, sigla=sigla, provincia=provincia, municipio=municipio,
+        id=id, nome=nome, sigla=sigla, nif=nif, endereco=endereco, telefone=telefone, # 👈 NOVO
+        provincia=provincia, municipio=municipio,
         cor_primaria=cor_primaria, cor_secundaria=cor_secundaria, tema=tema,
         logo_url=logo_url, id_curto=id_curto
     )
@@ -79,6 +82,9 @@ async def atualizar_escola(
     escola_id: str,
     nome: str = Form(...),
     sigla: Optional[str] = Form(None),
+    nif: Optional[str] = Form(None), # 👈 NOVO
+    endereco: Optional[str] = Form(None), # 👈 NOVO
+    telefone: Optional[str] = Form(None), # 👈 NOVO
     provincia: Optional[str] = Form(None),
     municipio: Optional[str] = Form(None),
     cor_primaria: str = Form(...),
@@ -99,6 +105,9 @@ async def atualizar_escola(
 
     escola.nome = nome
     escola.sigla = sigla
+    escola.nif = nif # 👈 NOVO
+    escola.endereco = endereco # 👈 NOVO
+    escola.telefone = telefone # 👈 NOVO
     escola.provincia = provincia
     escola.municipio = municipio
     escola.cor_primaria = cor_primaria
@@ -116,19 +125,17 @@ async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), cur
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
 
-    # 1. Apaga a logo do Cloudinary
     if escola.logo_url and "cloudinary.com" in escola.logo_url:
         try:
             public_id = escola.logo_url.split("/upload/")[-1].rsplit(".", 1)[0]
-            cloudinary.uploader.destroy(public_id, resource_type="image") # 👈 adiciona resource_type
+            cloudinary.uploader.destroy(public_id, resource_type="image")
             logger.info(f"Logo apagada do cloudinary: {public_id}")
         except Exception as e:
             logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
 
-    # 2. HARD DELETE FORÇADO - Apaga filhos primeiro
     try:
-        await db.execute(text("DELETE FROM usuario_escola WHERE escola_id = :id"), {"id": escola_id}) # 👈 FORÇA
-        await db.execute(text("DELETE FROM escolas WHERE id = :id"), {"id": escola_id}) # 👈 FORÇA
+        await db.execute(text("DELETE FROM usuario_escola WHERE escola_id = :id"), {"id": escola_id})
+        await db.execute(text("DELETE FROM escolas WHERE id = :id"), {"id": escola_id})
         await db.commit()
         logger.info(f"Escola {escola_id} e dados vinculados apagados com sucesso")
     except Exception as e:
