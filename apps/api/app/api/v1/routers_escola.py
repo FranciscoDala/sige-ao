@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, text # 👈 adiciona text
 from typing import List, Optional
 import logging
 import uuid
@@ -9,11 +9,10 @@ from app.db.database import get_db
 from app.models.models_escola import Escola
 from app.schemas.schemas_escola import EscolaResponse
 from app.core.security import get_current_user
-from app.cloudinaryUploads import upload_to_cloudinary # 👈 1. import correto e função correta
+from app.cloudinaryUploads import upload_to_cloudinary
 
-import cloudinary.uploader # 👈 adiciona no topo
+import cloudinary.uploader
 from cloudinary import CloudinaryImage
-
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +59,7 @@ async def criar_escola(
 
     logo_url = None
     if logo:
-        upload_data = await upload_to_cloudinary(logo, folder="logos") # 👈 2. usa a função correta
+        upload_data = await upload_to_cloudinary(logo, folder="logos")
         logo_url = upload_data["optimized_url"]
 
     id_curto = f"ESC{str(uuid.uuid4().int)[:3]}"
@@ -95,7 +94,7 @@ async def atualizar_escola(
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
 
     if logo:
-        upload_data = await upload_to_cloudinary(logo, folder="logos") # 👈
+        upload_data = await upload_to_cloudinary(logo, folder="logos")
         escola.logo_url = upload_data["optimized_url"]
 
     escola.nome = nome
@@ -110,8 +109,6 @@ async def atualizar_escola(
     await db.refresh(escola)
     return escola
 
-
-
 @router.delete("/{escola_id}", status_code=204)
 async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     check_ministerio(current_user)
@@ -123,19 +120,20 @@ async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), cur
     if escola.logo_url and "cloudinary.com" in escola.logo_url:
         try:
             public_id = escola.logo_url.split("/upload/")[-1].rsplit(".", 1)[0]
-            cloudinary.uploader.destroy(public_id)
+            cloudinary.uploader.destroy(public_id, resource_type="image") # 👈 adiciona resource_type
             logger.info(f"Logo apagada do cloudinary: {public_id}")
         except Exception as e:
             logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
 
-    # 2. HARD DELETE com cascade
+    # 2. HARD DELETE FORÇADO - Apaga filhos primeiro
     try:
-        await db.delete(escola)
+        await db.execute(text("DELETE FROM usuario_escola WHERE escola_id = :id"), {"id": escola_id}) # 👈 FORÇA
+        await db.execute(text("DELETE FROM escolas WHERE id = :id"), {"id": escola_id}) # 👈 FORÇA
         await db.commit()
-        logger.info(f"Escola {escola_id} apagada com sucesso")
+        logger.info(f"Escola {escola_id} e dados vinculados apagados com sucesso")
     except Exception as e:
         await db.rollback()
         logger.error(f"Erro ao deletar escola: {e}")
-        raise HTTPException(status_code=400, detail="Não foi possível apagar. Verifique se não existem dados vinculados.")
+        raise HTTPException(status_code=400, detail=f"Não foi possível apagar. Erro: {str(e)}")
 
     return None
