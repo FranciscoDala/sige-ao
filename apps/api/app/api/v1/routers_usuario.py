@@ -11,9 +11,9 @@ from app.core.security import get_current_user, get_password_hash
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
-def _eh_diretor(nivel: str) -> bool:
-    """Compatibilidade: aceita DIRECAO antigo e DIRETOR novo"""
-    return nivel in ["DIRETOR", "DIRECAO"]
+def _eh_diretor(nivel: NivelAcesso) -> bool:
+    """Checa se é diretor"""
+    return nivel == NivelAcesso.DIRETOR
 
 def check_permissao_criar_usuario(current_user: dict, escola_id_target: Optional[str]):
     """Só MINISTERIO pode criar em qualquer escola. DIRETOR só na própria escola"""
@@ -22,7 +22,7 @@ def check_permissao_criar_usuario(current_user: dict, escola_id_target: Optional
 
     if nivel == "MINISTERIO":
         return
-    if _eh_diretor(nivel) and escola_id_user == escola_id_target:
+    if nivel == "DIRETOR" and escola_id_user == escola_id_target:
         return
     raise HTTPException(status_code=403, detail="Sem permissão para criar usuário nesta escola")
 
@@ -38,7 +38,7 @@ def check_permissao_editar(current_user: dict, usuario_alvo: UsuarioEscola):
 
     if nivel == "MINISTERIO":
         return
-    if _eh_diretor(nivel) and usuario_alvo.escola_id == escola_id_user:
+    if nivel == "DIRETOR" and usuario_alvo.escola_id == escola_id_user:
         return
     raise HTTPException(status_code=403, detail="Sem permissão para editar este usuário")
 
@@ -47,7 +47,6 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
     mapa_perfil = {
         NivelAcesso.MINISTERIO: "super_admin",
         NivelAcesso.DIRETOR: "diretor",
-        NivelAcesso.DIRECAO: "diretor", # 👈 COMPATIBILIDADE
         NivelAcesso.SECRETARIO: "admin",
         NivelAcesso.PROFESSOR: "suporte",
         NivelAcesso.SUBDIRETOR_PEDAGOGICO: "admin",
@@ -62,7 +61,7 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
         "telefone": usuario.telefone,
         "ativo": usuario.ativo,
         "criado_em": usuario.criado_em,
-        "nivel": vinculo.nivel.value,
+        "nivel": vinculo.nivel.value, # 👈 DIRETO
         "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None,
         "perfil": mapa_perfil.get(vinculo.nivel, "suporte"),
         "departamento": escola.nome if escola else "Ministério",
@@ -103,7 +102,7 @@ async def listar_usuarios(
             "super_admin": [NivelAcesso.MINISTERIO],
             "admin": [NivelAcesso.SECRETARIO, NivelAcesso.SUBDIRETOR_PEDAGOGICO, NivelAcesso.SUBDIRETOR_ADMINISTRATIVO],
             "suporte": [NivelAcesso.PROFESSOR, NivelAcesso.FUNCIONARIO],
-            "diretor": [NivelAcesso.DIRETOR, NivelAcesso.DIRECAO] # 👈 COMPATIBILIDADE
+            "diretor": [NivelAcesso.DIRETOR] # 👈 SÓ DIRETOR
         }
         if perfil in mapa_perfil:
             filtros.append(UsuarioEscola.nivel.in_(mapa_perfil[perfil]))
@@ -157,7 +156,7 @@ async def criar_usuario(
         id=uuid.uuid4(),
         usuario_id=novo_usuario.id,
         escola_id=dados.escola_id,
-        nivel=dados.nivel
+        nivel=dados.nivel # 👈 DIRETO
     )
     db.add(novo_vinculo)
     await db.commit()
@@ -203,7 +202,7 @@ async def atualizar_usuario(
         usuario.ativo = dados.ativo
 
     if dados.nivel is not None:
-        vinculo.nivel = dados.nivel
+        vinculo.nivel = dados.nivel # 👈 DIRETO
         if dados.nivel == NivelAcesso.MINISTERIO:
             vinculo.escola_id = None
     if dados.escola_id is not None and dados.nivel!= NivelAcesso.MINISTERIO:
