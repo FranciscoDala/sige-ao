@@ -8,6 +8,27 @@ import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// 👇 FUNÇÃO PRA PEGAR COOKIE IGUAL STOCKBOT
+const getCookie = (name: string): string | undefined => {
+    return document.cookie.split('; ').reduce((r, v) => {
+        const parts = v.split('=');
+        return parts[0] === name? decodeURIComponent(parts[1]) : r;
+    }, '');
+};
+
+// 👇 AXIOS COM INTERCEPTOR - JÁ MANDA TOKEN EM TUDO
+const api = axios.create({
+    baseURL: API_URL
+})
+
+api.interceptors.request.use((config) => {
+    const token = getCookie('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})
+
 interface Escola {
     id: string
     nome: string
@@ -44,15 +65,15 @@ const EscolaCard = ({ escola, onEdit, onDelete }: { escola: Escola, onEdit: () =
         <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0">
-                    {escola.logo_url ? <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-xl" /> : <School className="w-6 h-6 text-white" />}
+                    {escola.logo_url? <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-xl" /> : <School className="w-6 h-6 text-white" />}
                 </div>
                 <div>
                     <h3 className="font-bold text-white text-lg leading-tight">{escola.nome}</h3>
                     <p className="text-xs text-gray-400">{escola.sigla || `ID: ${escola.id}`}</p>
                 </div>
             </div>
-            <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${escola.ativo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                {escola.ativo ? 'Ativa' : 'Inativa'}
+            <span className={`text-xs px-3 py-1 rounded-full font-semibold flex-shrink-0 ${escola.ativo? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                {escola.ativo? 'Ativa' : 'Inativa'}
             </span>
         </div>
 
@@ -119,17 +140,17 @@ const EscolaModal = ({ open, onClose, onSave, escola, saving }: any) => {
         onSave(formData, escola?.id)
     }
 
-    const handleChange = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+    const handleChange = (field: string, value: string) => setForm(prev => ({...prev, [field]: value }))
     const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] transition"
     const labelClass = "text-sm font-semibold text-gray-300 mb-2 block"
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in-0">
-            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="w-full max-w-2xl bg-[#0F172A]/80 backdrop-blur-2xl border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
                 <div className="p-6 border-b border-white/10 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center"><School className="w-5 h-5 text-white" /></div>
-                        <div><h2 className="text-xl font-bold text-white">{escola ? "Editar Escola" : "Cadastrar Nova Escola"}</h2><p className="text-sm text-gray-400">{escola ? "Altere os dados abaixo." : "Preencha os dados da nova escola"}</p></div>
+                        <div><h2 className="text-xl font-bold text-white">{escola? "Editar Escola" : "Cadastrar Nova Escola"}</h2><p className="text-sm text-gray-400">{escola? "Altere os dados abaixo." : "Preencha os dados da nova escola"}</p></div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                 </div>
@@ -169,7 +190,7 @@ const EscolaModal = ({ open, onClose, onSave, escola, saving }: any) => {
                     <div>
                         <p className="text-sm font-bold text-white mb-3 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-[#3B82F6]" />Logo da Escola</p>
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">{logoPreview ? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                            <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
                             <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} />
                                 <label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
                         </div>
@@ -179,7 +200,7 @@ const EscolaModal = ({ open, onClose, onSave, escola, saving }: any) => {
                 <div className="p-6 border-t border-white/10 flex flex-col sm:flex-row gap-3 shrink-0">
                     <button type="button" onClick={onClose} className="w-full sm:w-auto px-6 h-11 font-semibold rounded-xl bg-white/5 text-white hover:bg-white/10 transition">Cancelar</button>
                     <button type="submit" onClick={handleSubmit} disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#3B82F6]/30 transition disabled:opacity-50">
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving ? "Salvando..." : escola ? "Salvar Alterações" : "Criar Escola"}
+                        {saving? <Loader2 className="w-5 h-5 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar Alterações" : "Criar Escola"}
                     </button>
                 </div>
             </div>
@@ -199,7 +220,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false)
+            if (dropdownRef.current &&!dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false)
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -211,10 +232,10 @@ export default function Dashboard() {
             const params: any = {}
             if (filtroStatus === 'ativa') params.ativo = true
             if (filtroStatus === 'inativa') params.ativo = false
-            const res = await axios.get<Escola[]>(`${API_URL}/escolas`, { params })
+            const res = await api.get<Escola[]>(`/escolas`, { params }) // 👈 AGORA USA 'api'
             setEscolas(res.data)
         } catch (err: any) {
-            toast.error(`Erro ao carregar escolas: ${err.message}`)
+            toast.error(`Erro ao carregar escolas: ${err.response?.data?.detail || err.message}`)
         } finally {
             setLoading(false)
         }
@@ -226,10 +247,10 @@ export default function Dashboard() {
         setSaving(true)
         try {
             if (id) {
-                await axios.put(`${API_URL}/escolas/${id}`, data)
+                await api.put(`/escolas/${id}`, data) // 👈 AGORA USA 'api'
                 toast.success("Escola atualizada com sucesso!")
             } else {
-                await axios.post(`${API_URL}/escolas`, data)
+                await api.post(`/escolas`, data) // 👈 AGORA USA 'api'
                 toast.success("Escola criada com sucesso!")
             }
             setModalOpen(false)
@@ -247,7 +268,7 @@ export default function Dashboard() {
     const handleDelete = async (id: string) => {
         if (confirm("Tem certeza que deseja desativar esta escola?")) {
             try {
-                await axios.delete(`${API_URL}/escolas/${id}`)
+                await api.delete(`/escolas/${id}`) // 👈 AGORA USA 'api'
                 toast.success("Escola desativada")
                 fetchEscolas()
             } catch { toast.error("Erro ao desativar") }
@@ -276,12 +297,12 @@ export default function Dashboard() {
                     <label className="text-sm text-gray-400 mb-2 block">Filtrar por Status</label>
                     <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
-                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
                         <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden">
                             <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
-                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
+                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
                                 </button>
                             ))}</div>
@@ -298,8 +319,8 @@ export default function Dashboard() {
 
             <div>
                 <p className="font-bold text-white text-lg mb-4">Escolas Cadastradas <span className="text-sm font-normal text-gray-400 ml-2">({escolas.length} encontradas)</span></p>
-                {loading ? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
-                    escolas.length === 0 ? <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
+                {loading? <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" /></div> :
+                    escolas.length === 0? <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-10 text-center"><School className="w-12 h-12 text-gray-500 mx-auto mb-3" /><p className="text-gray-400">Nenhuma escola encontrada com este filtro.</p></div> :
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                             {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDelete(escola.id)} />)}
                         </div>
