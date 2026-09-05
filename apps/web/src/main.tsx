@@ -5,7 +5,7 @@ import Login from './pages/auth/Login'
 import MainLayout from './layouts/MainLayout'
 import SchoolsPage from './pages/admin/SchoolsPage'
 import UsersPage from './pages/admin/UsersPage'
-import AjudaPage from './pages/admin/AjudaPage' // 👈 ADD
+import AjudaPage from './pages/admin/AjudaPage'
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
 import './globals.css'
@@ -43,10 +43,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         </PrivateRoute>
                     }
                 >
-                    <Route index element={<SchoolsPage />} />
-                    <Route path="schools" element={<SchoolsPage />} />
+                    <Route index element={<SchoolsPage />} /> {/* /dashboard = Painel = Escolas */}
+                    {/* REMOVIDO: <Route path="schools" element={<SchoolsPage />} /> */}
+                    <Route path="schools/:id" element={<div>Detalhes da Escola</div>} /> {/* 👈 só pra detalhe se precisar */}
                     <Route path="users" element={<UsersPage />} />
-                    <Route path="ajuda" element={<AjudaPage />} /> {/* 👈 ADD */}
+                    <Route path="ajuda" element={<AjudaPage />} />
                     <Route path="settings" element={<div>Configurações</div>} />
                 </Route>
 

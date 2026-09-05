@@ -11,9 +11,10 @@ export default function AjudaPage() {
 
     return (
         <div className="space-y-6">
+            
             <div>
-                <h1 className="text-2xl font-bold text-white">Ajuda</h1>
-                <p className="text-gray-400">Tire suas dúvidas e encontre suporte sobre o SIGE</p>
+                <h2 className="text-3xl font-bold text-white">Ajuda</h2>
+                <p className="text-gray-400">Tire suas dúvidas e encontre suporte sobre o sige</p>
             </div>
 
             {/* Cards de Contato */}

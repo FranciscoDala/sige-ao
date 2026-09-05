@@ -11,11 +11,10 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
-    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Building2, label: 'Escolas', path: '/dashboard/schools', type: 'Definição' },
+    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' }, // 👈 Painel = Lista de Escolas
     { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
     { icon: CircleHelp, label: 'Ajuda', path: '/dashboard/ajuda', type: 'Definição' },
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true }, // 👈 OCULTO
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true },
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
