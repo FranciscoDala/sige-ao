@@ -34,13 +34,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 {/* Header */}
                 <div className="p-5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-white" />
-                        </div>
+
                         <div>
-                            <h2 className="text-xl font-bold text-white">SIGE</h2>
+                            <h2 className="text-xl font-bold text-white">Sige</h2>
                         </div>
-                        <span className="text-xs px-2 py-0.5 bg-[#3B82F6]/20 text-[#3B82F6] rounded-md font-semibold">Admin</span>
                     </div>
                     {/* Botão X só no mobile */}
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg md:hidden">
