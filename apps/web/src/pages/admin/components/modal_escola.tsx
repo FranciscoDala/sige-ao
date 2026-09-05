@@ -11,7 +11,7 @@ const NIVEIS_ENSINO = [
     { value: "COMPLEXO", label: "Complexo - 7ª à 13ª" },
     { value: "MEDIO_TECNICO", label: "Médio Técnico" },
     { value: "SUPERIOR", label: "Superior" },
-] // 👈 ADD
+]
 
 const PROVINCIAS_ANGOLA = [
     "Bengo", "Benguela", "Bié", "Cabinda", "Cuando Cubango", "Cuanza Norte",
@@ -33,7 +33,7 @@ export interface Escola {
     nome: string
     sigla?: string | null
     nif?: string | null
-    nivel_ensino?: "PRIMARIO" | "I_CICLO" | "II_CICLO" | "COMPLEXO" | "MEDIO_TECNICO" | "SUPERIOR" // 👈 ADD
+    nivel_ensino?: "PRIMARIO" | "I_CICLO" | "II_CICLO" | "COMPLEXO" | "MEDIO_TECNICO" | "SUPERIOR"
     endereco?: string | null
     telefone?: string | null
     provincia?: string | null
@@ -58,16 +58,16 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     const primeiraCarga = useRef(true)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const [form, setForm] = useState({
-        nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO", // 👈 ADD
+        nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO",
         endereco: "", telefone: "", provincia: "", municipio: ""
     })
 
     const [dropdownProv, setDropdownProv] = useState(false)
     const [dropdownMun, setDropdownMun] = useState(false)
-    const [dropdownNivel, setDropdownNivel] = useState(false) // 👈 ADD
+    const [dropdownNivel, setDropdownNivel] = useState(false)
     const dropdownProvRef = useRef<HTMLDivElement>(null)
     const dropdownMunRef = useRef<HTMLDivElement>(null)
-    const dropdownNivelRef = useRef<HTMLDivElement>(null) // 👈 ADD
+    const dropdownNivelRef = useRef<HTMLDivElement>(null)
 
     const municipios = useMemo(() => MUNICIPIOS_ANGOLA[form.provincia] || [], [form.provincia]);
 
@@ -75,7 +75,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         const handleClickOutside = (event: Event) => {
             if (dropdownProvRef.current &&!dropdownProvRef.current.contains(event.target as Node)) setDropdownProv(false)
             if (dropdownMunRef.current &&!dropdownMunRef.current.contains(event.target as Node)) setDropdownMun(false)
-            if (dropdownNivelRef.current &&!dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false) // 👈 ADD
+            if (dropdownNivelRef.current &&!dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false)
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -99,14 +99,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         if (escola) {
             setForm({
                 nome: escola.nome || "", sigla: escola.sigla || "", nif: escola.nif || "",
-                nivel_ensino: escola.nivel_ensino || "PRIMARIO", // 👈 ADD
+                nivel_ensino: escola.nivel_ensino || "PRIMARIO",
                 endereco: escola.endereco || "", telefone: escola.telefone || "",
                 provincia: escola.provincia || "", municipio: escola.municipio || ""
             })
             setLogoPreview(escola.logo_url || null)
             primeiraCarga.current = true;
         } else {
-            setForm({ nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO", endereco: "", telefone: "", provincia: "", municipio: "" }) // 👈 ADD
+            setForm({ nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO", endereco: "", telefone: "", provincia: "", municipio: "" })
             setLogoPreview(null)
             primeiraCarga.current = true;
         }
@@ -134,7 +134,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         e.preventDefault()
         if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
         if (!form.provincia) { toast.error("Selecione a província"); return }
-        if (!form.nivel_ensino) { toast.error("Selecione o nível de ensino"); return } // 👈 ADD
+        if (!form.nivel_ensino) { toast.error("Selecione o nível de ensino"); return }
         const formData = new FormData()
         if (!escola) formData.append("id", `ESC${Date.now().toString().slice(-3)}`)
         Object.entries(form).forEach(([k, v]) => formData.append(k, v))
@@ -158,7 +158,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
     const CustomSelect = ({
-        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv, isObject = false // 👈 ADD isObject
+        value, onSelect, options, placeholder, disabled = false, isOpen, setIsOpen, refDiv, isObject = false
     }: any) => (
         <div ref={refDiv} className="relative sm:col-span-3">
             <button
@@ -168,7 +168,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
                 <span className="truncate">
-                    {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder} {/* 👈 ADD */}
+                    {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
                 </span>
                 <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
             </button>
@@ -177,7 +177,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 <div className="absolute z-20 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
                     <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
-                        {options.map((op: any) => { // 👈 AJUSTE
+                        {options.map((op: any) => {
                             const optionValue = isObject? op.value : op
                             const optionLabel = isObject? op.label : op
                             return (
@@ -185,8 +185,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                                     key={optionValue}
                                     type="button"
                                     onClick={() => { onSelect(optionValue); setIsOpen(false) }}
-                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'
-                                        }`}
+                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
                                 >
                                     <span>{optionLabel}</span>
                                     {value === optionValue && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
@@ -203,7 +202,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
             >
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
@@ -225,7 +224,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                                 <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="Escola Mutamba" required />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                                <label className={labelClass}><GraduationCap className="w-4 h-4" />Nível de Ensino *</label> {/* 👈 ADD */}
+                                <label className={labelClass}><GraduationCap className="w-4 h-4" />Nível de Ensino *</label>
                                 <CustomSelect
                                     refDiv={dropdownNivelRef}
                                     value={form.nivel_ensino}
@@ -300,11 +299,22 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
-                        <button type="submit" disabled={saving} className="w-full h-11 font-bold rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#3B82F6]/20 transition">
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}{saving? "Salvando..." : escola? "Salvar" : "Salvar"}
+                    {/* FOOTER AJUSTADO */}
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#3B82F6]/20 transition order-1 sm:order-2"
+                        >
+                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            {saving? "Salvando..." : escola? "Salvar" : "Salvar"}
                         </button>
-                        <button type="button" onClick={onClose} className="w-full px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition">
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1"
+                        >
                             Cancelar
                         </button>
                     </div>
