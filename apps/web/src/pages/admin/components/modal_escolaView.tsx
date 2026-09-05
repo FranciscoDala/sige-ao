@@ -6,7 +6,7 @@ interface Props {
     open: boolean
     onClose: () => void
     escola: Escola | null
-    onEdit: (escola: Escola) => void // 👈 1. RECEBE ONEDIT PRA ABRIR A OUTRA MODAL
+    onEdit: (escola: Escola) => void
 }
 
 export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props) {
@@ -28,8 +28,8 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
     }
 
     const handleEditClick = () => {
-        onEdit(escola) // chama a função do pai pra abrir a modal de editar
-        onClose() // fecha a modal de ver
+        onEdit(escola)
+        onClose()
     }
 
     const stats = [
@@ -43,7 +43,7 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
         <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[720px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                className="w-full max-w-[720px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl" // 👈 CORRIGIDO: flex-col
             >
                 {/* HEADER */}
                 <div className="p-5 pb-4 border-b border-white/10 shrink-0">
@@ -56,19 +56,26 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
                                 }
                             </div>
                             <div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-wrap">
                                     <h2 className="text-xl font-bold text-white">{escola.nome}</h2>
-                                    <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                        escola.ativo? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-red-500/15 text-red-400'
-                                    }`}>
-                                        <div className={`w-2 h-2 rounded-full ${escola.ativo? 'bg-[#10B981]' : 'bg-red-400'}`}></div>
-                                        {escola.ativo? 'Ativa' : 'Inativa'}
-                                    </span>
+                                    <div className="flex items-center gap-2"> {/* 👈 AGRUPEI STATUS + X */}
+                                        <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                            escola.ativo? 'bg-[#10B981]/15 text-[#10B981]' : 'bg-red-500/15 text-red-400'
+                                        }`}>
+                                            <div className={`w-2 h-2 rounded-full ${escola.ativo? 'bg-[#10B981]' : 'bg-red-400'}`}></div>
+                                            {escola.ativo? 'Ativa' : 'Inativa'}
+                                        </span>
+                                        <button
+                                            onClick={onClose}
+                                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 border-red-500/30 rounded-lg transition" // 👈 X COM FUNDO VERMELHO
+                                        >
+                                            <X className="w-4 h-4 text-red-400" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-gray-400 mt-1">{escola.sigla} • ID: {escola.id}</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition shrink-0"><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
                 </div>
 
@@ -77,7 +84,7 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
                     <div className="space-y-6">
 
                         {/* STATS */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             {stats.map((stat, i) => (
                                 <div key={i} className="bg-white/5 border-white/10 rounded-xl p-3">
                                     <div className="flex items-center gap-2 mb-2">
@@ -89,41 +96,40 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
                             ))}
                         </div>
 
-                        {/* DADOS */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white/5 border-white/10 rounded-xl p-4 space-y-3">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
-                                <div className="space-y-1 text-sm">
-                                    <p className="text-gray-300"><span className="text-gray-500">Província:</span> {escola.provincia || '-'}</p>
-                                    <p className="text-gray-300"><span className="text-gray-500">Município:</span> {escola.municipio || '-'}</p>
-                                    <p className="text-gray-300"><span className="text-gray-500">Endereço:</span> {escola.endereco || '-'}</p>
-                                </div>
+                        {/* LOCALIZAÇÃO */}
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2"><MapPin className="w-4 h-4 text-[#3B82F6]" />Localização</h3>
+                            <div className="space-y-1 text-sm">
+                                <p className="text-gray-300"><span className="text-gray-500">Província:</span> {escola.provincia || '-'}</p>
+                                <p className="text-gray-300"><span className="text-gray-500">Município:</span> {escola.municipio || '-'}</p>
+                                <p className="text-gray-300"><span className="text-gray-500">Endereço:</span> {escola.endereco || '-'}</p>
                             </div>
+                        </div>
 
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2"><Phone className="w-4 h-4 text-[#3B82F6]" />Contato</h3>
-                                <div className="space-y-1 text-sm">
-                                    <p className="text-gray-300"><span className="text-gray-500">Telefone:</span> {escola.telefone || '-'}</p>
-                                    <p className="text-gray-300"><span className="text-gray-500">NIF:</span> {escola.nif || '-'}</p>
-                                </div>
+                        {/* CONTATO */}
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2"><Phone className="w-4 h-4 text-[#3B82F6]" />Contato</h3>
+                            <div className="space-y-1 text-sm">
+                                <p className="text-gray-300"><span className="text-gray-500">Telefone:</span> {escola.telefone || '-'}</p>
+                                <p className="text-gray-300"><span className="text-gray-500">NIF:</span> {escola.nif || '-'}</p>
                             </div>
                         </div>
 
                         {/* IDENTIDADE VISUAL */}
                         <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
                             <h3 className="text-sm font-bold text-white flex items-center gap-2"><Eye className="w-4 h-4 text-[#3B82F6]" />Identidade Visual</h3>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-wrap">
                                 <div>
                                     <p className="text-xs text-gray-500 mb-1">Cor Primária</p>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg border-white/10" style={{ backgroundColor: escola.cor_primaria }}></div>
+                                        <div className="w-8 h-8 rounded-lg border border-white/10" style={{ backgroundColor: escola.cor_primaria }}></div>
                                         <span className="text-sm text-gray-300">{escola.cor_primaria}</span>
                                     </div>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 mb-1">Cor Secundária</p>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg border-white/10" style={{ backgroundColor: escola.cor_secundaria }}></div>
+                                        <div className="w-8 h-8 rounded-lg border border-white/10" style={{ backgroundColor: escola.cor_secundaria }}></div>
                                         <span className="text-sm text-gray-300">{escola.cor_secundaria}</span>
                                     </div>
                                 </div>
@@ -137,15 +143,15 @@ export default function EscolaViewModal({ open, onClose, escola, onEdit }: Props
                     </div>
                 </div>
 
-                {/* FOOTER - BOTOES CENTRALIZADOS NA DIREITA IGUAL IMAGEM */}
-                <div className="p-4 border-t border-white/10 flex justify-end gap-3 shrink-0 bg-[#0F172A]/90"> {/* 👈 justify-end */}
+                {/* FOOTER - BOTOES VOLTARAM */}
+                <div className="p-4 border-t border-white/10 flex justify-end gap-3 shrink-0 bg-[#0F172A]/90">
                     <button
-                        onClick={handleEditClick} // 👈 2. CHAMA EDITAR
-                        className="px-6 h-11 font-semibold rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6]/30 border border-[#3B82F6]/20 text-[#3B82F6] transition flex items-center justify-center gap-2"
+                        onClick={handleEditClick}
+                        className="px-6 h-11 font-semibold rounded-xl bg-[#3B82F6]/15 hover:bg-[#3B82F6]/30 border-[#3B82F6]/20 text-[#3B82F6] transition flex items-center justify-center gap-2"
                     >
                         <Edit className="w-4 h-4" /> Editar Escola
                     </button>
-                    <button className="px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition flex items-center justify-center gap-2">
+                    <button className="px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition flex items-center justify-center gap-2">
                         <Trash2 className="w-4 h-4" /> {escola.ativo? 'Desativar' : 'Ativar'}
                     </button>
                 </div>
