@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School, Menu, X, Shield, LayoutGrid, Settings, LogOut
+    ChevronDown, Loader2, School, Menu, X, Bell, Search, LogOut
 } from 'lucide-react'
 import { toast } from 'sonner'
 import StatCard from './components/card_stat'
@@ -33,7 +33,7 @@ export default function Dashboard() {
     const [saving, setSaving] = useState(false)
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
-    const [logoutOpen, setLogoutOpen] = useState(false)
+    const [logoutOpen, setLogoutOpen] = useState(false) // 👈 estado da modal
 
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -115,71 +115,52 @@ export default function Dashboard() {
         { title: "Províncias", value: new Set(escolas.map(e => e.provincia)).size, icon: MapPin, color: "bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED]" },
     ]
 
-    const menu = [
-        { label: 'Visão Geral', icon: LayoutGrid, active: true },
-        { label: 'Gerenciar Escolas', icon: Building2 },
-        { label: 'Configurações', icon: Settings },
-        { label: 'Sair', icon: LogOut, action: () => setLogoutOpen(true) },
-    ]
-
     return (
         <div className="flex bg-[#0F172A] min-h-screen text-white">
             {/* OVERLAY MOBILE */}
             {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" />}
 
-            {/* ===== SIDEBAR PROFISSIONAL ===== */}
+            {/* ===== SIDEBAR QUE JÁ EXISTE ===== */}
             <aside className={`
-                fixed top-4 left-4 z-50 h-[calc(100%-2rem)]
-                w-[80%] max-w-[280px] md:w-64 /* 80% mobile, 256px desktop */
-                bg-[#111827] border border-white/10 rounded-2xl
-                transition-transform duration-300 ease-in-out
-                ${sidebarOpen? 'translate-x-0' : '-translate-x-[120%]'} /* sai 100% da tela */
+                fixed top-0 left-0 z-50 h-full
+                w-[80%] max-w-sm md:w-64 /* 80% no mobile */
+                bg-[#0F172A] border-r border-white/10
+                transition-transform duration-300
+                ${sidebarOpen? 'translate-x-0' : '-translate-x-full'}
                 md:translate-x-0
-                flex-col shadow-2xl
             `}>
-                {/* HEADER LOGO */}
-                <div className="p-5 border-b border-white/10 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#3B82F6]/15 rounded-xl flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-[#3B82F6]" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-white tracking-tight">SIGE</h1>
-                                <span className="px-2 py-0.5 text-[10px] font-semibold bg-[#3B82F6]/20 text-[#3B82F6] rounded-md">Admin</span>
-                            </div>
-                        </div>
-                    </div>
+                <div className="p-5 border-b border-white/10 flex items-center justify-between">
+                    <h1 className="text-xl font-bold text-white">SIGE</h1>
                     <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 hover:bg-white/10 rounded-lg">
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
-
-                {/* NAV */}
-                <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
-                    {menu.map((item) => (
-                        <button
-                            key={item.label}
-                            onClick={() => { setSidebarOpen(false); item.action?.() }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200
-                                ${item.active
-                                   ? 'bg-white/10 text-white font-semibold'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                }
-                            `}
-                        >
-                            <item.icon className="w-5 h-5 flex-shrink-0" />
-                            <span className="text-sm">{item.label}</span>
-                        </button>
-                    ))}
+                <nav className="p-4 space-y-1">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white font-semibold">
+                        <Building2 className="w-5 h-5" /> Painel
+                    </button>
                 </nav>
             </aside>
 
             {/* CONTEUDO PRINCIPAL */}
-            <main className="flex-1 md:ml-72 p-4 md:p-6">
-                <button onClick={() => setSidebarOpen(true)} className="md:hidden mb-4 p-2 rounded-lg bg-white/5 hover:bg-white/10">
-                    <Menu className="w-6 h-6" />
-                </button>
+            <main className="flex-1 md:ml-64 p-4">
+
+                {/* ===== HEADER COM BTN SAIR ===== */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-6 flex items-center justify-between gap-3">
+                    <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-white/10">
+                        <Menu className="w-6 h-6" />
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10"><Search className="w-5 h-5 text-gray-300" /></button>
+                        <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10"><Bell className="w-5 h-5 text-gray-300" /></button>
+                        <button
+                            onClick={() => setLogoutOpen(true)} // 👈 ABRE A MODAL AQUI
+                            className="p-2 rounded-lg bg-red-500/15 hover:bg-red-500/30"
+                        >
+                            <LogOut className="w-5 h-5 text-red-400" />
+                        </button>
+                    </div>
+                </div>
 
                 <div className="space-y-6">
                     <div>
@@ -194,7 +175,7 @@ export default function Dashboard() {
                                 <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute z-10 w-full mt-2 bg-[#1E293B] border-white/10 rounded-xl shadow-2xl">
+                                <div className="absolute z-10 w-full mt-2 bg-[#1E293B] border-white/10 rounded-xl">
                                     <div className="py-1">{opcoesFiltro.map(op => (
                                         <button key={op.value} onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
                                             <op.icon className="w-5 h-5" /><span>{op.label}</span>
@@ -203,7 +184,7 @@ export default function Dashboard() {
                                 </div>
                             )}
                         </div>
-                        <button onClick={handleOpenCreate} className="w-full sm:w-1/2 h-11 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#3B82F6]/30 transition">
+                        <button onClick={handleOpenCreate} className="w-full sm:w-1/2 h-11 flex items-center justify-center gap-2 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white px-5 rounded-xl font-semibold">
                             <Plus className="w-5 h-5" /> Nova Escola
                         </button>
                     </div>
@@ -226,7 +207,7 @@ export default function Dashboard() {
                 {/* MODAIS */}
                 <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
                 <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
-                <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} />
+                <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} /> {/* 👈 AQUI */}
             </main>
         </div>
     )
