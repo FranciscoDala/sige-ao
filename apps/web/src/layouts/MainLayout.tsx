@@ -48,6 +48,7 @@ export default function MainLayout() {
         setIsMobileMenuOpen(false)
         setIsSearchModalOpen(false)
         setSearchQuery('')
+        setIsSearchOpen(false) // fecha barra desktop tb
     }
 
     const handleConfirmLogout = () => {
@@ -56,36 +57,63 @@ export default function MainLayout() {
         navigate('/login')
     }
 
+    // BUSCA AJUSTADA PRA NOVA ROTA DO BACKEND
     useEffect(() => {
-        if (!searchQuery.trim()) { setSearchResults([]); return }
+        if (!searchQuery.trim() || searchQuery.length < 2) { setSearchResults([]); return } // min_length=2 do backend
         const delay = setTimeout(async () => {
             setSearching(true)
             try {
-                const res = await api.get(`/search?q=${searchQuery}`)
+                // 1. ROTA CORRETA
+                const res = await api.get(`/escolas/search/global?q=${searchQuery}`)
+
                 const results: SearchResult[] = [
-                    ...res.data.escolas?.map((e: any) => ({ id: e.id, nome: e.nome, sub: e.provincia, path: `/dashboard/schools/${e.id}`, type: 'Escola' as const, Icon: Building2 })) || [],
-                    ...res.data.usuarios?.map((u: any) => ({ id: u.id, nome: u.nome, sub: u.email, path: `/dashboard/users/${u.id}`, type: 'Usuário' as const, Icon: User })) || [],
-                    ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({ id: m.path, nome: m.label, path: m.path, type: 'Definição' as const, Icon: m.icon }))
+                    // 2. MAPEAMENTO ESCOLAS
+                    ...res.data.escolas?.map((e: any) => ({
+                        id: e.id,
+                        nome: e.nome,
+                        sub: e.provincia, // vem do backend
+                        path: `/dashboard/schools/${e.id}`,
+                        type: 'Escola' as const,
+                        Icon: Building2
+                    })) || [],
+                    // 3. MAPEAMENTO USUARIOS
+                    ...res.data.usuarios?.map((u: any) => ({
+                        id: u.id,
+                        nome: u.nome,
+                        sub: u.email, // vem do backend
+                        path: `/dashboard/users/${u.id}`,
+                        type: 'Usuário' as const,
+                        Icon: User
+                    })) || [],
+                    // 4. MAPEAMENTO MENU LOCAL
+                    ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                        id: m.path,
+                        nome: m.label,
+                        path: m.path,
+                        type: 'Definição' as const,
+                        Icon: m.icon
+                    }))
                 ]
                 setSearchResults(results)
             } catch (err: any) {
-                toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
+                if(err.response?.status !== 404) { // evita toast pra cada letra
+                    toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
+                }
                 setSearchResults([])
             } finally { setSearching(false) }
-        }, 400)
+        }, 400) // debounce
         return () => clearTimeout(delay)
     }, [searchQuery])
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] relative flex overflow-x-hidden"> {/* 1. overflow-x-hidden */}
+        <div className="min-h-screen w-full bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] relative flex overflow-x-hidden">
             <div className="fixed top-0 left-1/4 w-96 h-96 bg-[#3B82F6]/20 rounded-full blur-[120px] -z-10"></div>
             <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-[#8B5CF6]/20 rounded-full blur-[120px] -z-10"></div>
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            {/* SIDEBAR: Reduzi pra 80% no mobile */}
-            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}> {/* p-3 */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20">
+            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20"> {/* flex-col */}
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
@@ -96,9 +124,9 @@ export default function MainLayout() {
                     </div>
                     <nav className="space-y-1 flex-1">
                         {menuItems.map(item => {
-                            const isActive = location.pathname.startsWith(item.path)
+                            const isActive = location.pathname === item.path
                             return (
-                                <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                                <button key={item.path} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border border-[#3B82F6]/30' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                                     <item.icon className="w-5 h-5 flex-shrink-0" />
                                     <span className="whitespace-nowrap">{item.label}</span>
                                 </button>
@@ -117,18 +145,24 @@ export default function MainLayout() {
                 </div>
             </aside>
 
-            <div className="flex-1 w-full lg:ml-[260px]"> {/* 2. w-full */}
-                <header className="sticky top-0 z-30 p-3 lg:p-6"> {/* 3. p-3 no mobile */}
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10"> {/* px-3 gap-2 */}
+            <div className="flex-1 w-full lg:ml-[260px]">
+                <header className="sticky top-0 z-30 p-3 lg:p-6">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-white" /></button>
 
-                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
+                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen ? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
                             <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
-                            <input ref={searchInputRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar escola, usuário..." className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400" />
+                            <input
+                                ref={searchInputRef}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar escola, usuário..."
+                                className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
+                            />
                             {searchQuery && (
                                 <div className="absolute top-14 w-full bg-[#1E293B]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
-                                    {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]"/></div>}
-                                    {!searching && searchResults.length === 0 && <p className="p-4 text-gray-400 text-sm">Nenhum resultado</p>}
+                                    {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]" /></div>}
+                                    {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="p-4 text-gray-400 text-sm">Nenhum resultado</p>}
                                     {searchResults.map(item => (
                                         <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
                                             <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
@@ -142,12 +176,12 @@ export default function MainLayout() {
                             )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 ml-auto"> {/* gap-1.5 */}
-                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                        <div className="flex items-center gap-1.5 ml-auto">
+                            <button onClick={() => window.innerWidth < 768 ? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <Search className="w-5 h-5 text-white" />
                             </button>
-                            <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
-                            <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                            <button className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
+                            <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
                             <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">
@@ -157,25 +191,35 @@ export default function MainLayout() {
                     </div>
                 </header>
 
-                {/* MAIN: Removi padding lateral extra */}
-                <main className="p-3 lg:p-6 w-full"> {/* p-3 */}
+                <main className="p-3 lg:p-6 w-full">
                     <Outlet />
                 </main>
             </div>
 
             {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex flex-col p-3 md:hidden"> {/* p-3 */}
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                            <input ref={searchInputRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Pesquisar..." className="w-full pl-10 pr-4 py-3 bg-white/10 border-white/20 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400" />
-                        </div>
-                        <button onClick={() => {setIsSearchModalOpen(false); setSearchQuery('')}} className="p-2"><X className="w-6 h-6 text-white" /></button>
+                <div className="fixed inset-0 z-[60] bg-[#0F172A] flex flex-col p-4 md:hidden animate-in fade-in">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-white">Pesquisar</h2>
+                        <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
+                            <X className="w-6 h-6 text-gray-300" />
+                        </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto bg-white/5 rounded-2xl border border-white/10 p-2">
-                        {!searchQuery && <p className="text-center text-gray-400 pt-10">Digite para pesquisar...</p>}
-                        {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#3B82F6]"/></div>}
-                        {!searching && searchQuery && searchResults.length === 0 && <p className="text-center text-gray-400 pt-10">Nenhum resultado encontrado</p>}
+
+                    <div className="relative mb-4">
+                        <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                        <input
+                            ref={searchInputRef}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Pesquisar escolas, usuários..."
+                            className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400"
+                        />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto bg-white/5 rounded-2xl border-white/10 p-2">
+                        {!searchQuery && <p className="text-center text-gray-400 pt-10">Digite para começar a pesquisar</p>}
+                        {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#3B82F6]" /></div>}
+                        {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center text-gray-400 pt-10">Nenhum resultado encontrado</p>}
                         {searchResults.map(item => (
                             <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
                                 <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
