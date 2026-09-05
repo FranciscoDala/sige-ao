@@ -8,8 +8,9 @@ import { toast } from 'sonner'
 import StatCard from './components/card_stat'
 import EscolaCard from './components/card_escolas'
 import EscolaModal, { Escola } from './components/modal_escola'
+import EscolaViewModal from './components/modal_escolaView' // 👈 1. IMPORT DA MODAL VER
 import ConfirmDeleteModal from './components/modal_confirmDelete'
-import ConfirmLogoutModal from './components/modal_confirmLogout' // 👈 1. IMPORT
+import ConfirmLogoutModal from './components/modal_confirmLogout'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -30,14 +31,18 @@ export default function Dashboard() {
     const [modalOpen, setModalOpen] = useState(false)
     const [escolaEditando, setEscolaEditando] = useState<Escola | null>(null)
     const [saving, setSaving] = useState(false)
+
+    const [viewModalOpen, setViewModalOpen] = useState(false) // 👈 2. ESTADO MODAL VER
+    const [escolaVisualizando, setEscolaVisualizando] = useState<Escola | null>(null) // 👈 2. ESTADO MODAL VER
+
     const [confirmOpen, setConfirmOpen] = useState(false)
     const [escolaParaDeletar, setEscolaParaDeletar] = useState<string | null>(null)
-    const [logoutOpen, setLogoutOpen] = useState(false) // 👈 2. ESTADO
+    const [logoutOpen, setLogoutOpen] = useState(false)
 
     const dropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: Event) => { // corrigido
             if (dropdownRef.current &&!dropdownRef.current.contains(event.target as Node)) setDropdownOpen(false)
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -79,6 +84,7 @@ export default function Dashboard() {
 
     const handleOpenCreate = () => { setEscolaEditando(null); setModalOpen(true) }
     const handleOpenEdit = (escola: Escola) => { setEscolaEditando(escola); setModalOpen(true) }
+    const handleOpenView = (escola: Escola) => { setEscolaVisualizando(escola); setViewModalOpen(true) } // 👈 3. FUNÇÃO VER
     const handleDeleteClick = (id: string) => { setEscolaParaDeletar(id); setConfirmOpen(true) }
 
     const handleConfirmDelete = async () => {
@@ -95,7 +101,7 @@ export default function Dashboard() {
         }
     }
 
-    const handleConfirmLogout = () => { // 👈 3. FUNÇÃO
+    const handleConfirmLogout = () => {
         localStorage.removeItem('access_token')
         toast.success("Sessão terminada")
         window.location.href = '/login'
@@ -116,8 +122,6 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6">
-
-
             <div>
                 <h2 className="text-3xl font-bold text-white">Painel</h2>
                 <p className="text-gray-400">Gerencie todas as escolas cadastradas</p>
@@ -125,15 +129,16 @@ export default function Dashboard() {
 
             <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:border-white/20 transition">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-12 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200">
                         <div className="flex items-center gap-3 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
-                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/80 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                            <div className="max-h-60 overflow-y-auto py-1">{opcoesFiltro.map(op => (
-                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-white'}`}>
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
+                            <div className="max-h-60 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{opcoesFiltro.map(op => (
+                                <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
                                     <op.icon className="w-5 h-5 flex-shrink-0" /><span>{op.label}</span>
+                                    {filtroStatus === op.value && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
                                 </button>
                             ))}</div>
                         </div>
@@ -162,26 +167,34 @@ export default function Dashboard() {
                             <div className="md:hidden overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 px-4 -mx-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                 {escolas.map((escola) => (
                                     <div key={escola.id} className="w-full flex-shrink-0">
-                                        <EscolaCard escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />
+                                        <EscolaCard
+                                            escola={escola}
+                                            onView={() => handleOpenView(escola)} // 👈 4. PASSANDO ONVIEW
+                                            onEdit={() => handleOpenEdit(escola)}
+                                            onDelete={() => handleDeleteClick(escola.id)}
+                                        />
                                     </div>
                                 ))}
                             </div>
                             <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {escolas.map((escola) => <EscolaCard key={escola.id} escola={escola} onEdit={() => handleOpenEdit(escola)} onDelete={() => handleDeleteClick(escola.id)} />)}
+                                {escolas.map((escola) =>
+                                    <EscolaCard
+                                        key={escola.id}
+                                        escola={escola}
+                                        onView={() => handleOpenView(escola)} // 👈 4. PASSANDO ONVIEW
+                                        onEdit={() => handleOpenEdit(escola)}
+                                        onDelete={() => handleDeleteClick(escola.id)}
+                                    />
+                                )}
                             </div>
                         </>
                 }
             </div>
 
             <EscolaModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSaveEscola} escola={escolaEditando} saving={saving} />
+            <EscolaViewModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} escola={escolaVisualizando} /> {/* 👈 5. RENDER MODAL VER */}
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
-
-            {/* 👇 6. RENDER DA MODAL LOGOUT */}
-            <ConfirmLogoutModal
-                open={logoutOpen}
-                onClose={() => setLogoutOpen(false)}
-                onConfirm={handleConfirmLogout}
-            />
+            <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} />
         </div>
     )
 }
