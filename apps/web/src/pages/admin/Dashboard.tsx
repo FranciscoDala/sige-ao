@@ -196,7 +196,6 @@ export default function Dashboard() {
                 open={viewModalOpen}
                 onClose={() => setViewModalOpen(false)}
                 escola={escolaVisualizando}
-                onEdit={handleOpenEdit} // 👈 PASSA A FUNÇÃO DE EDITAR
             />
             <ConfirmDeleteModal open={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmDelete} />
             <ConfirmLogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} onConfirm={handleConfirmLogout} />
