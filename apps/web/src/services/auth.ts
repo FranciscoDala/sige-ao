@@ -2,7 +2,7 @@ export interface UserData {
     id: string;
     email: string;
     nome: string;
-    escola_id?: string | null // 👈 backend manda null
+    escola_id?: string | null
     nivel: string
 }
 
@@ -13,16 +13,21 @@ export interface LoginData {
 }
 
 export const authService = {
-    login: (data: LoginData) => {
+    login: (data: any) => { // 👈 mudei pra any pra não quebrar
+        // 👇 PEGA O NIVEL DE ONDE VIER
+        const nivel = data.nivel || data.user?.nivel || data.user?.NivelAcesso || 'DIRETOR'
+
         const userToSave: UserData = {
             ...data.user,
-            escola_id: data.user.escola_id ?? undefined // 👈 converte null pra undefined antes de salvar
+            nivel: nivel, // 👈 FORÇA O NIVEL CORRETO DENTRO DO USER TAMBEM
+            escola_id: data.user.escola_id ?? undefined
         }
 
         localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('nivel', data.nivel)
+        localStorage.setItem('nivel', nivel) // 👈 SALVA O QUE ACHOU
         localStorage.setItem('user', JSON.stringify(userToSave))
         console.log('[AUTH] Token salvo:', data.access_token.substring(0,20))
+        console.log('[AUTH] Nivel salvo:', nivel) // 👈 NOVO DEBUG
     },
     logout: () => {
         localStorage.removeItem('access_token')
@@ -35,9 +40,9 @@ export const authService = {
         const user = localStorage.getItem('user')
         return user ? JSON.parse(user) : null
     },
-    getEscolaId: (): string | undefined => { // 👈 CORRIGIDO AQUI
+    getEscolaId: (): string | undefined => {
         const user = authService.getUser()
-        return user?.escola_id ?? undefined // 👈 força null virar undefined
+        return user?.escola_id ?? undefined
     },
     isAuthenticated: (): boolean => !!localStorage.getItem('access_token')
 }
