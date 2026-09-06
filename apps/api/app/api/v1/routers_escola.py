@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_
 from typing import List, Optional
@@ -24,9 +25,12 @@ def check_ministerio(current_user: dict):
     if current_user["nivel"]!= "MINISTERIO":
         raise HTTPException(status_code=403, detail="Apenas MINISTERIO pode fazer isso")
 
-def check_diretor_ou_ministerio(current_user: dict):
+def check_diretor_ou_ministerio(current_user: dict = Depends(get_current_user)): # 👈 ADICIONA DEPENDS AQUI
     if current_user["nivel"] not in ["MINISTERIO", "DIRETOR", "DIRECAO"]:
         raise HTTPException(status_code=403, detail="Sem permissao")
+    return current_user # 👈 PRECISA RETORNAR
+
+
 
 def get_escola_do_usuario(current_user: dict) -> UUID:
     escola_id = current_user.get("escola_id")
@@ -111,11 +115,12 @@ async def obter_minha_escola(
     return JSONResponse(content=data)
 
 
+
 @router.put("/me/definicoes")
 async def atualizar_definicoes_escola(
-    dados: EscolaUpdate,  # 👈 BODY TEM QUE VIR PRIMEIRO
+    dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(check_diretor_ou_ministerio) # 👈 DEPENDS DEPOIS
+    current_user: dict = Depends(check_diretor_ou_ministerio) # 👈 AGORA ISSO FUNCIONA
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
@@ -125,19 +130,16 @@ async def atualizar_definicoes_escola(
 
     update_data = dados.model_dump(exclude_unset=True)
 
-    # 👇 TRATAMENTO ESPECIAL PRA ENUM
     if 'nivel_ensino' in update_data and isinstance(update_data['nivel_ensino'], str):
         try:
             update_data['nivel_ensino'] = NivelEnsino(update_data['nivel_ensino'])
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Nivel de ensino invalido: {update_data['nivel_ensino']}")
 
-    # 👇 CAMPOS BLOQUEADOS: NINGUEM DA ESCOLA PODE MUDAR
     CAMPOS_BLOQUEADOS = ['id', 'id_curto', 'nivel_ensino', 'ativo', 'criado_em']
     for campo in CAMPOS_BLOQUEADOS:
         update_data.pop(campo, None)
 
-    # Atualiza só o que veio
     for key, value in update_data.items():
         setattr(escola, key, value)
 
@@ -176,6 +178,8 @@ async def atualizar_definicoes_escola(
         "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
     }
     return JSONResponse(content=data)
+
+
 
 @router.post("/me/logo", response_model=EscolaResponse)
 async def upload_minha_logo(
