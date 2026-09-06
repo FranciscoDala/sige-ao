@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query # 👈 Tirei UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_
 from typing import List, Optional
-from uuid import UUID # 👈 FALTAVA ISSO
+from uuid import UUID
 import logging
 import uuid
 
 from app.db.database import get_db
 from app.models.models_escola import Escola, NivelEnsino
-from app.schemas.schemas_escola import EscolaResponse
+from app.schemas.schemas_escola import EscolaResponse, EscolaCreate, EscolaUpdate # 👈 ADD EscolaCreate e Update
 from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary
 
@@ -85,85 +85,74 @@ async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)): # �
 @router.post("", response_model=EscolaResponse, status_code=201)
 @router.post("/", response_model=EscolaResponse, status_code=201)
 async def criar_escola(
-    id: UUID = Form(...), # 👈 UUID
-    nome: str = Form(...),
-    sigla: Optional[str] = Form(None),
-    nif: Optional[str] = Form(None),
-    nivel_ensino: NivelEnsino = Form(NivelEnsino.PRIMARIO),
-    endereco: Optional[str] = Form(None),
-    telefone: Optional[str] = Form(None),
-    provincia: Optional[str] = Form(None),
-    municipio: Optional[str] = Form(None),
-    cor_primaria: str = Form("#3B82F6"),
-    cor_secundaria: str = Form("#8B5CF6"),
-    tema: str = Form("escuro"),
-    logo: Optional[UploadFile] = File(None),
+    dados: EscolaCreate, # 👈 MUDOU: era Form
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     check_ministerio(current_user)
-    result = await db.execute(select(Escola).where(Escola.id == id))
-    if result.scalar_one_or_none(): raise HTTPException(status_code=400, detail="Já existe uma escola com este código")
 
-    logo_url = None
-    if logo:
-        upload_data = await upload_to_cloudinary(logo, folder="logos")
-        logo_url = upload_data["optimized_url"]
+    # Verifica se id_curto já existe
+    result = await db.execute(select(Escola).where(Escola.id_curto == dados.id_curto))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Já existe uma escola com este id_curto")
 
-    id_curto = f"ESC{str(uuid.uuid4().int)[:3]}"
+    id_curto = dados.id_curto or f"ESC{str(uuid.uuid4().int)[:3]}"
 
     nova_escola = Escola(
-        id=id, nome=nome, sigla=sigla, nif=nif, nivel_ensino=nivel_ensino,
-        endereco=endereco, telefone=telefone, provincia=provincia, municipio=municipio,
-        cor_primaria=cor_primaria, cor_secundaria=cor_secundaria, tema=tema, logo_url=logo_url, id_curto=id_curto
+        id=uuid.uuid4(), # 👈 Gera no backend igual usuarios
+        nome=dados.nome,
+        sigla=dados.sigla,
+        nif=dados.nif,
+        nivel_ensino=dados.nivel_ensino,
+        endereco=dados.endereco,
+        telefone=dados.telefone,
+        provincia=dados.provincia,
+        municipio=dados.municipio,
+        email=dados.email,
+        cor_primaria=dados.cor_primaria,
+        cor_secundaria=dados.cor_secundaria,
+        cor_fundo=dados.cor_fundo,
+        tema=dados.tema,
+        fonte_titulo=dados.fonte_titulo,
+        fonte_corpo=dados.fonte_corpo,
+        estilo_card=dados.estilo_card,
+        permitir_auto_cadastro=dados.permitir_auto_cadastro,
+        usar_modulo_propina=dados.usar_modulo_propina,
+        usar_modulo_biblioteca=dados.usar_modulo_biblioteca,
+        config_json=dados.config_json,
+        ativo=dados.ativo,
+        id_curto=id_curto,
+        logo_url=dados.logo_url
     )
     db.add(nova_escola)
     await db.commit()
     await db.refresh(nova_escola)
     return nova_escola
 
+
+
 @router.put("/{escola_id}", response_model=EscolaResponse)
 async def atualizar_escola(
-    escola_id: UUID, # 👈 UUID
-    nome: str = Form(...),
-    sigla: Optional[str] = Form(None),
-    nif: Optional[str] = Form(None),
-    nivel_ensino: NivelEnsino = Form(...),
-    endereco: Optional[str] = Form(None),
-    telefone: Optional[str] = Form(None),
-    provincia: Optional[str] = Form(None),
-    municipio: Optional[str] = Form(None),
-    cor_primaria: str = Form(...),
-    cor_secundaria: str = Form(...),
-    tema: str = Form(...),
-    logo: Optional[UploadFile] = File(None),
+    escola_id: UUID,
+    dados: EscolaUpdate, # 👈 MUDOU: era Form
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
-    if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola não encontrada")
 
-    if logo:
-        upload_data = await upload_to_cloudinary(logo, folder="logos")
-        escola.logo_url = upload_data["optimized_url"]
-
-    escola.nome = nome
-    escola.sigla = sigla
-    escola.nif = nif
-    escola.nivel_ensino = nivel_ensino
-    escola.endereco = endereco
-    escola.telefone = telefone
-    escola.provincia = provincia
-    escola.municipio = municipio
-    escola.cor_primaria = cor_primaria
-    escola.cor_secundaria = cor_secundaria
-    escola.tema = tema
+    # Só atualiza campos que vieram
+    update_data = dados.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(escola, key, value)
 
     await db.commit()
     await db.refresh(escola)
     return escola
+
 
 @router.delete("/{escola_id}", status_code=204)
 async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)): # 👈 UUID
@@ -205,25 +194,7 @@ async def obter_minha_escola(
 
 @router.put("/me/definicoes", response_model=EscolaResponse)
 async def atualizar_definicoes_escola(
-    nome: str = Form(...),
-    sigla: Optional[str] = Form(None),
-    nif: Optional[str] = Form(None),
-    endereco: Optional[str] = Form(None),
-    telefone: Optional[str] = Form(None),
-    email: Optional[str] = Form(None),
-    provincia: Optional[str] = Form(None),
-    municipio: Optional[str] = Form(None),
-    cor_primaria: str = Form(...),
-    cor_secundaria: str = Form(...),
-    cor_fundo: str = Form(...),
-    tema: str = Form(...),
-    fonte_titulo: str = Form(...),
-    fonte_corpo: str = Form(...),
-    estilo_card: str = Form(...),
-    permitir_auto_cadastro: bool = Form(...),
-    usar_modulo_propina: bool = Form(...),
-    usar_modulo_biblioteca: bool = Form(...),
-    logo: Optional[UploadFile] = File(None),
+    dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -231,30 +202,12 @@ async def atualizar_definicoes_escola(
 
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
-    if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola nao encontrada")
 
-    if logo:
-        upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
-        escola.logo_url = upload_data["optimized_url"]
-
-    escola.nome = nome
-    escola.sigla = sigla
-    escola.nif = nif
-    escola.email = email
-    escola.endereco = endereco
-    escola.telefone = telefone
-    escola.provincia = provincia
-    escola.municipio = municipio
-    escola.cor_primaria = cor_primaria
-    escola.cor_secundaria = cor_secundaria
-    escola.cor_fundo = cor_fundo
-    escola.tema = tema
-    escola.fonte_titulo = fonte_titulo
-    escola.fonte_corpo = fonte_corpo
-    escola.estilo_card = estilo_card
-    escola.permitir_auto_cadastro = permitir_auto_cadastro
-    escola.usar_modulo_propina = usar_modulo_propina
-    escola.usar_modulo_biblioteca = usar_modulo_biblioteca
+    update_data = dados.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(escola, key, value)
 
     await db.commit()
     await db.refresh(escola)
