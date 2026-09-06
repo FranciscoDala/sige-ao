@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, FormEvent, useMemo, MouseEvent } from 'rea
 import { X, Upload, Loader2, Building2, Image as ImageIcon, MapPin, Phone, FileText, ChevronDown, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 const NIVEIS_ENSINO = [
     { value: "PRIMARIO", label: "Primário - 1ª à 6ª" },
     { value: "I_CICLO", label: "I Ciclo - 7ª à 9ª" },
@@ -148,7 +150,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         setForm(prev => ({...prev, [field]: value }))
     }
 
-    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
+    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) onClose()
+    }
+
+    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
     const CustomSelect = ({
@@ -193,10 +199,10 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     )
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 1. SEM onClick = travada */}
+        <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl" // 2. overflow-hidden
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl" // 👈 CORRIGIDO: ADD "flex"
             >
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
@@ -209,7 +215,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> {/* 4. scroll invisivel */}
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
                         {/* DADOS GERAIS */}
                         <div className="space-y-4">
@@ -286,21 +292,30 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><ImageIcon className="w-4 h-4" />Logo</label>
                                 <div className="sm:col-span-3 flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
-                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
+                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                    <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* 3. FOOTER FIXO + 5. RESPONSIVO */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
-                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
-                            Cancelar
-                        </button>
-                        <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
+                    {/* FOOTER IGUAL AO USUARIOMODAL */}
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2"
+                        >
                             {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                            {saving? "Salvando..." : escola? "Salvar" : "Cadastrar"}
+                            {saving? "Salvando..." : escola? "Salvar" : "Salvar"}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1"
+                        >
+                            Cancelar
                         </button>
                     </div>
                 </form>
