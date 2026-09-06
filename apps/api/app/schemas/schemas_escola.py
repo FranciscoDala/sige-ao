@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 from datetime import datetime
 from uuid import UUID
 from app.models.models_escola import NivelAcesso, NivelEnsino
@@ -21,16 +21,16 @@ class EscolaBase(BaseModel):
     ativo: bool = True
 
 class EscolaCreate(EscolaBase):
-    id: str = Field(..., min_length=3, max_length=20)
+    id: Union[UUID, str] = Field(...) # 👈 Aceita os dois
 
 class EscolaUpdate(EscolaBase):
     pass
 
 class EscolaResponse(EscolaBase):
-    id: str
+    id: UUID # 👈 CORRIGIDO
     id_curto: str
     criado_em: datetime
-    email: Optional[str] = None # 👈 ADD
+    email: Optional[str] = None
     cor_fundo: str = "#FFFFFF"
     fonte_titulo: str = "Poppins"
     fonte_corpo: str = "Inter"
@@ -42,7 +42,6 @@ class EscolaResponse(EscolaBase):
     usar_modulo_biblioteca: bool = False
     config_json: dict = {}
     model_config = ConfigDict(from_attributes=True)
-
 
 # ================== USUARIO ==================
 class UsuarioBase(BaseModel):
@@ -66,8 +65,8 @@ class UsuarioVinculoCreate(BaseModel):
     email: EmailStr
     senha: str = Field(..., min_length=6)
     telefone: Optional[str] = None
-    nivel: NivelAcesso # 👈 Aqui pode ficar Enum pq é entrada
-    escola_id: Optional[str] = None
+    nivel: NivelAcesso
+    escola_id: Optional[Union[UUID, str]] = None # 👈 CORRIGIDO
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
 
@@ -77,8 +76,8 @@ class UsuarioUpdate(BaseModel):
     senha: Optional[str] = Field(None, min_length=6)
     telefone: Optional[str] = None
     ativo: Optional[bool] = None
-    nivel: Optional[NivelAcesso] = None # 👈 Aqui pode ficar Enum pq é entrada
-    escola_id: Optional[str] = None
+    nivel: Optional[NivelAcesso] = None
+    escola_id: Optional[Union[UUID, str]] = None # 👈 CORRIGIDO
 
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
@@ -87,18 +86,16 @@ class UsuarioVinculoResponse(BaseModel):
     telefone: Optional[str] = None
     ativo: bool
     criado_em: datetime
-
-    nivel: NivelAcesso # 👈 Aqui pode ficar Enum pq vem do DB
-    escola_id: Optional[str] = None
-    perfil: Literal['super_admin', 'admin', 'diretor', 'suporte']
+    nivel: NivelAcesso
+    escola_id: Optional[Union[UUID, str]] = None # 👈 CORRIGIDO
+    perfil: Literal['super_admin', 'admin', 'diretor', 'suporte', 'aluno', 'encarregado']
     departamento: Optional[str] = None
-
     escola: Optional[EscolaResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 # ================== AUTH / LOGIN ==================
 class LoginRequest(BaseModel):
-    escola_id: Optional[str] = Field(None, description="Código da escola. Deixar vazio para Super Admin")
+    escola_id: Optional[Union[UUID, str]] = Field(None)
     email: EmailStr
     senha: str
 
@@ -106,12 +103,12 @@ class UserInToken(BaseModel):
     id: UUID
     email: EmailStr
     nome: str
-    nivel: str # 👈 CORRIGIDO: de NivelAcesso para str
-    escola_id: Optional[str] = None
+    nivel: str
+    escola_id: Optional[Union[UUID, str]] = None
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    nivel: str # 👈 CORRIGIDO: de NivelAcesso para str
+    nivel: str
     user: UserInToken
     expires_in: int = 28800
