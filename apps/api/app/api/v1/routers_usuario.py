@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, update
-from typing import List, Optional
+from typing import List, Optional, Union
+from uuid import UUID
 import uuid
 
 from app.db.database import get_db
@@ -12,38 +13,34 @@ from app.core.security import get_current_user, get_password_hash
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 def _eh_diretor(nivel: NivelAcesso) -> bool:
-    """Checa se é diretor"""
     return nivel == NivelAcesso.DIRETOR
 
-def check_permissao_criar_usuario(current_user: dict, escola_id_target: Optional[str]):
-    """Só MINISTERIO pode criar em qualquer escola. DIRETOR só na própria escola"""
-    nivel = current_user["nivel"]
-    escola_id_user = current_user["escola_id"]
+def _to_str(val: Optional[Union[UUID, str]]) -> Optional[str]:
+    return str(val) if val else None
 
-    if nivel == "MINISTERIO":
-        return
-    if nivel == "DIRETOR" and escola_id_user == escola_id_target:
-        return
+def check_permissao_criar_usuario(current_user: dict, escola_id_target: Optional[Union[UUID, str]]):
+    nivel = current_user["nivel"]
+    escola_id_user = _to_str(current_user["escola_id"])
+    escola_id_target = _to_str(escola_id_target)
+
+    if nivel == "MINISTERIO": return
+    if nivel == "DIRETOR" and escola_id_user == escola_id_target: return
     raise HTTPException(status_code=403, detail="Sem permissão para criar usuário nesta escola")
 
 def check_permissao_listar(current_user: dict):
-    """Só MINISTERIO pode listar todos. Outros só veem da própria escola"""
     if current_user["nivel"]!= "MINISTERIO":
         raise HTTPException(status_code=403, detail="Sem permissão para listar todos os usuários")
 
 def check_permissao_editar(current_user: dict, usuario_alvo: UsuarioEscola):
-    """Só MINISTERIO pode editar qualquer um. DIRETOR só da própria escola"""
     nivel = current_user["nivel"]
-    escola_id_user = current_user["escola_id"]
+    escola_id_user = _to_str(current_user["escola_id"])
+    escola_id_alvo = _to_str(usuario_alvo.escola_id)
 
-    if nivel == "MINISTERIO":
-        return
-    if nivel == "DIRETOR" and usuario_alvo.escola_id == escola_id_user:
-        return
+    if nivel == "MINISTERIO": return
+    if nivel == "DIRETOR" and escola_id_alvo == escola_id_user: return
     raise HTTPException(status_code=403, detail="Sem permissão para editar este usuário")
 
 def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optional[Escola]):
-    """Mapeia pra bater com UsuarioMinisterio do frontend"""
     mapa_perfil = {
         NivelAcesso.MINISTERIO: "super_admin",
         NivelAcesso.DIRETOR: "diretor",
@@ -57,20 +54,20 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
         NivelAcesso.ALUNO: "aluno",
         NivelAcesso.ENCARREGADO: "encarregado",
     }
-
     return {
-        "id": str(usuario.id),
+        "id": usuario.id,
         "nome": usuario.nome,
         "email": usuario.email,
         "telefone": usuario.telefone,
         "ativo": usuario.ativo,
         "criado_em": usuario.criado_em,
-        "nivel": vinculo.nivel.value,
-        "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None,
+        "nivel": vinculo.nivel,
+        "escola_id": vinculo.escola_id,
         "perfil": mapa_perfil.get(vinculo.nivel, "suporte"),
         "departamento": escola.nome if escola else "Ministério",
         "escola": escola
     }
+
 
 @router.get("/", response_model=List[UsuarioVinculoResponse])
 async def listar_usuarios(

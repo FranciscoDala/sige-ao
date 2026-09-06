@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_
 from typing import List, Optional
+from uuid import UUID # 👈 FALTAVA ISSO
 import logging
 import uuid
 
 from app.db.database import get_db
-from app.models.models_escola import Escola, NivelEnsino # 👈 ADD NivelEnsino
-# REMOVIDO: from app.models.models_user import User
+from app.models.models_escola import Escola, NivelEnsino
 from app.schemas.schemas_escola import EscolaResponse
 from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary
@@ -15,7 +15,6 @@ from app.cloudinaryUploads import upload_to_cloudinary
 import cloudinary.uploader
 
 logger = logging.getLogger(__name__)
-
 
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
 
@@ -27,14 +26,14 @@ def check_ministerio(current_user: dict):
 @router.get("/", response_model=List[EscolaResponse])
 async def listar_escolas(
     ativo: Optional[bool] = None,
-    nivel_ensino: Optional[NivelEnsino] = Query(None, description="Filtrar por nível de ensino"), # 👈 ADD FILTRO
+    nivel_ensino: Optional[NivelEnsino] = Query(None, description="Filtrar por nível de ensino"),
     search: Optional[str] = Query(None, description="Busca por nome, sigla, provincia"),
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Escola).order_by(Escola.nome)
     if ativo is not None:
         query = query.where(Escola.ativo == ativo)
-    if nivel_ensino: # 👈 ADD FILTRO
+    if nivel_ensino:
         query = query.where(Escola.nivel_ensino == nivel_ensino)
 
     if search:
@@ -58,8 +57,6 @@ async def search_global(
     current_user: dict = Depends(get_current_user)
 ):
     search_term = f"%{q}%"
-
-    # 1. Buscar Escolas - Isso já vai funcionar
     query_escolas = select(Escola).where(
         or_(
             Escola.nome.ilike(search_term),
@@ -70,19 +67,16 @@ async def search_global(
     result_escolas = await db.execute(query_escolas)
     escolas = result_escolas.scalars().all()
 
-    # 2. Buscar Usuarios - TEMPORARIAMENTE DESATIVADO
-    usuarios = []
-
     return {
         "escolas": [
-            {"id": e.id, "nome": e.nome, "provincia": e.provincia, "logo_url": e.logo_url, "nivel_ensino": e.nivel_ensino.value} # 👈 ADD
+            {"id": e.id, "nome": e.nome, "provincia": e.provincia, "logo_url": e.logo_url, "nivel_ensino": e.nivel_ensino.value}
             for e in escolas
         ],
-        "usuarios": [] # Vazio por enquanto
+        "usuarios": []
     }
 
 @router.get("/{escola_id}", response_model=EscolaResponse)
-async def obter_escola(escola_id: str, db: AsyncSession = Depends(get_db)):
+async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)): # 👈 UUID
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
@@ -91,11 +85,11 @@ async def obter_escola(escola_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("", response_model=EscolaResponse, status_code=201)
 @router.post("/", response_model=EscolaResponse, status_code=201)
 async def criar_escola(
-    id: str = Form(...),
+    id: UUID = Form(...), # 👈 UUID
     nome: str = Form(...),
     sigla: Optional[str] = Form(None),
     nif: Optional[str] = Form(None),
-    nivel_ensino: NivelEnsino = Form(NivelEnsino.PRIMARIO), # 👈 ADD
+    nivel_ensino: NivelEnsino = Form(NivelEnsino.PRIMARIO),
     endereco: Optional[str] = Form(None),
     telefone: Optional[str] = Form(None),
     provincia: Optional[str] = Form(None),
@@ -119,7 +113,7 @@ async def criar_escola(
     id_curto = f"ESC{str(uuid.uuid4().int)[:3]}"
 
     nova_escola = Escola(
-        id=id, nome=nome, sigla=sigla, nif=nif, nivel_ensino=nivel_ensino, # 👈 ADD
+        id=id, nome=nome, sigla=sigla, nif=nif, nivel_ensino=nivel_ensino,
         endereco=endereco, telefone=telefone, provincia=provincia, municipio=municipio,
         cor_primaria=cor_primaria, cor_secundaria=cor_secundaria, tema=tema, logo_url=logo_url, id_curto=id_curto
     )
@@ -130,11 +124,11 @@ async def criar_escola(
 
 @router.put("/{escola_id}", response_model=EscolaResponse)
 async def atualizar_escola(
-    escola_id: str,
+    escola_id: UUID, # 👈 UUID
     nome: str = Form(...),
     sigla: Optional[str] = Form(None),
     nif: Optional[str] = Form(None),
-    nivel_ensino: NivelEnsino = Form(...), # 👈 ADD
+    nivel_ensino: NivelEnsino = Form(...),
     endereco: Optional[str] = Form(None),
     telefone: Optional[str] = Form(None),
     provincia: Optional[str] = Form(None),
@@ -158,7 +152,7 @@ async def atualizar_escola(
     escola.nome = nome
     escola.sigla = sigla
     escola.nif = nif
-    escola.nivel_ensino = nivel_ensino # 👈 ADD
+    escola.nivel_ensino = nivel_ensino
     escola.endereco = endereco
     escola.telefone = telefone
     escola.provincia = provincia
@@ -172,7 +166,7 @@ async def atualizar_escola(
     return escola
 
 @router.delete("/{escola_id}", status_code=204)
-async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)): # 👈 UUID
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
@@ -186,31 +180,17 @@ async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), cur
         except Exception as e:
             logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
 
-    try:
-        await db.execute(text("DELETE FROM usuario_escola WHERE escola_id = :id"), {"id": escola_id})
-        await db.execute(text("DELETE FROM escolas WHERE id = :id"), {"id": escola_id})
-        await db.commit()
-        logger.info(f"Escola {escola_id} e dados vinculados apagados com sucesso")
-    except Exception as e:
-        await db.rollback()
-        logger.error(f"Erro ao deletar escola: {e}")
-        raise HTTPException(status_code=400, detail=f"Não foi possível apagar. Erro: {str(e)}")
-
+    await db.delete(escola) # 👈 Usa cascade
+    await db.commit()
+    logger.info(f"Escola {escola_id} apagada com sucesso")
     return None
 
-
-
-
-
-
-
-
-def get_escola_do_usuario(current_user: dict):
+def get_escola_do_usuario(current_user: dict) -> UUID: # 👈 AGORA FUNCIONA
     """Busca a escola_id do usuario logado"""
     escola_id = current_user.get("escola_id")
     if not escola_id:
         raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
-    return escola_id
+    return UUID(str(escola_id)) # 👈 Converte str pra UUID
 
 @router.get("/me", response_model=EscolaResponse)
 async def obter_minha_escola(
@@ -257,7 +237,6 @@ async def atualizar_definicoes_escola(
         upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
         escola.logo_url = upload_data["optimized_url"]
 
-    # Atualiza
     escola.nome = nome
     escola.sigla = sigla
     escola.nif = nif

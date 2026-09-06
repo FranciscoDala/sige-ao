@@ -48,23 +48,27 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS CORRIGIDO - igual stockbot
+# CORS CORRIGIDO
+origins = [
+    "https://sige-ao.onrender.com",  # PROD FRONT
+    "http://localhost:5173",         # VITE DEV
+    "http://localhost:3000",         # NEXT DEV
+]
+origins.extend(getattr(settings, "ALLOWED_ORIGINS_LIST", [])) # 👈 safe
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://sige-ao.onrender.com",  # SEU FRONT
-        "http://localhost:5173",
-        *settings.ALLOWED_ORIGINS_LIST
-    ],
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.onrender\.com", # 👈 Libera qualquer preview do render
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
 )
 
-logger.info(f"CORS liberado para: https://sige-ao.onrender.com + {settings.ALLOWED_ORIGINS_LIST}")
+logger.info(f"CORS liberado para: {origins}")
 
-# HANDLER DE ERRO 500 - pra ver o erro real no log e não só CORS
+# HANDLER DE ERRO 500
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Erro 500 nao tratado na rota {request.url}: {exc}\n{traceback.format_exc()}")

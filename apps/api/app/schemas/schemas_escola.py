@@ -43,7 +43,7 @@ class EscolaResponse(EscolaBase):
     config_json: dict = {}
     model_config = ConfigDict(from_attributes=True)
 
-    
+
 # ================== USUARIO ==================
 class UsuarioBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
