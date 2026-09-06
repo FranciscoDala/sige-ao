@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -27,10 +27,8 @@ const queryClient = new QueryClient({
     }
 })
 
-// 👇 NOVO: Provider que aplica o tema da escola
+// 👇 CORRIGIDO: Não bloqueia mais a tela
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-    const [loaded, setLoaded] = useState(false)
-
     useEffect(() => {
         const applyTheme = (tema: any) => {
             if (!tema) return
@@ -47,10 +45,11 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         const temaSalvo = localStorage.getItem('escola_tema')
         if (temaSalvo) {
             applyTheme(JSON.parse(temaSalvo))
-            setLoaded(true)
+        } else {
+            // aplica tema padrão se não tiver nada salvo
+            applyTheme({})
         }
 
-        // Escuta quando salvar nas definições
         const handleUpdate = () => {
             const t = localStorage.getItem('escola_tema')
             if (t) applyTheme(JSON.parse(t))
@@ -59,8 +58,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         return () => window.removeEventListener('escola-tema-updated', handleUpdate)
     }, [])
 
-    if (!loaded && authService.isAuthenticated()) return null // evita flicker
-    return <>{children}</>
+    return <>{children}</> // 👈 SEMPRE RENDERIZA
 }
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -86,7 +84,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
             <Toaster position="top-center" richColors />
-            <ThemeProvider> {/* 👈 ENVOLVE TUDO */}
+            <ThemeProvider>
                 <HashRouter>
                     <Routes>
                         <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
