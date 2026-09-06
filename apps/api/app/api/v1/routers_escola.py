@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query # 👈 Tirei UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query # 👈 Voltei UploadFile e File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_
 from typing import List, Optional
@@ -8,7 +8,7 @@ import uuid
 
 from app.db.database import get_db
 from app.models.models_escola import Escola, NivelEnsino
-from app.schemas.schemas_escola import EscolaResponse, EscolaCreate, EscolaUpdate # 👈 ADD EscolaCreate e Update
+from app.schemas.schemas_escola import EscolaResponse, EscolaCreate, EscolaUpdate
 from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary
 
@@ -76,7 +76,7 @@ async def search_global(
     }
 
 @router.get("/{escola_id}", response_model=EscolaResponse)
-async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)): # 👈 UUID
+async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
@@ -85,13 +85,12 @@ async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)): # �
 @router.post("", response_model=EscolaResponse, status_code=201)
 @router.post("/", response_model=EscolaResponse, status_code=201)
 async def criar_escola(
-    dados: EscolaCreate, # 👈 MUDOU: era Form
+    dados: EscolaCreate,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     check_ministerio(current_user)
 
-    # Verifica se id_curto já existe
     result = await db.execute(select(Escola).where(Escola.id_curto == dados.id_curto))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Já existe uma escola com este id_curto")
@@ -99,7 +98,7 @@ async def criar_escola(
     id_curto = dados.id_curto or f"ESC{str(uuid.uuid4().int)[:3]}"
 
     nova_escola = Escola(
-        id=uuid.uuid4(), # 👈 Gera no backend igual usuarios
+        id=uuid.uuid4(),
         nome=dados.nome,
         sigla=dados.sigla,
         nif=dados.nif,
@@ -122,19 +121,17 @@ async def criar_escola(
         config_json=dados.config_json,
         ativo=dados.ativo,
         id_curto=id_curto,
-        logo_url=dados.logo_url
+        logo_url=dados.logo_url # 👈 Agora vem por URL. Se for vazio, fica null
     )
     db.add(nova_escola)
     await db.commit()
     await db.refresh(nova_escola)
     return nova_escola
 
-
-
 @router.put("/{escola_id}", response_model=EscolaResponse)
 async def atualizar_escola(
     escola_id: UUID,
-    dados: EscolaUpdate, # 👈 MUDOU: era Form
+    dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -144,7 +141,6 @@ async def atualizar_escola(
     if not escola:
         raise HTTPException(status_code=404, detail="Escola não encontrada")
 
-    # Só atualiza campos que vieram
     update_data = dados.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(escola, key, value)
@@ -153,9 +149,48 @@ async def atualizar_escola(
     await db.refresh(escola)
     return escola
 
+# 👇 ROTAS NOVAS PRA UPLOAD
+@router.post("/{escola_id}/logo", response_model=EscolaResponse)
+async def upload_logo_escola(
+    escola_id: UUID,
+    logo: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    check_ministerio(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola não encontrada")
+
+    upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
+    escola.logo_url = upload_data["optimized_url"]
+
+    await db.commit()
+    await db.refresh(escola)
+    return escola
+
+@router.post("/me/logo", response_model=EscolaResponse)
+async def upload_minha_logo(
+    logo: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    escola_id = get_escola_do_usuario(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola nao encontrada")
+
+    upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
+    escola.logo_url = upload_data["optimized_url"]
+
+    await db.commit()
+    await db.refresh(escola)
+    return escola
 
 @router.delete("/{escola_id}", status_code=204)
-async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)): # 👈 UUID
+async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
     check_ministerio(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
@@ -169,17 +204,16 @@ async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), cu
         except Exception as e:
             logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
 
-    await db.delete(escola) # 👈 Usa cascade
+    await db.delete(escola)
     await db.commit()
     logger.info(f"Escola {escola_id} apagada com sucesso")
     return None
 
-def get_escola_do_usuario(current_user: dict) -> UUID: # 👈 AGORA FUNCIONA
-    """Busca a escola_id do usuario logado"""
+def get_escola_do_usuario(current_user: dict) -> UUID:
     escola_id = current_user.get("escola_id")
     if not escola_id:
         raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
-    return UUID(str(escola_id)) # 👈 Converte str pra UUID
+    return UUID(str(escola_id))
 
 @router.get("/me", response_model=EscolaResponse)
 async def obter_minha_escola(
