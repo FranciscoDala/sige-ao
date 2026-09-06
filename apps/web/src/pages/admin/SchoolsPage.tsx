@@ -74,11 +74,31 @@ export default function Dashboard() {
 
     useEffect(() => { fetchDados() }, [filtroStatus])
 
-    const handleSaveEscola = async (data: Partial<Escola> & { id_curto?: string }, id?: string) => { // 👈 MUDOU AQUI
+    const handleSaveEscola = async (
+        data: Partial<Escola> & { id_curto?: string },
+        id?: string,
+        logoFile?: File // 👈 1. RECEBE O ARQUIVO DO MODAL
+    ) => {
         setSaving(true)
         try {
-            if (id) await api.put(`/escolas/${id}`, data)
-            else await api.post(`/escolas`, data)
+            let escolaId = id
+            let res
+
+            // 1. Cria ou Atualiza via JSON
+            if (id) {
+                res = await api.put(`/escolas/${id}`, data)
+            } else {
+                res = await api.post(`/escolas`, data)
+            }
+            escolaId = res.data.id
+
+            // 2. Se tiver logo, faz upload separado 👇
+            if (logoFile && escolaId) {
+                const formData = new FormData()
+                formData.append('logo', logoFile)
+                await api.post(`/escolas/${escolaId}/logo`, formData) // axios já seta o Content-Type
+            }
+
             toast.success(id ? "Escola atualizada!" : "Escola criada!")
             setModalOpen(false)
             setEscolaEditando(null)

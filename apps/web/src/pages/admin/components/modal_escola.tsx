@@ -49,7 +49,7 @@ export interface Escola {
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: Partial<Escola> & { id_curto?: string }, id?: string) => Promise<void> // 👈 MUDOU AQUI
+    onSave: (data: Partial<Escola> & { id_curto?: string }, id?: string, logoFile?: File) => Promise<void> // 👈 ADD logoFile // 👈 MUDOU AQUI
     escola: Escola | null
     saving: boolean
 }
@@ -58,6 +58,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     const fileRef = useRef<HTMLInputElement>(null)
     const primeiraCarga = useRef(true)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
+    const [logoFile, setLogoFile] = useState<File | null>(null) //
+
     const [form, setForm] = useState({
         nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO",
         endereco: "", telefone: "", provincia: "", municipio: ""
@@ -109,6 +112,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         } else {
             setForm({ nome: "", sigla: "", nif: "", nivel_ensino: "PRIMARIO", endereco: "", telefone: "", provincia: "", municipio: "" })
             setLogoPreview(null)
+            setLogoFile(null) // 👈 ADD ISSO
             primeiraCarga.current = true;
         }
     }, [escola, open])
@@ -126,9 +130,15 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     if (!open) return null
 
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file) { const reader = new FileReader(); reader.onloadend = () => setLogoPreview(reader.result as string); reader.readAsDataURL(file) }
+        if (file) {
+            setLogoFile(file) // 👈 SALVA O FILE
+            const reader = new FileReader();
+            reader.onloadend = () => setLogoPreview(reader.result as string);
+            reader.readAsDataURL(file)
+        }
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -137,11 +147,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         if (!form.provincia) { toast.error("Selecione a província"); return }
         if (!form.nivel_ensino) { toast.error("Selecione o nível de ensino"); return }
 
-        const payload: Partial<Escola> & { id_curto: string } = { // 👈 FORÇA O TIPO
+        const payload: Partial<Escola> & { id_curto: string } = {
             nome: form.nome,
             sigla: form.sigla || undefined,
             nif: form.nif || undefined,
-            nivel_ensino: form.nivel_ensino as Escola['nivel_ensino'], // 👈 CAST
+            nivel_ensino: form.nivel_ensino as Escola['nivel_ensino'],
             endereco: form.endereco || undefined,
             telefone: form.telefone || undefined,
             provincia: form.provincia,
@@ -153,7 +163,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
             ativo: true
         }
 
-        onSave(payload, escola?.id)
+        onSave(payload, escola?.id, logoFile || undefined) // 👈 PASSA O FILE
     }
 
     const handleChange = (field: string, value: string) => {
