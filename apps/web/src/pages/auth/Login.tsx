@@ -14,7 +14,7 @@ interface UserInToken {
     email: string;
     nome: string;
     escola_id?: string | null;
-    nivel: string // MINISTERIO, DIRETOR, SECRETARIO, etc
+    nivel: string
 }
 interface LoginResponse { access_token: string; nivel: string; user: UserInToken; token_type: string; expires_in: number }
 
@@ -32,30 +32,31 @@ export default function Login() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-
-
+    // Mata token antigo se não for admin
     useEffect(() => {
+        if(authService.isAuthenticated() && authService.getNivel()!== 'MINISTERIO'){
+            // só pra debug
+        }
         console.log('[DEBUG] Nivel Raiz:', authService.getNivel())
         console.log('[DEBUG] Nivel User:', authService.getUser()?.nivel)
-        console.log('[DEBUG] Token:', authService.getToken()?.substring(0, 20))
     }, [])
 
 
-    // Redireciona se já estiver logado - CORRIGIDO: usa nivel da raiz
+    // Redireciona se já estiver logado
     useEffect(() => {
         if (authService.isAuthenticated()) {
-            const nivel = authService.getNivel()?.toUpperCase() // 👈 CORRIGIDO
+            const nivel = authService.getNivel()?.toUpperCase()
             if (nivel === 'MINISTERIO') {
-                navigate('/admin', { replace: true }) // 👈 Painel Administrativo
+                window.location.hash = '#/admin' // 👈 FORÇA
             } else {
-                navigate('/dashboard', { replace: true }) // 👈 Painel da Escola
+                window.location.hash = '#/dashboard' // 👈 FORÇA
             }
         }
-    }, [navigate])
+    }, [])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (dropdownRef.current &&!dropdownRef.current.contains(event.target as Node)) {
                 setDropdownOpen(false)
             }
         }
@@ -84,73 +85,57 @@ export default function Login() {
     useEffect(() => {
         const isAdmin = email.toLowerCase().trim().startsWith('admin@')
         setIsSuperAdmin(isAdmin)
-        if (isAdmin) setEscolaId('') // SuperAdmin não precisa escolher escola
+        if (isAdmin) setEscolaId('')
     }, [email])
 
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
-        if (!isSuperAdmin && !escolaId) {
+        if (!isSuperAdmin &&!escolaId) {
             toast.error("Selecione uma escola");
             return
         }
 
-        // 👇 CORRIGIDO: se for admin manda null, se for escola manda o id
         const payload = {
             email,
             senha,
-            escola_id: isSuperAdmin ? null : escolaId
+            escola_id: isSuperAdmin? null : escolaId
         }
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
-            .then((res) => {
-                // 👇 SALVA TUDO: nivel da raiz + user
+           .then((res) => {
                 authService.login({
                     access_token: res.data.access_token,
-                    nivel: res.data.nivel, // 👈 GARANTE QUE SALVA O NIVEL RAIZ
+                    nivel: res.data.nivel,
                     user: {
-                        ...res.data.user,
-                        escola_id: res.data.user.escola_id ?? undefined
+                       ...res.data.user,
+                        escola_id: res.data.user.escola_id?? undefined
                     }
                 })
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
 
-                // 👇 REDIRECIONAMENTO PELO NIVEL - USA O DA RAIZ QUE É MAIS CONFIÁVEL
                 const nivel = res.data.nivel?.toUpperCase()
+                // 👇 FORÇA VIA WINDOW.LOCATION
                 setTimeout(() => {
                     if (nivel === 'MINISTERIO') {
-                        navigate('/admin', { replace: true }) // Painel Administrativo de Escolas
+                        window.location.hash = '#/admin'
                     } else {
-                        navigate('/dashboard', { replace: true }) // Painel da Escola
+                        window.location.hash = '#/dashboard'
                     }
-                }, 800)
+                }, 500)
             })
-            .catch((err: AxiosError<{ detail: string }>) => {
+           .catch((err: AxiosError<{ detail: string }>) => {
                 const msg = err.response?.data?.detail || "Usuário ou senha inválidos"
-
-                if (msg.toLowerCase().includes('escola inativa')) {
-                    toast.error(msg, {
-                        description: "Esta escola foi desativada pelo administrador. Entre em contato com o suporte do MINEDU.",
-                        icon: <Ban className="w-5 h-5 text-red-500" />,
-                        duration: 6000,
-                    })
-                } else if (msg.toLowerCase().includes('não vinculado')) {
-                    toast.error(msg, {
-                        description: "Seu usuário não tem permissão de acesso nesta escola.",
-                        duration: 5000,
-                    })
-                } else {
-                    toast.error(msg)
-                }
+                toast.error(msg)
             })
-            .finally(() => setLoading(false))
+           .finally(() => setLoading(false))
     }
 
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
     const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
     const selectedEscola = escolas.find(e => e.id === escolaId)
-    const podeLogar = !loading && !loadingEscolas && apiOnline && (isSuperAdmin || !!escolaId)
+    const podeLogar =!loading &&!loadingEscolas && apiOnline && (isSuperAdmin ||!!escolaId)
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
@@ -158,23 +143,23 @@ export default function Login() {
                 {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5" />API Offline: {API_URL}</div>}
 
                 <div className="text-center mb-8">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin ? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                        {isSuperAdmin ? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
+                    <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                        {isSuperAdmin? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
                     </div>
                     <h1 className="text-3xl font-bold">SIGE-AO</h1>
-                    <p className="text-white/60 text-sm">{isSuperAdmin ? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
+                    <p className="text-white/60 text-sm">{isSuperAdmin? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                     {!isSuperAdmin && (
                         <div ref={dropdownRef} className="relative">
                             <label className="text-sm text-white/80 mb-1 block">Escola *</label>
-                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} disabled={loadingEscolas || !apiOnline} className={dropdownButtonClass}>
+                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} disabled={loadingEscolas ||!apiOnline} className={dropdownButtonClass}>
                                 <div className="flex items-center gap-3 truncate">
                                     <Building2 className="w-5 h-5 text-white/50 flex-shrink-0" />
-                                    <span className="truncate">{selectedEscola?.nome || (loadingEscolas ? "Carregando escolas..." : "Selecione sua escola")}</span>
+                                    <span className="truncate">{selectedEscola?.nome || (loadingEscolas? "Carregando escolas..." : "Selecione sua escola")}</span>
                                 </div>
-                                <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-5 h-5 text-white/50 flex-shrink-0 transition-transform ${dropdownOpen? 'rotate-180' : ''}`} />
                             </button>
                             {dropdownOpen && (
                                 <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border-white/20 rounded-xl shadow-2xl overflow-hidden">
@@ -186,8 +171,8 @@ export default function Login() {
                                                 type="button"
                                                 disabled={!e.ativo}
                                                 onClick={() => { setEscolaId(e.id); setDropdownOpen(false) }}
-                                                className={`w-full text-left px-4 py-3 transition flex items-center gap-3 ${!e.ativo ? 'bg-white/5 text-white/30 cursor-not-allowed' :
-                                                    escolaId === e.id ? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white hover:bg-[#CF0921]/30'
+                                                className={`w-full text-left px-4 py-3 transition flex items-center gap-3 ${!e.ativo? 'bg-white/5 text-white/30 cursor-not-allowed' :
+                                                    escolaId === e.id? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white hover:bg-[#CF0921]/30'
                                                     }`}
                                             >
                                                 <School className={`w-5 h-5 flex-shrink-0 ${!e.ativo && 'opacity-40'}`} />
@@ -210,10 +195,10 @@ export default function Login() {
                     </div>
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Senha</label>
-                        <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type={showSenha ? "text" : "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required /><button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">{showSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button></div>
+                        <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type={showSenha? "text" : "password"} value={senha} onChange={(e) => setSenha(e.target.value)} className={`${inputClass} pr-12`} placeholder="********" required /><button type="button" onClick={() => setShowSenha(!showSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">{showSenha? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button></div>
                     </div>
                     <button type="submit" disabled={!podeLogar} className="w-full py-3.5 bg-gradient-to-r from-[#CF0921] to-[#FFD700] text-black font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
-                        {loading ? <><Loader2 className="animate-spin" /> Acessando...</> : <>Entrar <ArrowRight /></>}
+                        {loading? <><Loader2 className="animate-spin" /> Acessando...</> : <>Entrar <ArrowRight /></>}
                     </button>
                 </form>
             </div>
