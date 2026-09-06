@@ -2,8 +2,6 @@ import { useState, useRef, useEffect, FormEvent, useMemo, MouseEvent } from 'rea
 import { X, Upload, Loader2, Building2, Image as ImageIcon, MapPin, Phone, FileText, ChevronDown, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 
-const API_URL = import.meta.env.VITE_API_URL
-
 const NIVEIS_ENSINO = [
     { value: "PRIMARIO", label: "Primário - 1ª à 6ª" },
     { value: "I_CICLO", label: "I Ciclo - 7ª à 9ª" },
@@ -114,11 +112,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     useEffect(() => {
         if (!open) return
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+        document.addEventListener('keydown', handleKeyDown)
         document.body.style.overflow = 'hidden'
         return () => {
+            document.removeEventListener('keydown', handleKeyDown)
             document.body.style.overflow = 'unset'
         }
-    }, [open])
+    }, [open, onClose])
 
     if (!open) return null
 
@@ -147,7 +148,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         setForm(prev => ({...prev, [field]: value }))
     }
 
-    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
+    const inputClass = "w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
     const CustomSelect = ({
@@ -158,7 +159,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 type="button"
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
                 <span className="truncate">
                     {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
@@ -167,8 +168,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 scrollbar-hide">
+                <div className="absolute z-20 w-full mt-2 bg-[#1E293B]/95 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95">
+                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
                             const optionValue = isObject? op.value : op
@@ -192,12 +193,11 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
     )
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-hidden"> {/* 1. SEM onClick aqui */}
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* 1. SEM onClick = travada */}
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] shadow-2xl overflow-hidden" // 2. overflow-hidden + flex
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl" // 2. overflow-hidden
             >
-                {/* HEADER */}
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
@@ -208,9 +208,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-                    {/* BODY COM SCROLL INVISIVEL */}
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 scrollbar-hide"> {/* 4. scroll-y invisivel */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"> {/* 4. scroll invisivel */}
 
                         {/* DADOS GERAIS */}
                         <div className="space-y-4">
@@ -294,20 +293,12 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                         </div>
                     </div>
 
-                    {/* FOOTER FIXO */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/95 backdrop-blur-xl"> {/* 3. e 5. flex + responsivo */}
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1"
-                        >
+                    {/* 3. FOOTER FIXO + 5. RESPONSIVO */}
+                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
                             Cancelar
                         </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2"
-                        >
+                        <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
                             {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                             {saving? "Salvando..." : escola? "Salvar" : "Cadastrar"}
                         </button>
