@@ -32,27 +32,22 @@ export default function Login() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Mata token antigo se não for admin
     useEffect(() => {
-        if(authService.isAuthenticated() && authService.getNivel()!== 'MINISTERIO'){
-            // só pra debug
-        }
         console.log('[DEBUG] Nivel Raiz:', authService.getNivel())
         console.log('[DEBUG] Nivel User:', authService.getUser()?.nivel)
     }, [])
 
-
-    // Redireciona se já estiver logado
+    // Redireciona se já estiver logado - COM REPLACE
     useEffect(() => {
         if (authService.isAuthenticated()) {
             const nivel = authService.getNivel()?.toUpperCase()
             if (nivel === 'MINISTERIO') {
-                window.location.hash = '#/admin' // 👈 FORÇA
+                navigate('/admin', { replace: true })
             } else {
-                window.location.hash = '#/dashboard' // 👈 FORÇA
+                navigate('/dashboard', { replace: true })
             }
         }
-    }, [])
+    }, [navigate])
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -83,7 +78,9 @@ export default function Login() {
     }, [])
 
     useEffect(() => {
-        const isAdmin = email.toLowerCase().trim().startsWith('admin@')
+        // 👇 NOVA LÓGICA: Se tiver "admin" em qualquer lugar do email
+        const emailLower = email.toLowerCase().trim()
+        const isAdmin = emailLower.includes('admin')
         setIsSuperAdmin(isAdmin)
         if (isAdmin) setEscolaId('')
     }, [email])
@@ -91,6 +88,7 @@ export default function Login() {
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
+        // 👇 IMPORTANTE: Quem decide é a API. Isso aqui é só pra UX
         if (!isSuperAdmin &&!escolaId) {
             toast.error("Selecione uma escola");
             return
@@ -104,32 +102,31 @@ export default function Login() {
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
-           .then((res) => {
+         .then((res) => {
                 authService.login({
                     access_token: res.data.access_token,
-                    nivel: res.data.nivel,
+                    nivel: res.data.nivel, // 👈 A API DECIDE AQUI
                     user: {
-                       ...res.data.user,
+                     ...res.data.user,
                         escola_id: res.data.user.escola_id?? undefined
                     }
                 })
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
 
-                const nivel = res.data.nivel?.toUpperCase()
-                // 👇 FORÇA VIA WINDOW.LOCATION
+                const nivel = res.data.nivel?.toUpperCase() // 👈 CONFIA NA API
                 setTimeout(() => {
                     if (nivel === 'MINISTERIO') {
-                        window.location.hash = '#/admin'
+                        navigate('/admin', { replace: true })
                     } else {
-                        window.location.hash = '#/dashboard'
+                        navigate('/dashboard', { replace: true })
                     }
                 }, 500)
             })
-           .catch((err: AxiosError<{ detail: string }>) => {
+         .catch((err: AxiosError<{ detail: string }>) => {
                 const msg = err.response?.data?.detail || "Usuário ou senha inválidos"
                 toast.error(msg)
             })
-           .finally(() => setLoading(false))
+         .finally(() => setLoading(false))
     }
 
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
@@ -191,7 +188,7 @@ export default function Login() {
 
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Email</label>
-                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="admin@minedu.gov.ao ou nome@escola.ao" required /></div>
+                        <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="admin@sige.com ou nome@escola.ao" required /></div>
                     </div>
                     <div>
                         <label className="text-sm text-white/80 mb-1 block">Senha</label>
