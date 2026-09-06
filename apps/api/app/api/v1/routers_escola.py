@@ -113,9 +113,9 @@ async def obter_minha_escola(
 
 @router.put("/me/definicoes")
 async def atualizar_definicoes_escola(
-    dados: EscolaUpdate,
+    dados: EscolaUpdate,  # 👈 BODY TEM QUE VIR PRIMEIRO
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(check_diretor_ou_ministerio)
+    current_user: dict = Depends(check_diretor_ou_ministerio) # 👈 DEPENDS DEPOIS
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
@@ -176,7 +176,6 @@ async def atualizar_definicoes_escola(
         "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
     }
     return JSONResponse(content=data)
-
 
 @router.post("/me/logo", response_model=EscolaResponse)
 async def upload_minha_logo(
