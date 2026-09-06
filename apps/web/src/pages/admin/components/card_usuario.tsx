@@ -50,7 +50,7 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-300">
                             <Building className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
-                            <span>{usuario.departamento || (isDiretor ? 'Escola' : 'Ministério')}</span> {/* 👈 AQUI PEGA O NOME CERTO */}
+                            <span>{usuario.departamento || (isDiretor ? 'Escola' : 'Ministério')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-300">
                             <ShieldCheck className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
@@ -66,15 +66,15 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
-                <button onClick={onView} className="w-full flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-sm text-gray-300 font-semibold transition">
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10">
+                <button onClick={onView} className="hidden w-full items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-sm text-gray-300 font-semibold transition">
                     <Eye className="w-4 h-4" /> Ver
                 </button>
                 <button onClick={onEdit} className="w-full flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
                     <Edit className="w-4 h-4" /> Editar
                 </button>
-                <button onClick={onDelete} className="w-full flex items-center justify-center p-2.5 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-red-400 transition">
-                    <Trash2 className="w-4 h-4" />
+                <button onClick={onDelete} className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
+                    <Trash2 className="w-4 h-4" /> Apagar
                 </button>
             </div>
         </div>

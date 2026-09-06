@@ -1,6 +1,6 @@
 import { Eye, Edit, Trash2, School, Phone, MapPinIcon, Hash, GraduationCap, User } from 'lucide-react'
 import { Escola } from './modal_escola'
-import { UsuarioMinisterio } from '../../types/usuario' // 👈 ADD
+import { UsuarioMinisterio } from '../../types/usuario'
 
 const NIVEL_LABELS: Record<string, string> = {
     "PRIMARIO": "Primário",
@@ -13,13 +13,13 @@ const NIVEL_LABELS: Record<string, string> = {
 
 interface EscolaCardProps {
     escola: Escola
-    diretor?: UsuarioMinisterio | null // 👈 ADD PROP
+    diretor?: UsuarioMinisterio | null
     onView: () => void
     onEdit: () => void
     onDelete: () => void
 }
 
-export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }: EscolaCardProps) { // 👈 RECEBE DIRETOR
+export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }: EscolaCardProps) {
     return (
         <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
             <div className="flex items-start gap-4 mb-5">
@@ -41,7 +41,6 @@ export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }
                         </span>
                     </div>
 
-                    {/* BADGE NIVEL ENSINO */}
                     {escola.nivel_ensino && (
                         <div className="flex items-center gap-1.5 mb-2">
                             <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/30 font-semibold">
@@ -51,7 +50,6 @@ export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }
                         </div>
                     )}
 
-                    {/* DIRETOR DA ESCOLA 👈 ADD AQUI */}
                     <div className="flex items-center gap-2 text-sm text-gray-300 mb-2">
                         <User className="w-4 h-4 text-[#8B5CF6] flex-shrink-0" />
                         <span>Diretor: {diretor?.nome || 'Não definido'}</span>
@@ -78,15 +76,14 @@ export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }
                 </div>
             </div>
 
-            {/* FOOTER COM 3 BOTOES */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
-                <button onClick={onView} className="w-full flex items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-sm text-gray-300 font-semibold transition">
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10">
+                <button onClick={onView} className="hidden w-full items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-sm text-gray-300 font-semibold transition">
                     <Eye className="w-4 h-4" /> Ver
                 </button>
-                <button onClick={onEdit} className="w-full flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
+                <button onClick={onEdit} className="w-full flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
                     <Edit className="w-4 h-4" /> Editar
                 </button>
-                <button onClick={onDelete} className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
+                <button onClick={onDelete} className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
                     <Trash2 className="w-4 h-4" /> Apagar
                 </button>
             </div>
