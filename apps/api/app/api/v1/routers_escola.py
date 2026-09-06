@@ -16,6 +16,7 @@ import cloudinary.uploader
 
 logger = logging.getLogger(__name__)
 
+
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
 
 def check_ministerio(current_user: dict):
@@ -196,3 +197,86 @@ async def deletar_escola(escola_id: str, db: AsyncSession = Depends(get_db), cur
         raise HTTPException(status_code=400, detail=f"Não foi possível apagar. Erro: {str(e)}")
 
     return None
+
+
+
+
+
+
+
+
+def get_escola_do_usuario(current_user: dict):
+    """Busca a escola_id do usuario logado"""
+    escola_id = current_user.get("escola_id")
+    if not escola_id:
+        raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
+    return escola_id
+
+@router.get("/me", response_model=EscolaResponse)
+async def obter_minha_escola(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    escola_id = get_escola_do_usuario(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
+    return escola
+
+@router.put("/me/definicoes", response_model=EscolaResponse)
+async def atualizar_definicoes_escola(
+    nome: str = Form(...),
+    sigla: Optional[str] = Form(None),
+    nif: Optional[str] = Form(None),
+    endereco: Optional[str] = Form(None),
+    telefone: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
+    provincia: Optional[str] = Form(None),
+    municipio: Optional[str] = Form(None),
+    cor_primaria: str = Form(...),
+    cor_secundaria: str = Form(...),
+    cor_fundo: str = Form(...),
+    tema: str = Form(...),
+    fonte_titulo: str = Form(...),
+    fonte_corpo: str = Form(...),
+    estilo_card: str = Form(...),
+    permitir_auto_cadastro: bool = Form(...),
+    usar_modulo_propina: bool = Form(...),
+    usar_modulo_biblioteca: bool = Form(...),
+    logo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    escola_id = get_escola_do_usuario(current_user)
+
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
+
+    if logo:
+        upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
+        escola.logo_url = upload_data["optimized_url"]
+
+    # Atualiza
+    escola.nome = nome
+    escola.sigla = sigla
+    escola.nif = nif
+    escola.email = email
+    escola.endereco = endereco
+    escola.telefone = telefone
+    escola.provincia = provincia
+    escola.municipio = municipio
+    escola.cor_primaria = cor_primaria
+    escola.cor_secundaria = cor_secundaria
+    escola.cor_fundo = cor_fundo
+    escola.tema = tema
+    escola.fonte_titulo = fonte_titulo
+    escola.fonte_corpo = fonte_corpo
+    escola.estilo_card = estilo_card
+    escola.permitir_auto_cadastro = permitir_auto_cadastro
+    escola.usar_modulo_propina = usar_modulo_propina
+    escola.usar_modulo_biblioteca = usar_modulo_biblioteca
+
+    await db.commit()
+    await db.refresh(escola)
+    return escola

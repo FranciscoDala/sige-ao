@@ -30,8 +30,20 @@ class EscolaResponse(EscolaBase):
     id: str
     id_curto: str
     criado_em: datetime
+    email: Optional[str] = None # 👈 ADD
+    cor_fundo: str = "#FFFFFF"
+    fonte_titulo: str = "Poppins"
+    fonte_corpo: str = "Inter"
+    estilo_card: str = "arredondado"
+    banner_url: Optional[str] = None
+    favicon_url: Optional[str] = None
+    permitir_auto_cadastro: bool = False
+    usar_modulo_propina: bool = True
+    usar_modulo_biblioteca: bool = False
+    config_json: dict = {}
     model_config = ConfigDict(from_attributes=True)
 
+    
 # ================== USUARIO ==================
 class UsuarioBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)

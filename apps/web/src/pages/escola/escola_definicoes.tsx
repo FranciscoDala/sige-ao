@@ -1,78 +1,88 @@
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import {
   School, Save, Upload, Palette, MapPin, Settings, Building2,
-  Mail, Phone, Image, Globe, ToggleLeft, Info
+  Mail, Phone, Image, Info, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { authService } from '../../services/auth' // 👈 pra pegar o token
 
 type Tab = 'identificacao' | 'contato' | 'visual' | 'modulos' | 'avancado'
 
 type EscolaForm = {
-    nome: string;
-    sigla: string;
-    id_curto: string;
-    nif: string;
-    nivel_ensino: string;
-    email: string;
-    telefone: string;
-    endereco: string;
-    provincia: string;
-    municipio: string;
-    logo_url: string;
-    banner_url: string;
-    favicon_url: string;
-    cor_primaria: string;
-    cor_secundaria: string;
-    cor_fundo: string;
-    tema: string;
-    fonte_titulo: string;
-    fonte_corpo: string;
-    estilo_card: string;
-    permitir_auto_cadastro: boolean;
-    usar_modulo_propina: boolean;
-    usar_modulo_biblioteca: boolean;
-    ativo: boolean;
+    nome: string; sigla: string; id_curto: string; nif: string; nivel_ensino: string;
+    email: string; telefone: string; endereco: string; provincia: string; municipio: string;
+    logo_url: string; banner_url: string; favicon_url: string;
+    cor_primaria: string; cor_secundaria: string; cor_fundo: string;
+    tema: string; fonte_titulo: string; fonte_corpo: string; estilo_card: string;
+    permitir_auto_cadastro: boolean; usar_modulo_propina: boolean; usar_modulo_biblioteca: boolean; ativo: boolean;
 }
+
+const API_URL = import.meta.env.VITE_API_URL || '/api' // 👈 ajusta se precisar
 
 export default function DefinicoesEscolaPage() {
     const [activeTab, setActiveTab] = useState<Tab>('identificacao')
     const [loading, setLoading] = useState(false)
+    const [loadingData, setLoadingData] = useState(true)
+    const [logoFile, setLogoFile] = useState<File | null>(null)
 
     const [form, setForm] = useState<EscolaForm>({
-        nome: 'Escola Primária do Futuro',
-        sigla: 'EPF',
-        id_curto: 'EPF001',
-        nif: '',
-        nivel_ensino: 'PRIMARIO',
-        email: '',
-        telefone: '',
-        endereco: '',
-        provincia: '',
-        municipio: '',
-        logo_url: '',
-        banner_url: '',
-        favicon_url: '',
-        cor_primaria: '#0056b3',
-        cor_secundaria: '#FFC107',
-        cor_fundo: '#FFFFFF',
-        tema: 'claro',
-        fonte_titulo: 'Poppins',
-        fonte_corpo: 'Inter',
-        estilo_card: 'arredondado',
-        permitir_auto_cadastro: false,
-        usar_modulo_propina: true,
-        usar_modulo_biblioteca: false,
-        ativo: true,
+        nome: '', sigla: '', id_curto: '', nif: '', nivel_ensino: 'PRIMARIO',
+        email: '', telefone: '', endereco: '', provincia: '', municipio: '',
+        logo_url: '', banner_url: '', favicon_url: '',
+        cor_primaria: '#0056b3', cor_secundaria: '#FFC107', cor_fundo: '#FFFFFF',
+        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado',
+        permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
+
+    const getAuthHeader = () => ({
+        'Authorization': `Bearer ${authService.getToken()}`
+    })
+
+    // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
+    useEffect(() => {
+        const fetchEscola = async () => {
+            try {
+                const res = await fetch(`${API_URL}/escolas/me`, {
+                    headers: getAuthHeader()
+                })
+                if (!res.ok) throw new Error('Erro ao carregar')
+                const data: EscolaForm = await res.json()
+                setForm(data)
+            } catch (error) {
+                toast.error('Erro ao carregar dados da escola')
+            } finally {
+                setLoadingData(false)
+            }
+        }
+        fetchEscola()
+    }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
         setForm(prev => ({...prev, [key]: value }))
     }
 
+    // 2. SALVAR DADOS
     const handleSave = async () => {
         setLoading(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            const formData = new FormData()
+            Object.entries(form).forEach(([key, value]) => {
+                if (key!== 'logo_url' && key!== 'banner_url' && key!== 'favicon_url' && key!== 'id_curto' && key!== 'nivel_ensino') {
+                    formData.append(key, String(value))
+                }
+            })
+            if (logoFile) formData.append('logo', logoFile)
+
+            const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
+                method: 'PUT',
+                headers: getAuthHeader(), // FormData não usa Content-Type
+                body: formData
+            })
+
+            if (!res.ok) throw new Error('Erro ao salvar')
+            const updatedData = await res.json()
+            setForm(updatedData)
+            setLogoFile(null)
             toast.success('Definições salvas com sucesso!')
         } catch (error) {
             toast.error('Erro ao salvar definições')
@@ -89,6 +99,8 @@ export default function DefinicoesEscolaPage() {
         { id: 'avancado', label: 'Avançado', icon: Info },
     ]
 
+    if (loadingData) return <div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin text-[#3B82F6]" /></div>
+
     return (
         <div className="space-y-4 lg:space-y-6">
             <div>
@@ -102,14 +114,8 @@ export default function DefinicoesEscolaPage() {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
                         return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0
-                                ${isActive? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {tab.label}
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0 ${isActive? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                                <Icon className="w-4 h-4" />{tab.label}
                             </button>
                         )
                     })}
@@ -117,45 +123,72 @@ export default function DefinicoesEscolaPage() {
             </div>
 
             <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 lg:p-6">
+                {/* IDENTIFICACAO */}
                 {activeTab === 'identificacao' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Building2 className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Identificação</h2></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input label="Nome Completo" value={form.nome} onChange={v => handleChange('nome', v)} />
                             <Input label="Sigla" value={form.sigla} onChange={v => handleChange('sigla', v)} />
-                            <Input label="ID Curto" value={form.id_curto} onChange={v => handleChange('id_curto', v)} />
+                            <Input label="ID Curto" value={form.id_curto} onChange={v => handleChange('id_curto', v)} disabled />
                             <Input label="NIF" value={form.nif} onChange={v => handleChange('nif', v)} />
-                            <Select label="Nível de Ensino" value={form.nivel_ensino} onChange={v => handleChange('nivel_ensino', v)} options={['PRIMARIO', 'SECUNDARIO', 'TECNICO', 'UNIVERSITARIO']} />
+                            <div>
+                                <label className="text-sm text-white/80 mb-2 block">Nível de Ensino</label>
+                                <input value={form.nivel_ensino} disabled className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white/50 cursor-not-allowed"/>
+                                <p className="text-xs text-gray-500 mt-1">Apenas o Ministério pode alterar</p>
+                            </div>
                         </div>
                     </div>
                 )}
+
+                {/* CONTATO */}
+                {activeTab === 'contato' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3 mb-4"><MapPin className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Contato</h2></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Email" type="email" icon={<Mail className="w-4 h-4" />} value={form.email} onChange={v => handleChange('email', v)} />
+                            <Input label="Telefone" icon={<Phone className="w-4 h-4" />} value={form.telefone} onChange={v => handleChange('telefone', v)} />
+                            <div className="md:col-span-2"><Input label="Endereço" value={form.endereco} onChange={v => handleChange('endereco', v)} /></div>
+                            <Input label="Província" value={form.provincia} onChange={v => handleChange('provincia', v)} />
+                            <Input label="Município" value={form.municipio} onChange={v => handleChange('municipio', v)} />
+                        </div>
+                    </div>
+                )}
+
+                {/* VISUAL */}
                 {activeTab === 'visual' && (
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-4"><Palette className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Aparência</h2></div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <UploadBox label="Logo" />
-                            <UploadBox label="Banner" />
-                            <UploadBox label="Favicon" />
+                            <UploadBox label="Logo" currentUrl={form.logo_url} onFileSelect={setLogoFile} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} />
                             <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} />
                             <ColorPicker label="Cor Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} />
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Select label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={['claro', 'escuro']} />
+                            <Select label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={['Poppins', 'Montserrat', 'Roboto']} />
+                            <Select label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={['Inter', 'Roboto', 'Open Sans']} />
+                        </div>
                     </div>
                 )}
+
+                {/* MODULOS */}
                 {activeTab === 'modulos' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Settings className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Módulos</h2></div>
                         <Toggle label="Módulo de Propinas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} />
                         <Toggle label="Módulo Biblioteca" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} />
+                        <Toggle label="Auto Cadastro" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} />
                     </div>
                 )}
             </div>
 
-            <div className="flex justify-end sticky bottom-0 py-4">
+            <div className="flex justify-end sticky bottom-0 py-4 bg-gradient-to-t from-[#0F172A] to-transparent">
                 <button onClick={handleSave} disabled={loading} className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
-                    <Save className="w-5 h-5" /> {loading? 'Salvando...' : 'Salvar Definições'}
+                    {loading? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading? 'Salvando...' : 'Salvar Definições'}
                 </button>
             </div>
         </div>
@@ -163,29 +196,18 @@ export default function DefinicoesEscolaPage() {
 }
 
 // ===== COMPONENTES TIPADOS =====
-interface InputProps {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    type?: string;
-    icon?: ReactNode;
-}
-const Input = ({ label, value, onChange, type = 'text', icon }: InputProps) => (
+interface InputProps { label: string; value: string; onChange: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; }
+const Input = ({ label, value, onChange, type = 'text', icon, disabled }: InputProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5 text-gray-400">{icon}</div>}
-            <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]`}/>
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] disabled:text-white/50 disabled:cursor-not-allowed`}/>
         </div>
     </div>
 )
 
-interface SelectProps {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    options: string[];
-}
+interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: string[]; }
 const Select = ({ label, value, onChange, options }: SelectProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
@@ -195,26 +217,18 @@ const Select = ({ label, value, onChange, options }: SelectProps) => (
     </div>
 )
 
-interface ColorPickerProps {
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-}
+interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; }
 const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
         <div className="flex items-center gap-3">
             <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border border-white/10 rounded-xl cursor-pointer" />
-            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]" />
+            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]" />
         </div>
     </div>
 )
 
-interface ToggleProps {
-    label: string;
-    checked: boolean;
-    onChange: (value: boolean) => void;
-}
+interface ToggleProps { label: string; checked: boolean; onChange: (value: boolean) => void; }
 const Toggle = ({ label, checked, onChange }: ToggleProps) => (
     <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
         <p className="text-white font-medium">{label}</p>
@@ -224,15 +238,11 @@ const Toggle = ({ label, checked, onChange }: ToggleProps) => (
     </div>
 )
 
-interface UploadBoxProps {
-    label: string;
-}
-const UploadBox = ({ label }: UploadBoxProps) => (
+interface UploadBoxProps { label: string; currentUrl?: string; onFileSelect: (file: File) => void; }
+const UploadBox = ({ label, currentUrl, onFileSelect }: UploadBoxProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
-        <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-[#3B82F6] transition cursor-pointer">
-            <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-400 text-xs">Enviar {label}</p>
-        </div>
+        {currentUrl && <img src={currentUrl} alt={label} className="w-24 h-24 object-contain mb-2 rounded-lg bg-white/5 p-2" />}
+        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30"/>
     </div>
 )
