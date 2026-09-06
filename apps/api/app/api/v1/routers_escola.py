@@ -110,6 +110,7 @@ async def obter_minha_escola(
     }
     return JSONResponse(content=data)
 
+
 @router.put("/me/definicoes")
 async def atualizar_definicoes_escola(
     dados: EscolaUpdate,
@@ -123,15 +124,30 @@ async def atualizar_definicoes_escola(
         raise HTTPException(status_code=404, detail="Escola nao encontrada")
 
     update_data = dados.model_dump(exclude_unset=True)
+
+    # 👇 TRATAMENTO ESPECIAL PRA ENUM
+    if 'nivel_ensino' in update_data and isinstance(update_data['nivel_ensino'], str):
+        try:
+            update_data['nivel_ensino'] = NivelEnsino(update_data['nivel_ensino'])
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Nivel de ensino invalido: {update_data['nivel_ensino']}")
+
+    # 👇 CAMPOS BLOQUEADOS: NINGUEM DA ESCOLA PODE MUDAR
+    CAMPOS_BLOQUEADOS = ['id', 'id_curto', 'nivel_ensino', 'ativo', 'criado_em']
+    for campo in CAMPOS_BLOQUEADOS:
+        update_data.pop(campo, None)
+
+    # Atualiza só o que veio
     for key, value in update_data.items():
         setattr(escola, key, value)
 
     await db.commit()
     await db.refresh(escola)
 
-    # 👇 CORRIGIDO: Converti UUID pra str
+    logger.info(f"Escola {escola.id} atualizada por {current_user.get('email')}")
+
     data = {
-        "id": str(escola.id), # 👈 AQUI
+        "id": str(escola.id),
         "nome": escola.nome,
         "sigla": escola.sigla,
         "id_curto": escola.id_curto,
@@ -160,6 +176,7 @@ async def atualizar_definicoes_escola(
         "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
     }
     return JSONResponse(content=data)
+
 
 @router.post("/me/logo", response_model=EscolaResponse)
 async def upload_minha_logo(

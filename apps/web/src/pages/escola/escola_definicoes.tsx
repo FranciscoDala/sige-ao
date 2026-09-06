@@ -1,7 +1,7 @@
 import { useState, useEffect, ReactNode, ChangeEvent } from 'react'
 import {
-  Save, Upload, Palette, MapPin, Settings, Building2,
-  Mail, Phone, Info, Loader2, Image as ImageIcon
+    Save, Upload, Palette, MapPin, Settings, Building2,
+    Mail, Phone, Info, Loader2, Image as ImageIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../../services/auth'
@@ -56,7 +56,7 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-    ...(isJson? { 'Content-Type': 'application/json' } : {})
+        ...(isJson ? { 'Content-Type': 'application/json' } : {})
     })
 
     // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
@@ -70,8 +70,8 @@ export default function DefinicoesEscolaPage() {
                 const data = await res.json()
 
                 const escolaData: EscolaForm = {
-                 ...form,
-                 ...data,
+                    ...form,
+                    ...data,
                     nome: data.nome || '',
                     sigla: data.sigla || '',
                     id_curto: data.id_curto || '',
@@ -93,7 +93,7 @@ export default function DefinicoesEscolaPage() {
                 // Atualiza nome da escola no sidebar
                 const userAtual = authService.getUser()
                 if (userAtual && escolaData.nome) {
-                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
+                    localStorage.setItem('user', JSON.stringify({ ...userAtual, escola_nome: escolaData.nome }))
                     window.dispatchEvent(new Event('user-updated'))
                 }
 
@@ -104,11 +104,11 @@ export default function DefinicoesEscolaPage() {
             }
         }
         fetchEscola()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
-        setForm(prev => ({...prev, [key]: value }))
+        setForm(prev => ({ ...prev, [key]: value }))
     }
 
     const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +130,10 @@ export default function DefinicoesEscolaPage() {
                 body: JSON.stringify(form)
             })
 
-            if (!res.ok) throw new Error('Erro ao salvar dados')
+            if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.detail || 'Erro ao salvar dados')
+            }
             let updatedData = await res.json()
 
             // 2. SE TIVER LOGO NOVA, FAZ UPLOAD SEPARADO
@@ -142,14 +145,17 @@ export default function DefinicoesEscolaPage() {
                     headers: getAuthHeader(false),
                     body: formData
                 })
-                if (!logoRes.ok) throw new Error('Erro ao salvar logo')
+                if (!logoRes.ok) {
+                    const err = await logoRes.json()
+                    throw new Error(err.detail || 'Erro ao salvar logo')
+                }
                 updatedData = await logoRes.json()
                 setLogoFile(null)
             }
 
             const escolaData: EscolaForm = {
-             ...form,
-             ...updatedData,
+                ...form,
+                ...updatedData,
                 nome: updatedData.nome || '',
                 sigla: updatedData.sigla || '',
                 logo_url: updatedData.logo_url || '',
@@ -160,7 +166,7 @@ export default function DefinicoesEscolaPage() {
 
             const userAtual = authService.getUser()
             if (userAtual && escolaData.nome) {
-                localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
+                localStorage.setItem('user', JSON.stringify({ ...userAtual, escola_nome: escolaData.nome }))
                 window.dispatchEvent(new Event('user-updated'))
             }
 
@@ -172,7 +178,7 @@ export default function DefinicoesEscolaPage() {
         }
     }
 
-    const tabs: {id: Tab, label: string, icon: any}[] = [
+    const tabs: { id: Tab, label: string, icon: any }[] = [
         { id: 'identificacao', label: 'Identificação', icon: Building2 },
         { id: 'contato', label: 'Contato', icon: MapPin },
         { id: 'visual', label: 'Visual', icon: Palette },
@@ -190,7 +196,7 @@ export default function DefinicoesEscolaPage() {
                     <p className="text-gray-400 text-sm">Personalize as informações e aparência do painel</p>
                 </div>
                 <button onClick={handleSave} disabled={loading} className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:opacity-90 transition">
-                    {loading? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading? 'Salvando...' : 'Salvar Todas as Definições'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading ? 'Salvando...' : 'Salvar Todas as Definições'}
                 </button>
             </div>
 
@@ -200,7 +206,7 @@ export default function DefinicoesEscolaPage() {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
                         return (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0 ${isActive? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0 ${isActive ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                                 <Icon className="w-4 h-4" />{tab.label}
                             </button>
                         )
@@ -220,7 +226,7 @@ export default function DefinicoesEscolaPage() {
                             <Input label="NIF" value={form.nif} onChange={v => handleChange('nif', v)} />
                             <div>
                                 <label className="text-sm text-white/80 mb-2 block">Nível de Ensino</label>
-                                <input value={form.nivel_ensino} disabled className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white/50 cursor-not-allowed"/>
+                                <input value={form.nivel_ensino} disabled className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white/50 cursor-not-allowed" />
                                 <p className="text-xs text-gray-500 mt-1">Apenas o Ministério pode alterar</p>
                             </div>
                         </div>
@@ -283,7 +289,7 @@ const Input = ({ label, value, onChange, type = 'text', icon, disabled }: InputP
         <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5 text-gray-400">{icon}</div>}
-            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6] transition disabled:text-white/50 disabled:cursor-not-allowed`}/>
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon ? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6] transition disabled:text-white/50 disabled:cursor-not-allowed`} />
         </div>
     </div>
 )
@@ -316,8 +322,8 @@ const Toggle = ({ label, description, checked, onChange }: ToggleProps) => (
             <p className="text-white font-medium">{label}</p>
             {description && <p className="text-sm text-gray-400">{description}</p>}
         </div>
-        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition ${checked? 'bg-[#3B82F6]' : 'bg-white/20'}`}>
-            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked? 'translate-x-6' : 'translate-x-1'}`}></div>
+        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition ${checked ? 'bg-[#3B82F6]' : 'bg-white/20'}`}>
+            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></div>
         </button>
     </div>
 )
@@ -327,8 +333,8 @@ const UploadBox = ({ label, currentUrl, onFileSelect }: UploadBoxProps) => (
     <div>
         <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
         <div className="flex items-center gap-4">
-            {currentUrl? <img src={currentUrl} alt={label} className="w-24 h-24 object-contain rounded-lg bg-white/5 p-2 border-white/10" /> : <div className="w-24 h-24 rounded-lg bg-white/5 border-dashed border-white/20 flex items-center justify-center"><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
-            <input type="file" accept="image/*" onChange={onFileSelect} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30 file:font-semibold file:cursor-pointer cursor-pointer"/>
+            {currentUrl ? <img src={currentUrl} alt={label} className="w-24 h-24 object-contain rounded-lg bg-white/5 p-2 border-white/10" /> : <div className="w-24 h-24 rounded-lg bg-white/5 border-dashed border-white/20 flex items-center justify-center"><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
+            <input type="file" accept="image/*" onChange={onFileSelect} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30 file:font-semibold file:cursor-pointer cursor-pointer" />
         </div>
     </div>
 )
