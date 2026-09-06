@@ -78,8 +78,9 @@ async def obter_minha_escola(
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
 
+    # 👇 CORRIGIDO: Converti UUID pra str
     data = {
-        "id": escola.id,
+        "id": str(escola.id), # 👈 AQUI
         "nome": escola.nome,
         "sigla": escola.sigla,
         "id_curto": escola.id_curto,
@@ -128,8 +129,9 @@ async def atualizar_definicoes_escola(
     await db.commit()
     await db.refresh(escola)
 
+    # 👇 CORRIGIDO: Converti UUID pra str
     data = {
-        "id": escola.id,
+        "id": str(escola.id), # 👈 AQUI
         "nome": escola.nome,
         "sigla": escola.sigla,
         "id_curto": escola.id_curto,
@@ -197,7 +199,7 @@ async def search_global(
 
     return {
         "escolas": [
-            {"id": e.id, "nome": e.nome, "provincia": e.provincia, "logo_url": e.logo_url, "nivel_ensino": e.nivel_ensino.value}
+            {"id": str(e.id), "nome": e.nome, "provincia": e.provincia, "logo_url": e.logo_url, "nivel_ensino": e.nivel_ensino.value}
             for e in escolas
         ],
         "usuarios": []
