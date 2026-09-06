@@ -85,11 +85,12 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Usuário não vinculado a esta escola")
 
     access_token = create_access_token({
-        "sub": str(usuario.id),
-        "email": usuario.email,
-        "nivel": vinculo.nivel.value,
-        "escola_id": vinculo.escola_id
+    "sub": str(usuario.id),
+    "email": usuario.email,
+    "nivel": vinculo.nivel.value,
+    "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None
     })
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
@@ -100,6 +101,6 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
             email=usuario.email,
             nome=usuario.nome,
             nivel=vinculo.nivel.value,
-            escola_id=vinculo.escola_id
+            escola_id=str(vinculo.escola_id) if vinculo.escola_id else None
         )
     )

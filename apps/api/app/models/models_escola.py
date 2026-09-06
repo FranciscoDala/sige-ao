@@ -27,24 +27,24 @@ class NivelAcesso(str, enum.Enum):
     # 5. Apoio
     FUNCIONARIO = "FUNCIONARIO"
 
-class NivelEnsino(str, enum.Enum): # 👈 ADD
+class NivelEnsino(str, enum.Enum):
     PRIMARIO = "PRIMARIO"
     I_CICLO = "I_CICLO"
     II_CICLO = "II_CICLO"
-    COMPLEXO = "COMPLEXO" # 7ª à 13ª
+    COMPLEXO = "COMPLEXO"
     MEDIO_TECNICO = "MEDIO_TECNICO"
     SUPERIOR = "SUPERIOR"
 
 class Escola(Base):
     __tablename__ = "escolas"
 
-    id: Mapped[str] = mapped_column(String(20), primary_key=True, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True) # 👈 CORRIGIDO
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     sigla: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     id_curto: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, index=True, comment='ESC001')
     nif: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
-    nivel_ensino: Mapped[NivelEnsino] = mapped_column( # 👈 ADD
+    nivel_ensino: Mapped[NivelEnsino] = mapped_column(
         SAEnum(NivelEnsino, name="nivelensino", native_enum=False, create_constraint=False),
         nullable=False,
         default=NivelEnsino.PRIMARIO,
@@ -103,7 +103,7 @@ class UsuarioEscola(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
-    escola_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=True)
+    escola_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=True) # 👈 CORRIGIDO
     nivel: Mapped[NivelAcesso] = mapped_column(
         SAEnum(NivelAcesso, name="nivelacesso", native_enum=False, create_constraint=False),
         nullable=False
@@ -125,14 +125,13 @@ class UsuarioEscola(Base):
         ),
     )
 
-# ===== MODELS PREPARADAS PRO FUTURO =====
 class Turma(Base):
     __tablename__ = "turmas"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     nome: Mapped[str] = mapped_column(String(100), nullable=False)
     ano_letivo: Mapped[str] = mapped_column(String(10), nullable=False)
-    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    escola_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True) # 👈 CORRIGIDO
     criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     escola: Mapped["Escola"] = relationship("Escola", back_populates="turmas")
@@ -143,7 +142,7 @@ class Aluno(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     matricula: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    escola_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True) # 👈 CORRIGIDO
     criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     escola: Mapped["Escola"] = relationship("Escola", back_populates="alunos")
@@ -154,7 +153,7 @@ class Professor(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     especialidade: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    escola_id: Mapped[str] = mapped_column(String(20), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True)
+    escola_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("escolas.id", ondelete="CASCADE"), nullable=False, index=True) # 👈 CORRIGIDO
     criado_em: Mapped[datetime.datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     escola: Mapped["Escola"] = relationship("Escola", back_populates="professores")
