@@ -2,13 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&display=swap');
+
+:root {
+    --cor-primaria: #3B82F6;
+    --cor-secundaria: #8B5CF6;
+    --cor-fundo: #FFFFFF;
+    --fonte-titulo: 'Poppins';
+    --fonte-corpo: 'Inter';
+}
+
 * {
-    font-family: "Zalando Sans Expanded", sans-serif; /* <- AGORA É ZALANDO */
-    font-optical-sizing: auto; /* <- melhor pra fonte variável */
+    font-family: var(--fonte-corpo), "Zalando Sans Expanded", sans-serif;
+    font-optical-sizing: auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--fonte-titulo), "Zalando Sans Expanded", sans-serif;
 }
 
 body {
-    background-color: #0F172A; /* <- teu fundo tava azul escuro. se quer bege usa #F7F3EA */
-    color: #E5E7EB; /* <- texto claro pra combinar com o fundo escuro */
+    background-color: #0F172A;
+    color: #E5E7EB;
     min-height: 100vh;
 }
+
+[data-tema="claro"] body {
+    background-color: #F8FAFC;
+    color: #1E293B;
+}
+
+[data-card-style="quadrado"].rounded-2xl { border-radius: 0.5rem; }
+[data-card-style="minimalista"].rounded-2xl { border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.1); }
