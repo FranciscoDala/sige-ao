@@ -1,4 +1,4 @@
-import { Eye, Edit, Trash2, ShieldCheck, Mail, Phone, Building, GraduationCap } from 'lucide-react'
+import { Eye, Edit, Trash2, User, Mail, Phone, Building, GraduationCap } from 'lucide-react'
 import { UsuarioMinisterio } from '../../types/usuario'
 
 interface UsuarioCardProps {
@@ -26,24 +26,26 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
     return (
         <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
             <div className="flex items-start gap-4 mb-5">
+                {/* ICONE TROCADO PARA USER */}
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg mt-1 overflow-hidden ${
                     isDiretor ? 'bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] shadow-[#8B5CF6]/20' : 'bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-[#3B82F6]/20'
                 }`}>
-                    {isDiretor ? <GraduationCap className="w-8 h-8 text-white" /> : <ShieldCheck className="w-8 h-8 text-white" />}
+                    <User className="w-8 h-8 text-white" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="min-w-0">
                             <h3 className="font-bold text-white text-lg leading-tight break-words">{usuario.nome}</h3>
-                            <span className={`text-xs px-3 py-1 rounded-full font-semibold border ${getNivelColor(usuario.nivel)}`}>
+                            {/* ESPAÇO TOP E BOTTOM NO BADGE */}
+                            <span className={`inline-block text-xs px-3 py-1 rounded-full font-semibold border my-2 ${getNivelColor(usuario.nivel)}`}>
                                 {getNivelLabel(usuario.nivel)}
                             </span>
                         </div>
                         <div className={`w-3 h-3 rounded-full ${usuario.ativo ? 'bg-green-400' : 'bg-gray-500'}`} />
                     </div>
 
-                    <div className="space-y-1.5 mt-2">
+                    <div className="space-y-1.5">
                         <div className="flex items-center gap-2 text-sm text-gray-300">
                             <Mail className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
                             <span className="break-words">{usuario.email}</span>
@@ -53,7 +55,7 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                             <span>{usuario.departamento || (isDiretor ? 'Escola' : 'Ministério')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-300">
-                            <ShieldCheck className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                            <User className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
                             <span>{usuario.ativo ? 'Ativo' : 'Inativo'}</span>
                         </div>
                         {usuario.telefone && (
