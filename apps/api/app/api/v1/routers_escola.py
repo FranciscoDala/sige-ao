@@ -21,8 +21,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
 
 def check_ministerio(current_user: dict):
-    if current_user["nivel"]!= "MINISTERIO":
+    if current_user["nivel"] != "MINISTERIO":
         raise HTTPException(status_code=403, detail="Apenas MINISTERIO pode fazer isso")
+
+def check_diretor_ou_ministerio(current_user: dict): # 👈 COLA AQUI
+    if current_user["nivel"] not in ["MINISTERIO", "DIRETOR", "DIRECAO"]:
+        raise HTTPException(status_code=403, detail="Sem permissao")
+
 
 @router.get("", response_model=List[EscolaResponse])
 @router.get("/", response_model=List[EscolaResponse])
@@ -123,7 +128,9 @@ async def criar_escola(
         config_json=dados.config_json,
         ativo=dados.ativo,
         id_curto=id_curto,
-        logo_url=dados.logo_url # 👈 Agora vem por URL. Se for vazio, fica null
+        logo_url=dados.logo_url, # 👈 Agora vem por URL. Se for vazio, fica null
+        banner_url=dados.banner_url, # 👈 ADD
+        favicon_url=dados.favicon_url # 👈 ADD
     )
     db.add(nova_escola)
     await db.commit()
@@ -269,14 +276,13 @@ async def obter_minha_escola(
 
 
 
-@router.put("/me/definicoes", response_model=EscolaResponse)
+@router.put("/me/definicoes") # 👈 TIREI O response_model
 async def atualizar_definicoes_escola(
     dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(check_diretor_ou_ministerio)
 ):
     escola_id = get_escola_do_usuario(current_user)
-
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
     if not escola:
@@ -288,4 +294,35 @@ async def atualizar_definicoes_escola(
 
     await db.commit()
     await db.refresh(escola)
-    return escola
+
+    # 👇 MESMA CONVERSÃO DO GET /ME
+    data = {
+        "id": escola.id,
+        "nome": escola.nome,
+        "sigla": escola.sigla,
+        "id_curto": escola.id_curto,
+        "nif": escola.nif,
+        "nivel_ensino": escola.nivel_ensino.value if escola.nivel_ensino else None,
+        "endereco": escola.endereco,
+        "telefone": escola.telefone,
+        "email": escola.email,
+        "provincia": escola.provincia,
+        "municipio": escola.municipio,
+        "cor_primaria": escola.cor_primaria,
+        "cor_secundaria": escola.cor_secundaria,
+        "cor_fundo": escola.cor_fundo,
+        "tema": escola.tema,
+        "fonte_titulo": escola.fonte_titulo,
+        "fonte_corpo": escola.fonte_corpo,
+        "estilo_card": escola.estilo_card,
+        "logo_url": escola.logo_url,
+        "banner_url": escola.banner_url,
+        "favicon_url": escola.favicon_url,
+        "permitir_auto_cadastro": escola.permitir_auto_cadastro,
+        "usar_modulo_propina": escola.usar_modulo_propina,
+        "usar_modulo_biblioteca": escola.usar_modulo_biblioteca,
+        "config_json": escola.config_json,
+        "ativo": escola.ativo,
+        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
+    }
+    return JSONResponse(content=data)

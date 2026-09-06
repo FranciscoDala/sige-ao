@@ -24,7 +24,7 @@ export default function DefinicoesEscolaPage() {
     const [loading, setLoading] = useState(false)
     const [loadingData, setLoadingData] = useState(true)
     const [logoFile, setLogoFile] = useState<File | null>(null)
-    const [logoPreview, setLogoPreview] = useState<string | null>(null) // 👈 pra preview
+    const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
     const [form, setForm] = useState<EscolaForm>({
         nome: '', sigla: '', id_curto: '', nif: '', nivel_ensino: 'PRIMARIO',
@@ -37,7 +37,7 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-       ...(isJson? { 'Content-Type': 'application/json' } : {})
+      ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
@@ -48,9 +48,37 @@ export default function DefinicoesEscolaPage() {
                     headers: getAuthHeader()
                 })
                 if (!res.ok) throw new Error('Erro ao carregar')
-                const data: EscolaForm = await res.json()
-                setForm(data)
-                setLogoPreview(data.logo_url)
+                const data: any = await res.json()
+
+                // Trata null do backend
+                const escolaData: EscolaForm = {
+                   ...form,
+                   ...data,
+                    nome: data.nome || '',
+                    sigla: data.sigla || '',
+                    id_curto: data.id_curto || '',
+                    nif: data.nif || '',
+                    nivel_ensino: data.nivel_ensino || 'PRIMARIO',
+                    email: data.email || '',
+                    telefone: data.telefone || '',
+                    endereco: data.endereco || '',
+                    provincia: data.provincia || '',
+                    municipio: data.municipio || '',
+                    logo_url: data.logo_url || '',
+                    banner_url: data.banner_url || '',
+                    favicon_url: data.favicon_url || '',
+                }
+
+                setForm(escolaData)
+                setLogoPreview(escolaData.logo_url)
+
+                // Atualiza nome da escola no sidebar
+                const userAtual = authService.getUser()
+                if (userAtual && escolaData.nome) {
+                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
+                    window.dispatchEvent(new Event('user-updated'))
+                }
+
             } catch (error) {
                 toast.error('Erro ao carregar dados da escola')
             } finally {
@@ -58,6 +86,7 @@ export default function DefinicoesEscolaPage() {
             }
         }
         fetchEscola()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
@@ -84,7 +113,7 @@ export default function DefinicoesEscolaPage() {
             })
 
             if (!res.ok) throw new Error('Erro ao salvar dados')
-            let updatedData: EscolaForm = await res.json()
+            let updatedData: any = await res.json()
 
             // 2. SE TIVER LOGO NOVA, FAZ UPLOAD SEPARADO
             if (logoFile) {
@@ -100,8 +129,25 @@ export default function DefinicoesEscolaPage() {
                 setLogoFile(null)
             }
 
-            setForm(updatedData)
-            setLogoPreview(updatedData.logo_url)
+            // Trata null do backend no retorno
+            const escolaData: EscolaForm = {
+               ...form,
+               ...updatedData,
+                nome: updatedData.nome || '',
+                sigla: updatedData.sigla || '',
+                logo_url: updatedData.logo_url || '',
+            }
+
+            setForm(escolaData)
+            setLogoPreview(escolaData.logo_url)
+
+            // Atualiza nome da escola no sidebar após salvar
+            const userAtual = authService.getUser()
+            if (userAtual && escolaData.nome) {
+                localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
+                window.dispatchEvent(new Event('user-updated'))
+            }
+
             toast.success('Definições salvas com sucesso!')
         } catch (error: any) {
             toast.error(error.message || 'Erro ao salvar definições')
