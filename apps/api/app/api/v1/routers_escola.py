@@ -6,6 +6,8 @@ from uuid import UUID
 import logging
 import uuid
 
+from pydantic import ValidationError
+
 from app.db.database import get_db
 from app.models.models_escola import Escola, NivelEnsino
 from app.schemas.schemas_escola import EscolaResponse, EscolaCreate, EscolaUpdate
@@ -220,7 +222,8 @@ def get_escola_do_usuario(current_user: dict) -> UUID:
     except Exception:
         raise HTTPException(status_code=422, detail="escola_id invalido no token")
 
-    
+
+
 @router.get("/me", response_model=EscolaResponse)
 async def obter_minha_escola(
     db: AsyncSession = Depends(get_db),
@@ -230,7 +233,18 @@ async def obter_minha_escola(
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
-    return escola
+
+    logger.info(f"[ME RAW] {escola.__dict__}") # 👈 VAI MOSTRAR TUDO QUE VEIO DO DB
+
+    try:
+        return EscolaResponse.model_validate(escola) # 👈 VALIDA MANUAL
+    except ValidationError as e:
+        logger.error(f"[ME ERROR] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 
 @router.put("/me/definicoes", response_model=EscolaResponse)
 async def atualizar_definicoes_escola(

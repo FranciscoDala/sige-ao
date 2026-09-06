@@ -97,10 +97,38 @@ class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
     ativo: Optional[bool] = None
 
 
-class EscolaResponse(EscolaBase):
+class EscolaResponse(BaseModel): # 👈 NÃO HERDA MAIS DO BASE
     id: UUID
-    criado_em: Optional[datetime] = None # 👈 MUDAR PRA OPCIONAL
+    nome: Optional[str] = None
+    sigla: Optional[str] = None
+    id_curto: Optional[str] = None
+    nif: Optional[str] = None
+    nivel_ensino: Optional[NivelEnsino] = None
+    endereco: Optional[str] = None
+    telefone: Optional[str] = None
+    email: Optional[EmailStr] = None
+    provincia: Optional[str] = None
+    municipio: Optional[str] = None
+    cor_primaria: Optional[str] = None
+    cor_secundaria: Optional[str] = None
+    cor_fundo: Optional[str] = None
+    tema: Optional[str] = None
+    fonte_titulo: Optional[str] = None
+    fonte_corpo: Optional[str] = None
+    estilo_card: Optional[str] = None
+    logo_url: Optional[str] = None
+    banner_url: Optional[str] = None
+    favicon_url: Optional[str] = None
+    permitir_auto_cadastro: Optional[bool] = None
+    usar_modulo_propina: Optional[bool] = None
+    usar_modulo_biblioteca: Optional[bool] = None
+    config_json: Optional[dict[str, Any]] = None
+    ativo: Optional[bool] = None
+    criado_em: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+
 
 # ================== USUARIO ==================
 class UsuarioBase(BaseModel):
