@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Users, GraduationCap, BookOpen, ClipboardList, DollarSign, Settings, Power, Search, Bell, School, Menu, X, User, Loader2, CircleHelp, CalendarDays, FileText
+    LayoutGrid, Settings, Power, Search, Bell, School, Menu, X, User, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -10,17 +10,10 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// 👇 SÓ 2 ITENS AGORA
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Users, label: 'Alunos', path: '/dashboard/alunos', type: 'Definição' },
-    { icon: GraduationCap, label: 'Turmas', path: '/dashboard/turmas', type: 'Definição' },
-    { icon: BookOpen, label: 'Disciplinas', path: '/dashboard/disciplinas', type: 'Definição' },
-    { icon: ClipboardList, label: 'Notas', path: '/dashboard/notas', type: 'Definição' },
-    { icon: CalendarDays, label: 'Frequência', path: '/dashboard/frequencia', type: 'Definição' },
-    { icon: DollarSign, label: 'Financeiro', path: '/dashboard/financeiro', type: 'Definição' },
-    { icon: FileText, label: 'Matrículas', path: '/dashboard/matriculas', type: 'Definição' },
-    { icon: CircleHelp, label: 'Ajuda(Help)', path: '/dashboard/ajuda', type: 'Definição' },
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true },
+    { icon: Settings, label: 'Definições', path: '/dashboard/definicoes', type: 'Definição' },
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
@@ -31,7 +24,7 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-type SearchResult = { id: string; nome: string; path: string; type: 'Aluno' | 'Turma' | 'Definição'; sub?: string; Icon: any }
+type SearchResult = { id: string; nome: string; path: string; type: 'Definição'; sub?: string; Icon: any }
 
 export default function MainLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -84,25 +77,9 @@ export default function MainLayout() {
         const delay = setTimeout(async () => {
             setSearching(true)
             try {
-                const res = await api.get(`/escola/search/global?q=${searchQuery}`)
+                // 👇 BUSCA SÓ NO MENU AGORA
                 const results: SearchResult[] = [
-                  ...res.data.alunos?.map((a: any) => ({
-                        id: a.id,
-                        nome: a.nome,
-                        sub: a.turma,
-                        path: `/dashboard/alunos/${a.id}`,
-                        type: 'Aluno' as const,
-                        Icon: Users
-                    })) || [],
-                  ...res.data.turmas?.map((t: any) => ({
-                        id: t.id,
-                        nome: t.nome,
-                        sub: `${t.quantidade_alunos} alunos`,
-                        path: `/dashboard/turmas/${t.id}`,
-                        type: 'Turma' as const,
-                        Icon: GraduationCap
-                    })) || [],
-                  ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                 ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -112,9 +89,7 @@ export default function MainLayout() {
                 ]
                 setSearchResults(results)
             } catch (err: any) {
-                if (err.response?.status!== 404) {
-                    toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
-                }
+                toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
                 setSearchResults([])
             } finally { setSearching(false) }
         }, 400)
@@ -129,7 +104,7 @@ export default function MainLayout() {
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20">
+                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20"> {/* 👈 CORRIGI: flex-col */}
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <School className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
@@ -141,9 +116,9 @@ export default function MainLayout() {
                         </button>
                     </div>
                     <nav className="space-y-1 flex-1 overflow-y-auto">
-                        {menuItems.filter(item =>!item.hidden).map(item => {
+                        {menuItems.map(item => {
                             const isActive = item.path === '/dashboard'
-                              ? location.pathname === '/dashboard'
+                            ? location.pathname === '/dashboard'
                                 : location.pathname.startsWith(item.path)
 
                             return (
@@ -151,7 +126,7 @@ export default function MainLayout() {
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
-                                      ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                    ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
                                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
@@ -168,7 +143,7 @@ export default function MainLayout() {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
-                                <p className="text-xs text-gray-400 truncate">{(user as any).escola_nome || user.email}</p> {/* 👈 CORRIGIDO */}
+                                <p className="text-xs text-gray-400 truncate">{(user as any).escola_nome || user.email}</p>
                             </div>
                         </div>
                     </div>
@@ -186,7 +161,7 @@ export default function MainLayout() {
                                 ref={searchInputRef}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Buscar aluno, turma..."
+                                placeholder="Buscar no menu..."
                                 className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
@@ -198,7 +173,7 @@ export default function MainLayout() {
                                             <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
                                             <div className="min-w-0">
                                                 <p className="text-white font-medium truncate">{item.nome}</p>
-                                                <p className="text-xs text-gray-400">{item.type} {item.sub && `• ${item.sub}`}</p>
+                                                <p className="text-xs text-gray-400">{item.type}</p>
                                             </div>
                                         </button>
                                     ))}
@@ -214,7 +189,7 @@ export default function MainLayout() {
                             <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
-                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">
+                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">
                                 <Power className="w-5 h-5 text-red-400 group-hover:text-red-300 transition" />
                             </button>
                         </div>
@@ -241,7 +216,7 @@ export default function MainLayout() {
                             ref={searchInputRef}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Pesquisar alunos, turmas..."
+                            placeholder="Pesquisar no menu..."
                             className="w-full pl-12 pr-4 py-3.5 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400"
                         />
                     </div>
@@ -255,7 +230,7 @@ export default function MainLayout() {
                                 <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
                                 <div className="min-w-0">
                                     <p className="text-white font-medium truncate">{item.nome}</p>
-                                    <p className="text-xs text-gray-400">{item.type} {item.sub && `• ${item.sub}`}</p>
+                                    <p className="text-xs text-gray-400">{item.type}</p>
                                 </div>
                             </button>
                         ))}

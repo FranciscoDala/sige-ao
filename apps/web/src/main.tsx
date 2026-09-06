@@ -1,127 +1,121 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
-import { authService } from './services/auth'
-import './globals.css'
+import { useState } from 'react'
+import { School, Save, Upload, Palette, Calendar } from 'lucide-react'
+import { toast } from 'sonner'
 
-// ======================= LAYOUTS =======================
-// Layout do painel da escola: Diretor, Secretario, Professor
-import MainLayout from './layouts/MainLayout'
-// Layout do MINISTERIO: Admin geral
-import AdminLayout from './layouts/AdminLayout'
+export default function DefinicoesEscolaPage() {
+    const [loading, setLoading] = useState(false)
 
-// ======================= PAGES =======================
-// PÁGINAS GERAIS
-import Login from './pages/auth/Login'
+    // Estados provisórios - depois ligamos na API
+    const [nomeEscola, setNomeEscola] = useState('Escola Primária do Futuro')
+    const [anoLetivo, setAnoLetivo] = useState('2026')
+    const [corPrimaria, setCorPrimaria] = useState('#3B82F6')
 
-// PÁGINAS DO ADMIN - MINISTERIO
-import SchoolsPage from './pages/admin/SchoolsPage' // 👈 FALTAVA ESSE IMPORT
-import UsersPage from './pages/admin/UsersPage'
-import AjudaPage from './pages/admin/AjudaPage'
-
-// PÁGINAS DA ESCOLA
-import EscolaListPage from './pages/escola/EscolaListPage' // Dashboard da escola
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1
+    const handleSave = async () => {
+        setLoading(true)
+        try {
+            // TODO: Ligar na API depois
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            toast.success('Definições salvas com sucesso!')
+        } catch (error) {
+            toast.error('Erro ao salvar definições')
+        } finally {
+            setLoading(false)
+        }
     }
-  }
-})
 
-// Bloqueia se não estiver logado
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-    const isAuth = authService.isAuthenticated()
-    return isAuth ? children : <Navigate to="/" replace />
+    return (
+        <div className="space-y-6">
+            {/* HEADER */}
+            <div>
+                <h1 className="text-2xl font-bold text-white">Definições da Escola</h1>
+                <p className="text-gray-400 text-sm">Configure as informações básicas do painel da sua escola</p>
+            </div>
+
+            {/* CARD 1: INFORMAÇÕES GERAIS */}
+            <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <School className="w-6 h-6 text-[#3B82F6]" />
+                    <h2 className="text-lg font-semibold text-white">Informações Gerais</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm text-white/80 mb-2 block">Nome da Escola</label>
+                        <input
+                            type="text"
+                            value={nomeEscola}
+                            onChange={(e) => setNomeEscola(e.target.value)}
+                            className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]"
+                            placeholder="Digite o nome da escola"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm text-white/80 mb-2 block">Ano Letivo</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                value={anoLetivo}
+                                onChange={(e) => setAnoLetivo(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]"
+                                placeholder="2026"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CARD 2: LOGO */}
+            <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <Upload className="w-6 h-6 text-[#3B82F6]" />
+                    <h2 className="text-lg font-semibold text-white">Logo da Escola</h2>
+                </div>
+
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-400 text-sm">Arraste a logo aqui ou clique para enviar</p>
+                    <p className="text-gray-500 text-xs mt-1">PNG, JPG até 2MB</p>
+                </div>
+            </div>
+
+            {/* CARD 3: PERSONALIZAÇÃO */}
+            <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <Palette className="w-6 h-6 text-[#3B82F6]" />
+                    <h2 className="text-lg font-semibold text-white">Personalização</h2>
+                </div>
+
+                <div>
+                    <label className="text-sm text-white/80 mb-2 block">Cor Primária do Painel</label>
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="color"
+                            value={corPrimaria}
+                            onChange={(e) => setCorPrimaria(e.target.value)}
+                            className="w-14 h-12 bg-white/5 border border-white/10 rounded-xl cursor-pointer"
+                        />
+                        <input
+                            type="text"
+                            value={corPrimaria}
+                            onChange={(e) => setCorPrimaria(e.target.value)}
+                            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* BOTÃO SALVAR */}
+            <div className="flex justify-end">
+                <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="px-6 py-3 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold rounded-xl flex items-center gap-2 hover:scale-[1.02] transition disabled:opacity-50"
+                >
+                    <Save className="w-5 h-5" />
+                    {loading ? 'Salvando...' : 'Salvar Definições'}
+                </button>
+            </div>
+        </div>
+    )
 }
-
-// Bloqueia rota de escola se for MINISTERIO
-const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
-    const nivel = authService.getNivel()?.toUpperCase()
-    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
-    return <>{children}</>
-}
-
-// Bloqueia se já estiver logado
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-    const isAuth = authService.isAuthenticated()
-    const nivel = authService.getNivel()?.toUpperCase()
-
-    if (!isAuth) return children
-
-    // Redireciona baseado no nível
-    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
-    return <Navigate to="/dashboard" replace />
-}
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-            <Toaster position="top-center" richColors />
-
-            <HashRouter>
-                <Routes>
-                    {/* ========== 1. ROTA PÚBLICA ========== */}
-                    <Route
-                        path="/"
-                        element={
-                            <PublicRoute>
-                                <Login />
-                            </PublicRoute>
-                        }
-                    />
-
-                    {/* ========== 2. ROTAS ADMIN - MINISTERIO ========== */}
-                    <Route
-                        path="/admin"
-                        element={
-                            <PrivateRoute>
-                                <AdminLayout />
-                            </PrivateRoute>
-                        }
-                    >
-                        {/* Dashboard do Admin */}
-                        <Route index element={<SchoolsPage />} /> {/* 👈 TROQUEI AQUI */}
-
-                        <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
-                        <Route path="users" element={<UsersPage />} />
-                        <Route path="ajuda" element={<AjudaPage />} />
-                        <Route path="settings" element={<div>Configurações Admin</div>} />
-                    </Route>
-
-                    {/* ========== 3. ROTAS ESCOLA - DIRETOR, SECRETARIO, etc ========== */}
-                    <Route
-                        path="/dashboard"
-                        element={
-                            <PrivateRoute>
-                                <SchoolRouteGuard> {/* TRANCADO: MINISTERIO não entra aqui */}
-                                    <MainLayout />
-                                </SchoolRouteGuard>
-                            </PrivateRoute>
-                        }
-                    >
-                        {/* Dashboard da Escola */}
-                        <Route index element={<EscolaListPage />} /> {/* 👈 AGORA É DA ESCOLA */}
-
-                        <Route path="alunos" element={<div>Alunos</div>} />
-                        <Route path="turmas" element={<div>Turmas</div>} />
-                        <Route path="disciplinas" element={<div>Disciplinas</div>} />
-                        <Route path="notas" element={<div>Notas</div>} />
-                        <Route path="frequencia" element={<div>Frequência</div>} />
-                        <Route path="financeiro" element={<div>Financeiro</div>} />
-                        <Route path="matriculas" element={<div>Matrículas</div>} />
-                        <Route path="ajuda" element={<AjudaPage />} />
-                        <Route path="settings" element={<div>Configurações Escola</div>} />
-                    </Route>
-
-                    {/* ROTA 404 */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </HashRouter>
-        </QueryClientProvider>
-    </React.StrictMode>
-)
