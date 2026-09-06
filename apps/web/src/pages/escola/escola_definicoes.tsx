@@ -37,23 +37,32 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-      ...(isJson? { 'Content-Type': 'application/json' } : {})
+     ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
     useEffect(() => {
         const fetchEscola = async () => {
+            console.log('[DEBUG] Iniciando fetchEscola')
             try {
                 const res = await fetch(`${API_URL}/escolas/me`, {
                     headers: getAuthHeader()
                 })
-                if (!res.ok) throw new Error('Erro ao carregar')
-                const data: any = await res.json()
+
+                console.log('[DEBUG] Status GET /me:', res.status)
+                const bodyText = await res.text() // pega como texto pra não quebrar
+                console.log('[DEBUG] Body GET /me:', bodyText)
+
+                if (!res.ok) {
+                    throw new Error(`Erro ${res.status}: ${bodyText}`)
+                }
+
+                const data = JSON.parse(bodyText)
 
                 // Trata null do backend
                 const escolaData: EscolaForm = {
-                   ...form,
-                   ...data,
+                  ...form,
+                  ...data,
                     nome: data.nome || '',
                     sigla: data.sigla || '',
                     id_curto: data.id_curto || '',
@@ -69,6 +78,7 @@ export default function DefinicoesEscolaPage() {
                     favicon_url: data.favicon_url || '',
                 }
 
+                console.log('[DEBUG] Dados tratados:', escolaData)
                 setForm(escolaData)
                 setLogoPreview(escolaData.logo_url)
 
@@ -79,8 +89,9 @@ export default function DefinicoesEscolaPage() {
                     window.dispatchEvent(new Event('user-updated'))
                 }
 
-            } catch (error) {
-                toast.error('Erro ao carregar dados da escola')
+            } catch (error: any) {
+                console.error('[DEBUG] Erro no fetchEscola:', error)
+                toast.error(error.message || 'Erro ao carregar dados da escola')
             } finally {
                 setLoadingData(false)
             }
@@ -97,13 +108,14 @@ export default function DefinicoesEscolaPage() {
         const file = e.target.files?.[0]
         if (file) {
             setLogoFile(file)
-            setLogoPreview(URL.createObjectURL(file)) // preview instantaneo
+            setLogoPreview(URL.createObjectURL(file))
         }
     }
 
     // 2. SALVAR DADOS
     const handleSave = async () => {
         setLoading(true)
+        console.log('[DEBUG] Dados a enviar no PUT:', form)
         try {
             // 1. SALVA OS DADOS JSON
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
@@ -112,18 +124,24 @@ export default function DefinicoesEscolaPage() {
                 body: JSON.stringify(form)
             })
 
-            if (!res.ok) throw new Error('Erro ao salvar dados')
-            let updatedData: any = await res.json()
+            console.log('[DEBUG] Status PUT /me/definicoes:', res.status)
+            const bodyText = await res.text()
+            console.log('[DEBUG] Body PUT /me/definicoes:', bodyText)
+
+            if (!res.ok) throw new Error(`Erro ${res.status}: ${bodyText}`)
+            let updatedData = JSON.parse(bodyText)
 
             // 2. SE TIVER LOGO NOVA, FAZ UPLOAD SEPARADO
             if (logoFile) {
+                console.log('[DEBUG] Enviando logo...')
                 const formData = new FormData()
                 formData.append('logo', logoFile)
                 const logoRes = await fetch(`${API_URL}/escolas/me/logo`, {
                     method: 'POST',
-                    headers: getAuthHeader(false), // sem Content-Type
+                    headers: getAuthHeader(false),
                     body: formData
                 })
+                console.log('[DEBUG] Status POST /me/logo:', logoRes.status)
                 if (!logoRes.ok) throw new Error('Erro ao salvar logo')
                 updatedData = await logoRes.json()
                 setLogoFile(null)
@@ -131,8 +149,8 @@ export default function DefinicoesEscolaPage() {
 
             // Trata null do backend no retorno
             const escolaData: EscolaForm = {
-               ...form,
-               ...updatedData,
+              ...form,
+              ...updatedData,
                 nome: updatedData.nome || '',
                 sigla: updatedData.sigla || '',
                 logo_url: updatedData.logo_url || '',
@@ -141,7 +159,6 @@ export default function DefinicoesEscolaPage() {
             setForm(escolaData)
             setLogoPreview(escolaData.logo_url)
 
-            // Atualiza nome da escola no sidebar após salvar
             const userAtual = authService.getUser()
             if (userAtual && escolaData.nome) {
                 localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
@@ -150,6 +167,7 @@ export default function DefinicoesEscolaPage() {
 
             toast.success('Definições salvas com sucesso!')
         } catch (error: any) {
+            console.error('[DEBUG] Erro no handleSave:', error)
             toast.error(error.message || 'Erro ao salvar definições')
         } finally {
             setLoading(false)
