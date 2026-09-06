@@ -211,10 +211,16 @@ async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), cu
 
 def get_escola_do_usuario(current_user: dict) -> UUID:
     escola_id = current_user.get("escola_id")
+    logger.info(f"[GET_ESCOLA] user={current_user.get('email')} escola_id={escola_id}")
+
     if not escola_id:
         raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
-    return UUID(str(escola_id))
+    try:
+        return UUID(str(escola_id))
+    except Exception:
+        raise HTTPException(status_code=422, detail="escola_id invalido no token")
 
+    
 @router.get("/me", response_model=EscolaResponse)
 async def obter_minha_escola(
     db: AsyncSession = Depends(get_db),

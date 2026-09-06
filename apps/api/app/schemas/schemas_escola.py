@@ -1,45 +1,75 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Literal, Union
+from typing import Optional, Literal, Union, Any
 from datetime import datetime
 from uuid import UUID
 from app.models.models_escola import NivelAcesso, NivelEnsino
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):
+    """Base para Response. Tudo opcional pra não quebrar se vier null do DB"""
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
-    id_curto: str = Field(..., min_length=3, max_length=10, description="Código único da escola ex: ESC001") # 👈 OBRIGATÓRIO
+    id_curto: Optional[str] = Field(None, min_length=3, max_length=10, description="Código único da escola ex: ESC001")
     nif: Optional[str] = Field(None, max_length=50)
-    nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO)
+    nivel_ensino: Optional[NivelEnsino] = Field(None)
     endereco: Optional[str] = Field(None, max_length=500)
     telefone: Optional[str] = Field(None, max_length=20)
-    email: Optional[EmailStr] = None # 👈 ADD
+    email: Optional[EmailStr] = None
     provincia: Optional[str] = Field(None, max_length=50)
     municipio: Optional[str] = Field(None, max_length=50)
 
     # BRANDING
-    cor_primaria: str = "#3B82F6"
-    cor_secundaria: str = "#8B5CF6"
-    cor_fundo: str = "#FFFFFF"
-    tema: str = "escuro"
-    fonte_titulo: str = "Poppins"
-    fonte_corpo: str = "Inter"
-    estilo_card: str = "arredondado"
+    cor_primaria: Optional[str] = "#3B82F6"
+    cor_secundaria: Optional[str] = "#8B5CF6"
+    cor_fundo: Optional[str] = "#FFFFFF"
+    tema: Optional[str] = "escuro"
+    fonte_titulo: Optional[str] = "Poppins"
+    fonte_corpo: Optional[str] = "Inter"
+    estilo_card: Optional[str] = "arredondado"
     logo_url: Optional[str] = None
     banner_url: Optional[str] = None
     favicon_url: Optional[str] = None
 
     # CONFIG
-    permitir_auto_cadastro: bool = False
-    usar_modulo_propina: bool = True
-    usar_modulo_biblioteca: bool = False
-    config_json: dict = {}
-    ativo: bool = True
+    permitir_auto_cadastro: Optional[bool] = False
+    usar_modulo_propina: Optional[bool] = True
+    usar_modulo_biblioteca: Optional[bool] = False
+    config_json: Optional[dict[str, Any]] = {} # 👈 tipado melhor
+    ativo: Optional[bool] = True
 
-class EscolaCreate(EscolaBase):
-    pass # 👈 TIREI O ID. Quem gera é o DB com uuid4
 
-class EscolaUpdate(BaseModel): # 👈 Não herdar tudo pra não obrigar campos
+class EscolaCreate(BaseModel): # 👈 NÃO HERDA
+    """Create: só o que é obrigatório pra criar"""
+    nome: str = Field(..., min_length=3, max_length=255)
+    id_curto: str = Field(..., min_length=3, max_length=10)
+    nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO)
+
+    sigla: Optional[str] = Field(None, max_length=10)
+    nif: Optional[str] = Field(None, max_length=50)
+    endereco: Optional[str] = Field(None, max_length=500)
+    telefone: Optional[str] = Field(None, max_length=20)
+    email: Optional[EmailStr] = None
+    provincia: Optional[str] = Field(None, max_length=50)
+    municipio: Optional[str] = Field(None, max_length=50)
+    cor_primaria: Optional[str] = "#3B82F6"
+    cor_secundaria: Optional[str] = "#8B5CF6"
+    cor_fundo: Optional[str] = "#FFFFFF"
+    tema: Optional[str] = "escuro"
+    fonte_titulo: Optional[str] = "Poppins"
+    fonte_corpo: Optional[str] = "Inter"
+    estilo_card: Optional[str] = "arredondado"
+    logo_url: Optional[str] = None
+    banner_url: Optional[str] = None
+    favicon_url: Optional[str] = None
+    permitir_auto_cadastro: Optional[bool] = False
+    usar_modulo_propina: Optional[bool] = True
+    usar_modulo_biblioteca: Optional[bool] = False
+    config_json: Optional[dict[str, Any]] = {}
+    ativo: Optional[bool] = True
+
+
+class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
+    """Update: tudo opcional"""
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
     id_curto: Optional[str] = Field(None, min_length=3, max_length=10)
@@ -63,8 +93,9 @@ class EscolaUpdate(BaseModel): # 👈 Não herdar tudo pra não obrigar campos
     permitir_auto_cadastro: Optional[bool] = None
     usar_modulo_propina: Optional[bool] = None
     usar_modulo_biblioteca: Optional[bool] = None
-    config_json: Optional[dict] = None
+    config_json: Optional[dict[str, Any]] = None
     ativo: Optional[bool] = None
+
 
 class EscolaResponse(EscolaBase):
     id: UUID

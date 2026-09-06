@@ -10,7 +10,6 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 
 const API_URL = import.meta.env.VITE_API_URL
 
-// 👇 SÓ 2 ITENS AGORA
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
     { icon: Settings, label: 'Definições', path: '/dashboard/definicoes', type: 'Definição' },
@@ -77,9 +76,8 @@ export default function MainLayout() {
         const delay = setTimeout(async () => {
             setSearching(true)
             try {
-                // 👇 BUSCA SÓ NO MENU AGORA
                 const results: SearchResult[] = [
-                 ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -104,7 +102,7 @@ export default function MainLayout() {
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20"> {/* 👈 CORRIGI: flex-col */}
+                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20">
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <School className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
@@ -118,16 +116,16 @@ export default function MainLayout() {
                     <nav className="space-y-1 flex-1 overflow-y-auto">
                         {menuItems.map(item => {
                             const isActive = item.path === '/dashboard'
-                            ? location.pathname === '/dashboard'
+                           ? location.pathname === '/dashboard'
                                 : location.pathname.startsWith(item.path)
 
                             return (
                                 <button
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
-                                    ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
-                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive
+                                   ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white border-transparent'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -185,7 +183,7 @@ export default function MainLayout() {
                             <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <Search className="w-5 h-5 text-white" />
                             </button>
-                            <button className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
+                            <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
                             <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>

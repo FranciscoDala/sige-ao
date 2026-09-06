@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
+import logging
 
 from app.db.database import get_db
 from app.models.models_escola import Usuario, UsuarioEscola, Escola, NivelAcesso
 from app.schemas.schemas_escola import LoginRequest, TokenResponse, UserInToken
 from app.core.security import verify_password, create_access_token
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -44,9 +47,13 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token = create_access_token({
             "sub": str(usuario.id),
             "email": usuario.email,
+            "nome": usuario.nome, # 👈 ADICIONEI AQUI
             "nivel": NivelAcesso.MINISTERIO.value,
             "escola_id": None
         })
+
+        logger.info(f"[LOGIN] user={usuario.email} nivel=MINISTERIO escola_id=None")
+
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
@@ -85,11 +92,14 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Usuário não vinculado a esta escola")
 
     access_token = create_access_token({
-    "sub": str(usuario.id),
-    "email": usuario.email,
-    "nivel": vinculo.nivel.value,
-    "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None
+        "sub": str(usuario.id),
+        "email": usuario.email,
+        "nome": usuario.nome, # 👈 JÁ TINHA AQUI
+        "nivel": vinculo.nivel.value,
+        "escola_id": str(vinculo.escola_id) if vinculo.escola_id else None # 👈 ESSENCIAL PRO /me
     })
+
+    logger.info(f"[LOGIN] user={usuario.email} nivel={vinculo.nivel.value} escola_id={vinculo.escola_id}")
 
     return TokenResponse(
         access_token=access_token,
