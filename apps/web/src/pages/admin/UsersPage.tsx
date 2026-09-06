@@ -99,15 +99,16 @@ export default function UsersPage() {
         fetchEscolas() // 👈 ADD
     }, [filtroStatus])
 
-    const handleSaveUsuario = async (data: { nome: string, email: string, senha?: string, telefone?: string, nivel: string, escola_id?: string }) => { // 👈 ADD nivel e escola_id
+    const handleSaveUsuario = async (data: { nome: string, email: string, senha?: string, telefone?: string, ativo?: boolean, nivel: string, escola_id?: string }) => {
         setSaving(true)
         try {
             const payload: any = {
                 nome: data.nome,
                 email: data.email,
                 telefone: data.telefone,
-                nivel: data.nivel, // 👈 AGORA VEM DO FORM
-                escola_id: data.nivel === 'DIRETOR' ? data.escola_id : null // 👈 SÓ ENVIA SE FOR DIRETOR
+                ativo: data.ativo, // 👈 ADD ESSA LINHA
+                nivel: data.nivel,
+                escola_id: data.nivel === 'DIRETOR' ? data.escola_id : null
             }
             if (data.senha) payload.senha = data.senha
 
