@@ -4,10 +4,10 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Zalando Sans Expanded"', 'ui-sans-serif', 'system-ui'], // <- FONTE PADRÃO AGORA
+                sans: ['"Zalando Sans Expanded"', 'ui-sans-serif', 'system-ui'],
             },
             colors: {
-                'primaria': '#0a4a8a',  // <- AZUL
+                'primaria': '#0a4a8a',
                 'secundaria': '#1e90ff',
                 'terciaria': '#00c6ff',
             }

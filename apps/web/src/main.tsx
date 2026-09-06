@@ -1,20 +1,28 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
 import './globals.css'
 
-// LAYOUTS
-import MainLayout from './layouts/MainLayout' // Layout do painel da escola
-import AdminLayout from './layouts/AdminLayout' // Layout do MINISTERIO
+// ======================= LAYOUTS =======================
+// Layout do painel da escola: Diretor, Secretario, Professor
+import MainLayout from './layouts/MainLayout'
+// Layout do MINISTERIO: Admin geral
+import AdminLayout from './layouts/AdminLayout'
 
-// PAGES
+// ======================= PAGES =======================
+// PÁGINAS GERAIS
 import Login from './pages/auth/Login'
-import EscolaListPage from './pages/escola/EscolaListPage'
+
+// PÁGINAS DO ADMIN - MINISTERIO
+import SchoolsPage from './pages/admin/SchoolsPage' // 👈 FALTAVA ESSE IMPORT
 import UsersPage from './pages/admin/UsersPage'
 import AjudaPage from './pages/admin/AjudaPage'
+
+// PÁGINAS DA ESCOLA
+import EscolaListPage from './pages/escola/EscolaListPage' // Dashboard da escola
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +39,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuth ? children : <Navigate to="/" replace />
 }
 
-// 👇 NOVO: Bloqueia rota de escola se for MINISTERIO
+// Bloqueia rota de escola se for MINISTERIO
 const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
     const nivel = authService.getNivel()?.toUpperCase()
     if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
@@ -41,10 +49,11 @@ const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
 // Bloqueia se já estiver logado
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    const nivel = authService.getNivel()?.toUpperCase() // 👈 USA O DA RAIZ
+    const nivel = authService.getNivel()?.toUpperCase()
 
     if (!isAuth) return children
 
+    // Redireciona baseado no nível
     if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
     return <Navigate to="/dashboard" replace />
 }
@@ -56,7 +65,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
             <HashRouter>
                 <Routes>
-                    {/* ROTA PÚBLICA */}
+                    {/* ========== 1. ROTA PÚBLICA ========== */}
                     <Route
                         path="/"
                         element={
@@ -66,7 +75,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         }
                     />
 
-                    {/* ROTAS ADMIN - MINISTERIO */}
+                    {/* ========== 2. ROTAS ADMIN - MINISTERIO ========== */}
                     <Route
                         path="/admin"
                         element={
@@ -75,25 +84,29 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                             </PrivateRoute>
                         }
                     >
-                        <Route index element={<EscolaListPage />} />
+                        {/* Dashboard do Admin */}
+                        <Route index element={<SchoolsPage />} /> {/* 👈 TROQUEI AQUI */}
+
                         <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
                         <Route path="users" element={<UsersPage />} />
                         <Route path="ajuda" element={<AjudaPage />} />
                         <Route path="settings" element={<div>Configurações Admin</div>} />
                     </Route>
 
-                    {/* ROTAS ESCOLA - DIRETOR, SECRETARIO, etc */}
+                    {/* ========== 3. ROTAS ESCOLA - DIRETOR, SECRETARIO, etc ========== */}
                     <Route
                         path="/dashboard"
                         element={
                             <PrivateRoute>
-                                <SchoolRouteGuard> {/* 👈 TRANCADO AQUI */}
+                                <SchoolRouteGuard> {/* TRANCADO: MINISTERIO não entra aqui */}
                                     <MainLayout />
                                 </SchoolRouteGuard>
                             </PrivateRoute>
                         }
                     >
-                        <Route index element={<div>Bem-vindo ao painel da escola</div>} />
+                        {/* Dashboard da Escola */}
+                        <Route index element={<EscolaListPage />} /> {/* 👈 AGORA É DA ESCOLA */}
+
                         <Route path="alunos" element={<div>Alunos</div>} />
                         <Route path="turmas" element={<div>Turmas</div>} />
                         <Route path="disciplinas" element={<div>Disciplinas</div>} />
@@ -105,6 +118,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <Route path="settings" element={<div>Configurações Escola</div>} />
                     </Route>
 
+                    {/* ROTA 404 */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </HashRouter>

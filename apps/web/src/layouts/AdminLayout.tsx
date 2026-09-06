@@ -1,9 +1,8 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp // 👈 ADD CircleHelp
+    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -11,11 +10,12 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+// ======================= MENU DO MINISTERIO =======================
 const menuItems = [
-    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' }, // 👈 Painel = Lista de Escolas
-    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
-    { icon: CircleHelp, label: 'Ajuda(Help)', path: '/dashboard/ajuda', type: 'Definição' },
-    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true },
+    { icon: LayoutGrid, label: 'Painel', path: '/admin', type: 'Definição' }, // Lista de Escolas
+    { icon: Users, label: 'Usuários', path: '/admin/users', type: 'Definição' },
+    { icon: CircleHelp, label: 'Ajuda(Help)', path: '/admin/ajuda', type: 'Definição' },
+    { icon: Settings, label: 'Configurações', path: '/admin/settings', type: 'Definição', hidden: true },
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
@@ -28,7 +28,7 @@ api.interceptors.request.use((config) => {
 
 type SearchResult = { id: string; nome: string; path: string; type: 'Escola' | 'Usuário' | 'Definição'; sub?: string; Icon: any }
 
-export default function MainLayout() {
+export default function AdminLayout() { // 👈 CORRIGIDO
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
@@ -71,7 +71,7 @@ export default function MainLayout() {
     const handleConfirmLogout = () => {
         authService.logout()
         toast.success("Sessão terminada")
-        navigate('/login')
+        navigate('/') // 👈 CORRIGIDO PARA HASHROUTER
     }
 
     useEffect(() => {
@@ -85,7 +85,7 @@ export default function MainLayout() {
                         id: e.id,
                         nome: e.nome,
                         sub: e.provincia,
-                        path: `/dashboard/schools/${e.id}`,
+                        path: `/admin/schools/${e.id}`, // 👈 CORRIGIDO
                         type: 'Escola' as const,
                         Icon: Building2
                     })) || [],
@@ -93,7 +93,7 @@ export default function MainLayout() {
                         id: u.id,
                         nome: u.nome,
                         sub: u.email,
-                        path: `/dashboard/users/${u.id}`,
+                        path: `/admin/users/${u.id}`, // 👈 CORRIGIDO
                         type: 'Usuário' as const,
                         Icon: User
                     })) || [],
@@ -124,7 +124,7 @@ export default function MainLayout() {
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
+                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
@@ -134,9 +134,9 @@ export default function MainLayout() {
                         <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
                     <nav className="space-y-1 flex-1">
-                        {menuItems.filter(item => !item.hidden).map(item => { // 👈 FILTRA AQUI
-                            const isActive = item.path === '/dashboard'
-                                ? location.pathname === '/dashboard'
+                        {menuItems.filter(item => !item.hidden).map(item => {
+                            const isActive = item.path === '/admin'
+                                ? location.pathname === '/admin'
                                 : location.pathname.startsWith(item.path)
 
                             return (
