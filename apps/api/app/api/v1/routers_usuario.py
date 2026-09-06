@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, update
+from sqlalchemy import select, and_
 from typing import List, Optional, Union
-from uuid import UUID
-import uuid
+from uuid import UUID, uuid4
 
 from app.db.database import get_db
 from app.models.models_escola import Usuario, UsuarioEscola, Escola, NivelAcesso
@@ -12,19 +11,21 @@ from app.core.security import get_current_user, get_password_hash
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
-def _eh_diretor(nivel: NivelAcesso) -> bool:
-    return nivel == NivelAcesso.DIRETOR
-
-def _to_str(val: Optional[Union[UUID, str]]) -> Optional[str]:
-    return str(val) if val else None
+def _to_uuid(val: Optional[Union[UUID, str]]) -> Optional[UUID]:
+    if val is None: return None
+    if isinstance(val, UUID): return val
+    try:
+        return UUID(str(val))
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"ID inválido: {val}")
 
 def check_permissao_criar_usuario(current_user: dict, escola_id_target: Optional[Union[UUID, str]]):
     nivel = current_user["nivel"]
-    escola_id_user = _to_str(current_user["escola_id"])
-    escola_id_target = _to_str(escola_id_target)
+    escola_id_user = _to_uuid(current_user["escola_id"])
+    escola_id_target = _to_uuid(escola_id_target)
 
     if nivel == "MINISTERIO": return
-    if nivel == "DIRETOR" and escola_id_user == escola_id_target: return
+    if nivel in ["DIRETOR", "DIRECAO"] and escola_id_user == escola_id_target: return # 👈 ACEITA DIRECAO TAMBEM
     raise HTTPException(status_code=403, detail="Sem permissão para criar usuário nesta escola")
 
 def check_permissao_listar(current_user: dict):
@@ -33,16 +34,17 @@ def check_permissao_listar(current_user: dict):
 
 def check_permissao_editar(current_user: dict, usuario_alvo: UsuarioEscola):
     nivel = current_user["nivel"]
-    escola_id_user = _to_str(current_user["escola_id"])
-    escola_id_alvo = _to_str(usuario_alvo.escola_id)
+    escola_id_user = _to_uuid(current_user["escola_id"])
+    escola_id_alvo = usuario_alvo.escola_id # 👈 JÁ É UUID
 
     if nivel == "MINISTERIO": return
-    if nivel == "DIRETOR" and escola_id_alvo == escola_id_user: return
+    if nivel in ["DIRETOR", "DIRECAO"] and escola_id_alvo == escola_id_user: return # 👈 ACEITA DIRECAO TAMBEM
     raise HTTPException(status_code=403, detail="Sem permissão para editar este usuário")
 
 def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optional[Escola]):
     mapa_perfil = {
         NivelAcesso.MINISTERIO: "super_admin",
+        NivelAcesso.DIRECAO: "diretor", # 👈 MAPEIA O ANTIGO
         NivelAcesso.DIRETOR: "diretor",
         NivelAcesso.SECRETARIO: "admin",
         NivelAcesso.PROFESSOR: "suporte",
@@ -68,7 +70,6 @@ def mapear_para_frontend(usuario: Usuario, vinculo: UsuarioEscola, escola: Optio
         "escola": escola
     }
 
-
 @router.get("/", response_model=List[UsuarioVinculoResponse])
 async def listar_usuarios(
     db: AsyncSession = Depends(get_db),
@@ -91,7 +92,7 @@ async def listar_usuarios(
     if tipo == "ministerio":
         filtros.append(UsuarioEscola.nivel == NivelAcesso.MINISTERIO)
     else:
-        escola_filtro = escola_id or current_user.get("escola_id")
+        escola_filtro = _to_uuid(escola_id or current_user.get("escola_id")) # 👈 CONVERTE PRA UUID
         if escola_filtro:
             filtros.append(UsuarioEscola.escola_id == escola_filtro)
 
@@ -103,7 +104,7 @@ async def listar_usuarios(
             "super_admin": [NivelAcesso.MINISTERIO],
             "admin": [NivelAcesso.SECRETARIO, NivelAcesso.SUBDIRETOR_PEDAGOGICO, NivelAcesso.SUBDIRETOR_ADMINISTRATIVO, NivelAcesso.COORDENADOR_CURSO, NivelAcesso.COORDENADOR_CLASSE],
             "suporte": [NivelAcesso.PROFESSOR, NivelAcesso.FUNCIONARIO],
-            "diretor": [NivelAcesso.DIRETOR]
+            "diretor": [NivelAcesso.DIRETOR, NivelAcesso.DIRECAO] # 👈 INCLUI DIRECAO
         }
         if perfil in mapa_perfil:
             filtros.append(UsuarioEscola.nivel.in_(mapa_perfil[perfil]))
@@ -126,6 +127,7 @@ async def criar_usuario(
     current_user: dict = Depends(get_current_user)
 ):
     escola = None
+    dados.escola_id = _to_uuid(dados.escola_id) # 👈 CONVERTE PRA UUID
 
     if dados.nivel == NivelAcesso.MINISTERIO:
         dados.escola_id = None
@@ -134,7 +136,6 @@ async def criar_usuario(
         if not dados.escola_id:
             raise HTTPException(status_code=400, detail="escola_id é obrigatório para DIRETOR")
 
-        # 👇 VALIDA ESCOLA ANTES
         result = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
         escola = result.scalar_one_or_none()
         if not escola:
@@ -145,7 +146,7 @@ async def criar_usuario(
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
     novo_usuario = Usuario(
-        id=uuid.uuid4(),
+        id=uuid4(),
         nome=dados.nome,
         email=dados.email,
         senha=get_password_hash(dados.senha),
@@ -156,7 +157,7 @@ async def criar_usuario(
     await db.flush()
 
     novo_vinculo = UsuarioEscola(
-        id=uuid.uuid4(),
+        id=uuid4(),
         usuario_id=novo_usuario.id,
         escola_id=dados.escola_id,
         nivel=dados.nivel
@@ -170,7 +171,7 @@ async def criar_usuario(
 
 @router.put("/{usuario_id}", response_model=UsuarioVinculoResponse)
 async def atualizar_usuario(
-    usuario_id: uuid.UUID,
+    usuario_id: UUID, # 👈 JÁ ERA UUID, MANTIVE
     dados: UsuarioUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -189,23 +190,19 @@ async def atualizar_usuario(
     usuario, vinculo, escola = row
     check_permissao_editar(current_user, vinculo)
 
-    if dados.nome is not None:
-        usuario.nome = dados.nome
+    if dados.nome is not None: usuario.nome = dados.nome
     if dados.email is not None:
         if dados.email!= usuario.email:
             result_email = await db.execute(select(Usuario).where(Usuario.email == dados.email))
             if result_email.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail="Email já cadastrado")
         usuario.email = dados.email
-    if dados.telefone is not None:
-        usuario.telefone = dados.telefone
-    if dados.senha is not None and dados.senha!= "":
-        usuario.senha = get_password_hash(dados.senha)
-    if dados.ativo is not None:
-        usuario.ativo = dados.ativo
+    if dados.telefone is not None: usuario.telefone = dados.telefone
+    if dados.senha is not None and dados.senha!= "": usuario.senha = get_password_hash(dados.senha)
+    if dados.ativo is not None: usuario.ativo = dados.ativo
 
-    # 👇 ORDEM IMPORTANTE: valida escola antes de setar pra não quebrar o CHECK
     novo_nivel = dados.nivel if dados.nivel is not None else vinculo.nivel
+    dados.escola_id = _to_uuid(dados.escola_id) # 👈 CONVERTE PRA UUID
 
     if novo_nivel == NivelAcesso.MINISTERIO:
         vinculo.nivel = novo_nivel
@@ -215,41 +212,32 @@ async def atualizar_usuario(
         if dados.escola_id is not None:
             result_escola = await db.execute(select(Escola).where(Escola.id == dados.escola_id))
             escola = result_escola.scalar_one_or_none()
-            if not escola:
-                raise HTTPException(status_code=404, detail="Escola não encontrada")
+            if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
             vinculo.escola_id = dados.escola_id
         elif vinculo.escola_id is None:
             raise HTTPException(status_code=400, detail="escola_id é obrigatório para este nível")
 
-        if dados.nivel is not None:
-            vinculo.nivel = dados.nivel
+        if dados.nivel is not None: vinculo.nivel = dados.nivel
 
     await db.commit()
     await db.refresh(usuario)
     await db.refresh(vinculo)
-
     return mapear_para_frontend(usuario, vinculo, escola)
 
 @router.delete("/{usuario_id}", status_code=204)
 async def deletar_usuario(
-    usuario_id: uuid.UUID,
+    usuario_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    result = await db.execute(
-        select(Usuario, UsuarioEscola).join(
-            UsuarioEscola, Usuario.id == UsuarioEscola.usuario_id
-        ).where(Usuario.id == usuario_id)
-    )
+    result = await db.execute(select(Usuario, UsuarioEscola).join(UsuarioEscola, Usuario.id == UsuarioEscola.usuario_id).where(Usuario.id == usuario_id))
     row = result.first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    if not row: raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
     usuario, vinculo = row
     check_permissao_editar(current_user, vinculo)
 
-    current_user_id = current_user.get("id") or current_user.get("user_id") or current_user.get("sub")
-
+    current_user_id = current_user.get("id")
     if str(usuario.id) == str(current_user_id):
         raise HTTPException(status_code=400, detail="Você não pode apagar a si mesmo")
 
@@ -263,16 +251,12 @@ async def listar_usuarios_da_minha_escola(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    escola_id = current_user["escola_id"]
+    escola_id = _to_uuid(current_user["escola_id"]) # 👈 CONVERTE PRA UUID
     if not escola_id:
         raise HTTPException(status_code=400, detail="Super Admin não tem escola. Use /usuarios?escola_id=XXX")
 
     result = await db.execute(
-        select(Usuario, UsuarioEscola, Escola).join(
-            UsuarioEscola, Usuario.id == UsuarioEscola.usuario_id
-        ).join(
-            Escola, UsuarioEscola.escola_id == Escola.id
-        ).where(UsuarioEscola.escola_id == escola_id)
+        select(Usuario, UsuarioEscola, Escola).join(UsuarioEscola, Usuario.id == UsuarioEscola.usuario_id).join(Escola, UsuarioEscola.escola_id == Escola.id).where(UsuarioEscola.escola_id == escola_id)
     )
     rows = result.all()
 

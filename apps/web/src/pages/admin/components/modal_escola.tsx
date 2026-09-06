@@ -30,10 +30,11 @@ const MUNICIPIOS_ANGOLA: Record<string, string[]> = {
 
 export interface Escola {
     id: string
+    id_curto: string // 👈 ESSA FALTAVA
     nome: string
     sigla?: string | null
     nif?: string | null
-    nivel_ensino?: "PRIMARIO" | "I_CICLO" | "II_CICLO" | "COMPLEXO" | "MEDIO_TECNICO" | "SUPERIOR"
+    nivel_ensino: "PRIMARIO" | "I_CICLO" | "II_CICLO" | "COMPLEXO" | "MEDIO_TECNICO" | "SUPERIOR" // 👈 TIRA O ?
     endereco?: string | null
     telefone?: string | null
     provincia?: string | null
@@ -48,7 +49,7 @@ export interface Escola {
 interface Props {
     open: boolean
     onClose: () => void
-    onSave: (data: FormData, id?: string) => Promise<void>
+    onSave: (data: Partial<Escola> & { id_curto?: string }, id?: string) => Promise<void> // 👈 MUDOU AQUI
     escola: Escola | null
     saving: boolean
 }
@@ -73,9 +74,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     useEffect(() => {
         const handleClickOutside = (event: Event) => {
-            if (dropdownProvRef.current &&!dropdownProvRef.current.contains(event.target as Node)) setDropdownProv(false)
-            if (dropdownMunRef.current &&!dropdownMunRef.current.contains(event.target as Node)) setDropdownMun(false)
-            if (dropdownNivelRef.current &&!dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false)
+            if (dropdownProvRef.current && !dropdownProvRef.current.contains(event.target as Node)) setDropdownProv(false)
+            if (dropdownMunRef.current && !dropdownMunRef.current.contains(event.target as Node)) setDropdownMun(false)
+            if (dropdownNivelRef.current && !dropdownNivelRef.current.contains(event.target as Node)) setDropdownNivel(false)
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -83,16 +84,16 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
 
     useEffect(() => {
         if (form.nome) {
-            const siglaAuto = form.nome.split(" ").filter(w => w.length > 2 &&!["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase())).map(w => w[0]).join("").toUpperCase().slice(0, 4);
-            setForm(prev => ({...prev, sigla: siglaAuto }));
+            const siglaAuto = form.nome.split(" ").filter(w => w.length > 2 && !["da", "de", "do", "das", "dos", "e"].includes(w.toLowerCase())).map(w => w[0]).join("").toUpperCase().slice(0, 4);
+            setForm(prev => ({ ...prev, sigla: siglaAuto }));
         } else {
-            setForm(prev => ({...prev, sigla: "" }));
+            setForm(prev => ({ ...prev, sigla: "" }));
         }
     }, [form.nome]);
 
     useEffect(() => {
         if (primeiraCarga.current) return;
-        setForm(prev => ({...prev, municipio: "" }));
+        setForm(prev => ({ ...prev, municipio: "" }));
     }, [form.provincia]);
 
     useEffect(() => {
@@ -135,19 +136,29 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
         if (!form.nome) { toast.error("O nome da escola é obrigatório"); return }
         if (!form.provincia) { toast.error("Selecione a província"); return }
         if (!form.nivel_ensino) { toast.error("Selecione o nível de ensino"); return }
-        const formData = new FormData()
-        if (!escola) formData.append("id", `ESC${Date.now().toString().slice(-3)}`)
-        Object.entries(form).forEach(([k, v]) => formData.append(k, v))
-        formData.append("cor_primaria", "#3B82F6")
-        formData.append("cor_secundaria", "#8B5CF6")
-        formData.append("tema", "escuro")
-        if (fileRef.current?.files?.[0]) formData.append("logo", fileRef.current.files[0])
-        onSave(formData, escola?.id)
+
+        const payload: Partial<Escola> & { id_curto: string } = { // 👈 FORÇA O TIPO
+            nome: form.nome,
+            sigla: form.sigla || undefined,
+            nif: form.nif || undefined,
+            nivel_ensino: form.nivel_ensino as Escola['nivel_ensino'], // 👈 CAST
+            endereco: form.endereco || undefined,
+            telefone: form.telefone || undefined,
+            provincia: form.provincia,
+            municipio: form.municipio || undefined,
+            id_curto: escola ? escola.id_curto : `ESC${Date.now().toString().slice(-3)}`,
+            cor_primaria: "#3B82F6",
+            cor_secundaria: "#8B5CF6",
+            tema: "escuro",
+            ativo: true
+        }
+
+        onSave(payload, escola?.id)
     }
 
     const handleChange = (field: string, value: string) => {
         if (field === 'provincia') primeiraCarga.current = false;
-        setForm(prev => ({...prev, [field]: value }))
+        setForm(prev => ({ ...prev, [field]: value }))
     }
 
     const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
@@ -164,9 +175,9 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
                 <span className="truncate">
-                    {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
+                    {isObject ? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
                 </span>
-                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
@@ -174,14 +185,14 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {options.length === 0 && <p className="px-4 py-3 text-gray-400 text-sm">Nenhuma opção</p>}
                         {options.map((op: any) => {
-                            const optionValue = isObject? op.value : op
-                            const optionLabel = isObject? op.label : op
+                            const optionValue = isObject ? op.value : op
+                            const optionLabel = isObject ? op.label : op
                             return (
                                 <button
                                     key={optionValue}
                                     type="button"
                                     onClick={() => { onSelect(optionValue); setIsOpen(false) }}
-                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
+                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
                                 >
                                     <span>{optionLabel}</span>
                                     {value === optionValue && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
@@ -203,8 +214,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                 <div className="p-5 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-bold text-white">{escola? "Editar Escola" : "Cadastrar Escola"}</h2>
-                            <p className="text-sm mt-1 text-gray-400">{escola? "Altere os dados abaixo" : "Preencha os dados da nova escola"}</p>
+                            <h2 className="text-lg font-bold text-white">{escola ? "Editar Escola" : "Cadastrar Escola"}</h2>
+                            <p className="text-sm mt-1 text-gray-400">{escola ? "Altere os dados abaixo" : "Preencha os dados da nova escola"}</p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
@@ -288,7 +299,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                             <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
                                 <label className={labelClass}><ImageIcon className="w-4 h-4" />Logo</label>
                                 <div className="sm:col-span-3 flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
+                                    <div className="w-20 h-20 bg-white/5 border-white/10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">{logoPreview ? <img src={logoPreview} className="w-full h-full object-cover rounded-xl" /> : <Upload className="w-6 h-6 text-gray-500" />}</div>
                                     <div className="flex-1"><input type="file" ref={fileRef} accept="image/*" className="hidden" id="logo-upload" onChange={handleFileChange} /><label htmlFor="logo-upload" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 border-white/10 rounded-xl text-white/70 cursor-pointer hover:bg-white/10 text-sm font-semibold transition"><Upload className="w-4 h-4" /> Enviar Logo</label></div>
                                 </div>
                             </div>
@@ -302,8 +313,8 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                             disabled={saving}
                             className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2"
                         >
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                            {saving? "Salvando..." : escola? "Salvar" : "Salvar"}
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                            {saving ? "Salvando..." : escola ? "Salvar" : "Salvar"}
                         </button>
 
                         <button
