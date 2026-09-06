@@ -123,11 +123,33 @@ export default function DefinicoesEscolaPage() {
     const handleSave = async () => {
         setLoading(true)
         try {
+            // 👇 1. CRIA PAYLOAD SÓ COM CAMPOS EDITAVEIS
+            const payload = {
+                nome: form.nome,
+                sigla: form.sigla,
+                nif: form.nif,
+                email: form.email,
+                telefone: form.telefone,
+                endereco: form.endereco,
+                provincia: form.provincia,
+                municipio: form.municipio,
+                cor_primaria: form.cor_primaria,
+                cor_secundaria: form.cor_secundaria,
+                cor_fundo: form.cor_fundo,
+                tema: form.tema,
+                fonte_titulo: form.fonte_titulo,
+                fonte_corpo: form.fonte_corpo,
+                estilo_card: form.estilo_card,
+                permitir_auto_cadastro: form.permitir_auto_cadastro,
+                usar_modulo_propina: form.usar_modulo_propina,
+                usar_modulo_biblioteca: form.usar_modulo_biblioteca,
+            }
+
             // 1. SALVA OS DADOS JSON
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
                 headers: getAuthHeader(true),
-                body: JSON.stringify(form)
+                body: JSON.stringify(payload) // 👈 AGORA MANDA SÓ O PAYLOAD
             })
 
             if (!res.ok) {
