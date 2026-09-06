@@ -14,7 +14,7 @@ interface UserInToken {
     email: string;
     nome: string;
     escola_id?: string | null;
-    nivel: string // ministerio, diretor, secretario, etc
+    nivel: string // MINISTERIO, DIRETOR, SECRETARIO, etc
 }
 interface LoginResponse { access_token: string; nivel: string; user: UserInToken; token_type: string; expires_in: number }
 
@@ -28,20 +28,18 @@ export default function Login() {
     const [loading, setLoading] = useState(false)
     const [loadingEscolas, setLoadingEscolas] = useState(true)
     const [apiOnline, setApiOnline] = useState(true)
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
-
-    const isMinisterio = email.toLowerCase().includes('minedu') // 👈 se for email do minedu, esconde escola
 
     // Redireciona se já estiver logado
     useEffect(() => {
         if (authService.isAuthenticated()) {
             const user = authService.getUser()
-            const nivel = user?.nivel?.toUpperCase() // 👈 FORÇA MAIUSCULO
-            if (nivel === 'MINISTERIO') {
-                navigate('/admin', { replace: true })
+            if (user?.nivel === 'MINISTERIO') {
+                navigate('/admin', { replace: true }) // 👈 Painel Administrativo
             } else {
-                navigate('/dashboard', { replace: true })
+                navigate('/dashboard', { replace: true }) // 👈 Painel da Escola
             }
         }
     }, [navigate])
@@ -74,20 +72,25 @@ export default function Login() {
         fetchEscolas()
     }, [])
 
+    useEffect(() => {
+        const isAdmin = email.toLowerCase().trim().startsWith('admin@')
+        setIsSuperAdmin(isAdmin)
+        if (isAdmin) setEscolaId('') // SuperAdmin não precisa escolher escola
+    }, [email])
+
     const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
-        if (!isMinisterio &&!escolaId) {
+        if (!isSuperAdmin &&!escolaId) {
             toast.error("Selecione uma escola");
             return
         }
 
-        const payload = { email, senha,...(!isMinisterio && { escola_id: escolaId }) } // 👈 só manda escola_id se não for ministerio
+        const payload = { email, senha,...(!isSuperAdmin && { escola_id: escolaId }) }
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
            .then((res) => {
-                console.log("NIVEL DO TOKEN:", res.data.user.nivel) // 👈 pra debugar
                 authService.login({
                    ...res.data,
                     user: {
@@ -98,12 +101,12 @@ export default function Login() {
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
 
                 // 👇 REDIRECIONAMENTO PELO NIVEL
-                const nivel = res.data.user.nivel?.toUpperCase() // 👈 FORÇA MAIUSCULO
+                const nivel = res.data.user.nivel
                 setTimeout(() => {
                     if (nivel === 'MINISTERIO') {
-                        navigate('/admin', { replace: true }) // Painel Administrativo
+                        navigate('/admin', { replace: true }) // Painel Administrativo de Escolas
                     } else {
-                        navigate('/dashboard', { replace: true }) // Painel da Escola
+                        navigate('/dashboard', { replace: true }) // Painel da Escola com nível de acesso
                     }
                 }, 800)
             })
@@ -131,7 +134,7 @@ export default function Login() {
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"
     const dropdownButtonClass = "w-full pl-4 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left"
     const selectedEscola = escolas.find(e => e.id === escolaId)
-    const podeLogar =!loading &&!loadingEscolas && apiOnline && (isMinisterio ||!!escolaId) // 👈 ajustado
+    const podeLogar =!loading &&!loadingEscolas && apiOnline && (isSuperAdmin ||!!escolaId)
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #000 0%, #CF0921 50%, #FFD700 100%)' }}>
@@ -139,15 +142,15 @@ export default function Login() {
                 {!apiOnline && <div className="mb-4 p-3 bg-red-500/20 border-red-500/50 rounded-lg flex gap-2 items-center text-sm"><AlertCircle className="w-5 h-5" />API Offline: {API_URL}</div>}
 
                 <div className="text-center mb-8">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${isMinisterio? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                        {isMinisterio? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
+                    <div className={`w-16 h-16 bg-gradient-to-br ${isSuperAdmin? 'from-yellow-400 to-yellow-600' : 'from-[#CF0921] to-[#FFD700]'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                        {isSuperAdmin? <ShieldCheck className="w-8 h-8 text-black" /> : <School className="w-8 h-8 text-white" />}
                     </div>
                     <h1 className="text-3xl font-bold">SIGE-AO</h1>
-                    <p className="text-white/60 text-sm">{isMinisterio? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
+                    <p className="text-white/60 text-sm">{isSuperAdmin? 'Acesso Global de Super Administrador' : 'Selecione sua escola para entrar'}</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
-                    {!isMinisterio && ( // 👈 só mostra escola se não for ministerio
+                    {!isSuperAdmin && (
                         <div ref={dropdownRef} className="relative">
                             <label className="text-sm text-white/80 mb-1 block">Escola *</label>
                             <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} disabled={loadingEscolas ||!apiOnline} className={dropdownButtonClass}>
@@ -168,7 +171,7 @@ export default function Login() {
                                                 disabled={!e.ativo}
                                                 onClick={() => { setEscolaId(e.id); setDropdownOpen(false) }}
                                                 className={`w-full text-left px-4 py-3 transition flex items-center gap-3 ${!e.ativo? 'bg-white/5 text-white/30 cursor-not-allowed' :
-                                                    escolaId === e.id? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white hover:bg-[#CF0921]/30'
+                                                        escolaId === e.id? 'bg-[#CF0921]/40 text-[#FFD700]' : 'text-white hover:bg-[#CF0921]/30'
                                                     }`}
                                             >
                                                 <School className={`w-5 h-5 flex-shrink-0 ${!e.ativo && 'opacity-40'}`} />
