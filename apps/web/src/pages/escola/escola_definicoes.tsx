@@ -1,10 +1,10 @@
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, ReactNode, ChangeEvent } from 'react'
 import {
   School, Save, Upload, Palette, MapPin, Settings, Building2,
   Mail, Phone, Image, Info, Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { authService } from '../../services/auth' // 👈 pra pegar o token
+import { authService } from '../../services/auth'
 
 type Tab = 'identificacao' | 'contato' | 'visual' | 'modulos' | 'avancado'
 
@@ -17,13 +17,14 @@ type EscolaForm = {
     permitir_auto_cadastro: boolean; usar_modulo_propina: boolean; usar_modulo_biblioteca: boolean; ativo: boolean;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || '/api' // 👈 ajusta se precisar
+const API_URL = import.meta.env.VITE_API_URL
 
 export default function DefinicoesEscolaPage() {
     const [activeTab, setActiveTab] = useState<Tab>('identificacao')
     const [loading, setLoading] = useState(false)
     const [loadingData, setLoadingData] = useState(true)
     const [logoFile, setLogoFile] = useState<File | null>(null)
+    const [logoPreview, setLogoPreview] = useState<string | null>(null) // 👈 pra preview
 
     const [form, setForm] = useState<EscolaForm>({
         nome: '', sigla: '', id_curto: '', nif: '', nivel_ensino: 'PRIMARIO',
@@ -34,8 +35,9 @@ export default function DefinicoesEscolaPage() {
         permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
 
-    const getAuthHeader = () => ({
-        'Authorization': `Bearer ${authService.getToken()}`
+    const getAuthHeader = (isJson = true) => ({
+        'Authorization': `Bearer ${authService.getToken()}`,
+       ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
@@ -48,6 +50,7 @@ export default function DefinicoesEscolaPage() {
                 if (!res.ok) throw new Error('Erro ao carregar')
                 const data: EscolaForm = await res.json()
                 setForm(data)
+                setLogoPreview(data.logo_url)
             } catch (error) {
                 toast.error('Erro ao carregar dados da escola')
             } finally {
@@ -61,31 +64,47 @@ export default function DefinicoesEscolaPage() {
         setForm(prev => ({...prev, [key]: value }))
     }
 
+    const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setLogoFile(file)
+            setLogoPreview(URL.createObjectURL(file)) // preview instantaneo
+        }
+    }
+
     // 2. SALVAR DADOS
     const handleSave = async () => {
         setLoading(true)
         try {
-            const formData = new FormData()
-            Object.entries(form).forEach(([key, value]) => {
-                if (key!== 'logo_url' && key!== 'banner_url' && key!== 'favicon_url' && key!== 'id_curto' && key!== 'nivel_ensino') {
-                    formData.append(key, String(value))
-                }
-            })
-            if (logoFile) formData.append('logo', logoFile)
-
+            // 1. SALVA OS DADOS JSON
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
-                headers: getAuthHeader(), // FormData não usa Content-Type
-                body: formData
+                headers: getAuthHeader(true),
+                body: JSON.stringify(form)
             })
 
-            if (!res.ok) throw new Error('Erro ao salvar')
-            const updatedData = await res.json()
+            if (!res.ok) throw new Error('Erro ao salvar dados')
+            let updatedData: EscolaForm = await res.json()
+
+            // 2. SE TIVER LOGO NOVA, FAZ UPLOAD SEPARADO
+            if (logoFile) {
+                const formData = new FormData()
+                formData.append('logo', logoFile)
+                const logoRes = await fetch(`${API_URL}/escolas/me/logo`, {
+                    method: 'POST',
+                    headers: getAuthHeader(false), // sem Content-Type
+                    body: formData
+                })
+                if (!logoRes.ok) throw new Error('Erro ao salvar logo')
+                updatedData = await logoRes.json()
+                setLogoFile(null)
+            }
+
             setForm(updatedData)
-            setLogoFile(null)
+            setLogoPreview(updatedData.logo_url)
             toast.success('Definições salvas com sucesso!')
-        } catch (error) {
-            toast.error('Erro ao salvar definições')
+        } catch (error: any) {
+            toast.error(error.message || 'Erro ao salvar definições')
         } finally {
             setLoading(false)
         }
@@ -160,7 +179,7 @@ export default function DefinicoesEscolaPage() {
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-4"><Palette className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Aparência</h2></div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <UploadBox label="Logo" currentUrl={form.logo_url} onFileSelect={setLogoFile} />
+                            <UploadBox label="Logo" currentUrl={logoPreview || undefined} onFileSelect={handleLogoChange} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} />
@@ -222,7 +241,7 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
         <div className="flex items-center gap-3">
-            <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border border-white/10 rounded-xl cursor-pointer" />
+            <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border-white/10 rounded-xl cursor-pointer" />
             <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]" />
         </div>
     </div>
@@ -238,11 +257,11 @@ const Toggle = ({ label, checked, onChange }: ToggleProps) => (
     </div>
 )
 
-interface UploadBoxProps { label: string; currentUrl?: string; onFileSelect: (file: File) => void; }
+interface UploadBoxProps { label: string; currentUrl?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; }
 const UploadBox = ({ label, currentUrl, onFileSelect }: UploadBoxProps) => (
     <div>
         <label className="text-sm text-white/80 mb-2 block">{label}</label>
         {currentUrl && <img src={currentUrl} alt={label} className="w-24 h-24 object-contain mb-2 rounded-lg bg-white/5 p-2" />}
-        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30"/>
+        <input type="file" accept="image/*" onChange={onFileSelect} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30"/>
     </div>
 )
