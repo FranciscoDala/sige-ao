@@ -99,7 +99,7 @@ class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
 
 class EscolaResponse(EscolaBase):
     id: UUID
-    criado_em: datetime
+    criado_em: Optional[datetime] = None # 👈 MUDAR PRA OPCIONAL
     model_config = ConfigDict(from_attributes=True)
 
 # ================== USUARIO ==================
