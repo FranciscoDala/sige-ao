@@ -41,19 +41,19 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token = create_access_token({
             "sub": str(usuario.id),
             "email": usuario.email,
-            "nivel": NivelAcesso.MINISTERIO.value,
+            "nivel": NivelAcesso.MINISTERIO.value, # 👈 JÁ ESTAVA CERTO AQUI
             "escola_id": None
         })
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            nivel=NivelAcesso.MINISTERIO,
+            nivel=NivelAcesso.MINISTERIO.value, # 👈 CORRIGIDO: .value
             expires_in=28800,
             user=UserInToken(
                 id=usuario.id,
                 email=usuario.email,
                 nome=usuario.nome,
-                nivel=NivelAcesso.MINISTERIO,
+                nivel=NivelAcesso.MINISTERIO.value, # 👈 CORRIGIDO: .value
                 escola_id=None
             )
         )
@@ -90,13 +90,13 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        nivel=vinculo.nivel,
+        nivel=vinculo.nivel.value, # 👈 CORRIGIDO: .value
         expires_in=28800,
         user=UserInToken(
             id=usuario.id,
             email=usuario.email,
             nome=usuario.nome,
-            nivel=vinculo.nivel,
+            nivel=vinculo.nivel.value, # 👈 CORRIGIDO: .value
             escola_id=vinculo.escola_id
         )
     )

@@ -54,7 +54,7 @@ class UsuarioVinculoCreate(BaseModel):
     email: EmailStr
     senha: str = Field(..., min_length=6)
     telefone: Optional[str] = None
-    nivel: NivelAcesso
+    nivel: NivelAcesso # 👈 Aqui pode ficar Enum pq é entrada
     escola_id: Optional[str] = None
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
@@ -65,7 +65,7 @@ class UsuarioUpdate(BaseModel):
     senha: Optional[str] = Field(None, min_length=6)
     telefone: Optional[str] = None
     ativo: Optional[bool] = None
-    nivel: Optional[NivelAcesso] = None
+    nivel: Optional[NivelAcesso] = None # 👈 Aqui pode ficar Enum pq é entrada
     escola_id: Optional[str] = None
 
 class UsuarioVinculoResponse(BaseModel):
@@ -76,7 +76,7 @@ class UsuarioVinculoResponse(BaseModel):
     ativo: bool
     criado_em: datetime
 
-    nivel: NivelAcesso
+    nivel: NivelAcesso # 👈 Aqui pode ficar Enum pq vem do DB
     escola_id: Optional[str] = None
     perfil: Literal['super_admin', 'admin', 'diretor', 'suporte']
     departamento: Optional[str] = None
@@ -94,12 +94,12 @@ class UserInToken(BaseModel):
     id: UUID
     email: EmailStr
     nome: str
-    nivel: NivelAcesso
+    nivel: str # 👈 CORRIGIDO: de NivelAcesso para str
     escola_id: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    nivel: NivelAcesso
+    nivel: str # 👈 CORRIGIDO: de NivelAcesso para str
     user: UserInToken
     expires_in: int = 28800
