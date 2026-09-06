@@ -1,12 +1,14 @@
 import { useState, useEffect, ReactNode, ChangeEvent } from 'react'
 import {
-  School, Save, Upload, Palette, MapPin, Settings, Building2,
-  Mail, Phone, Image, Info, Loader2
+  Save, Upload, Palette, MapPin, Settings, Building2,
+  Mail, Phone, Info, Loader2, Image as ImageIcon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../../services/auth'
 
 type Tab = 'identificacao' | 'contato' | 'visual' | 'modulos' | 'avancado'
+
+type Option = { value: string; label: string }
 
 type EscolaForm = {
     nome: string; sigla: string; id_curto: string; nif: string; nivel_ensino: string;
@@ -18,6 +20,23 @@ type EscolaForm = {
 }
 
 const API_URL = import.meta.env.VITE_API_URL
+
+const TEMA_OPTIONS: Option[] = [
+    { value: 'claro', label: 'Claro' },
+    { value: 'escuro', label: 'Escuro' },
+]
+const FONTE_OPTIONS: Option[] = [
+    { value: 'Poppins', label: 'Poppins' },
+    { value: 'Montserrat', label: 'Montserrat' },
+    { value: 'Roboto', label: 'Roboto' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'Open Sans', label: 'Open Sans' },
+]
+const ESTILO_CARD_OPTIONS: Option[] = [
+    { value: 'arredondado', label: 'Arredondado' },
+    { value: 'quadrado', label: 'Quadrado' },
+    { value: 'minimalista', label: 'Minimalista' },
+]
 
 export default function DefinicoesEscolaPage() {
     const [activeTab, setActiveTab] = useState<Tab>('identificacao')
@@ -37,32 +56,22 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-     ...(isJson? { 'Content-Type': 'application/json' } : {})
+    ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     // 1. PEGAR DADOS DA ESCOLA AO CARREGAR
     useEffect(() => {
         const fetchEscola = async () => {
-            console.log('[DEBUG] Iniciando fetchEscola')
             try {
                 const res = await fetch(`${API_URL}/escolas/me`, {
                     headers: getAuthHeader()
                 })
+                if (!res.ok) throw new Error('Erro ao carregar dados')
+                const data = await res.json()
 
-                console.log('[DEBUG] Status GET /me:', res.status)
-                const bodyText = await res.text() // pega como texto pra não quebrar
-                console.log('[DEBUG] Body GET /me:', bodyText)
-
-                if (!res.ok) {
-                    throw new Error(`Erro ${res.status}: ${bodyText}`)
-                }
-
-                const data = JSON.parse(bodyText)
-
-                // Trata null do backend
                 const escolaData: EscolaForm = {
-                  ...form,
-                  ...data,
+                 ...form,
+                 ...data,
                     nome: data.nome || '',
                     sigla: data.sigla || '',
                     id_curto: data.id_curto || '',
@@ -78,7 +87,6 @@ export default function DefinicoesEscolaPage() {
                     favicon_url: data.favicon_url || '',
                 }
 
-                console.log('[DEBUG] Dados tratados:', escolaData)
                 setForm(escolaData)
                 setLogoPreview(escolaData.logo_url)
 
@@ -90,7 +98,6 @@ export default function DefinicoesEscolaPage() {
                 }
 
             } catch (error: any) {
-                console.error('[DEBUG] Erro no fetchEscola:', error)
                 toast.error(error.message || 'Erro ao carregar dados da escola')
             } finally {
                 setLoadingData(false)
@@ -112,10 +119,9 @@ export default function DefinicoesEscolaPage() {
         }
     }
 
-    // 2. SALVAR DADOS
+    // 2. SALVAR TUDO: DADOS + LOGO
     const handleSave = async () => {
         setLoading(true)
-        console.log('[DEBUG] Dados a enviar no PUT:', form)
         try {
             // 1. SALVA OS DADOS JSON
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
@@ -124,16 +130,11 @@ export default function DefinicoesEscolaPage() {
                 body: JSON.stringify(form)
             })
 
-            console.log('[DEBUG] Status PUT /me/definicoes:', res.status)
-            const bodyText = await res.text()
-            console.log('[DEBUG] Body PUT /me/definicoes:', bodyText)
-
-            if (!res.ok) throw new Error(`Erro ${res.status}: ${bodyText}`)
-            let updatedData = JSON.parse(bodyText)
+            if (!res.ok) throw new Error('Erro ao salvar dados')
+            let updatedData = await res.json()
 
             // 2. SE TIVER LOGO NOVA, FAZ UPLOAD SEPARADO
             if (logoFile) {
-                console.log('[DEBUG] Enviando logo...')
                 const formData = new FormData()
                 formData.append('logo', logoFile)
                 const logoRes = await fetch(`${API_URL}/escolas/me/logo`, {
@@ -141,16 +142,14 @@ export default function DefinicoesEscolaPage() {
                     headers: getAuthHeader(false),
                     body: formData
                 })
-                console.log('[DEBUG] Status POST /me/logo:', logoRes.status)
                 if (!logoRes.ok) throw new Error('Erro ao salvar logo')
                 updatedData = await logoRes.json()
                 setLogoFile(null)
             }
 
-            // Trata null do backend no retorno
             const escolaData: EscolaForm = {
-              ...form,
-              ...updatedData,
+             ...form,
+             ...updatedData,
                 nome: updatedData.nome || '',
                 sigla: updatedData.sigla || '',
                 logo_url: updatedData.logo_url || '',
@@ -167,7 +166,6 @@ export default function DefinicoesEscolaPage() {
 
             toast.success('Definições salvas com sucesso!')
         } catch (error: any) {
-            console.error('[DEBUG] Erro no handleSave:', error)
             toast.error(error.message || 'Erro ao salvar definições')
         } finally {
             setLoading(false)
@@ -186,9 +184,14 @@ export default function DefinicoesEscolaPage() {
 
     return (
         <div className="space-y-4 lg:space-y-6">
-            <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-white">Definições da Escola</h1>
-                <p className="text-gray-400 text-sm">Personalize as informações e aparência do painel</p>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h1 className="text-xl lg:text-2xl font-bold text-white">Definições da Escola</h1>
+                    <p className="text-gray-400 text-sm">Personalize as informações e aparência do painel</p>
+                </div>
+                <button onClick={handleSave} disabled={loading} className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:opacity-90 transition">
+                    {loading? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading? 'Salvando...' : 'Salvar Todas as Definições'}
+                </button>
             </div>
 
             <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-2">
@@ -243,17 +246,18 @@ export default function DefinicoesEscolaPage() {
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-4"><Palette className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Aparência</h2></div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <UploadBox label="Logo" currentUrl={logoPreview || undefined} onFileSelect={handleLogoChange} />
+                            <UploadBox label="Logo da Escola" currentUrl={logoPreview || undefined} onFileSelect={handleLogoChange} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} />
                             <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} />
-                            <ColorPicker label="Cor Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} />
+                            <ColorPicker label="Cor de Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Select label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={['claro', 'escuro']} />
-                            <Select label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={['Poppins', 'Montserrat', 'Roboto']} />
-                            <Select label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={['Inter', 'Roboto', 'Open Sans']} />
+                            <Select label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} />
+                            <Select label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} />
+                            <Select label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} />
+                            <Select label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} />
                         </div>
                     </div>
                 )}
@@ -261,41 +265,35 @@ export default function DefinicoesEscolaPage() {
                 {/* MODULOS */}
                 {activeTab === 'modulos' && (
                     <div className="space-y-4">
-                        <div className="flex items-center gap-3 mb-4"><Settings className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Módulos</h2></div>
-                        <Toggle label="Módulo de Propinas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} />
-                        <Toggle label="Módulo Biblioteca" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} />
-                        <Toggle label="Auto Cadastro" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} />
+                        <div className="flex items-center gap-3 mb-4"><Settings className="w-5 h-5 text-[#3B82F6]" /><h2 className="text-lg font-semibold text-white">Módulos Ativos</h2></div>
+                        <Toggle label="Módulo de Propinas" description="Ativa o controle financeiro e emissão de faturas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} />
+                        <Toggle label="Módulo Biblioteca" description="Controle de livros e empréstimos" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} />
+                        <Toggle label="Auto Cadastro" description="Permitir que novos usuários se cadastrem" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} />
                     </div>
                 )}
-            </div>
-
-            <div className="flex justify-end sticky bottom-0 py-4 bg-gradient-to-t from-[#0F172A] to-transparent">
-                <button onClick={handleSave} disabled={loading} className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
-                    {loading? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading? 'Salvando...' : 'Salvar Definições'}
-                </button>
             </div>
         </div>
     )
 }
 
-// ===== COMPONENTES TIPADOS =====
+// ===== COMPONENTES PADRONIZADOS =====
 interface InputProps { label: string; value: string; onChange: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; }
 const Input = ({ label, value, onChange, type = 'text', icon, disabled }: InputProps) => (
     <div>
-        <label className="text-sm text-white/80 mb-2 block">{label}</label>
+        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5 text-gray-400">{icon}</div>}
-            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] disabled:text-white/50 disabled:cursor-not-allowed`}/>
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6] transition disabled:text-white/50 disabled:cursor-not-allowed`}/>
         </div>
     </div>
 )
 
-interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: string[]; }
+interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: Option[]; }
 const Select = ({ label, value, onChange, options }: SelectProps) => (
     <div>
-        <label className="text-sm text-white/80 mb-2 block">{label}</label>
-        <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]">
-            {options.map((opt) => <option key={opt} value={opt} className="bg-[#1E293B]">{opt}</option>)}
+        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
+        <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6] transition appearance-none">
+            {options.map((opt) => <option key={opt.value} value={opt.value} className="bg-[#1E293B] text-white">{opt.label}</option>)}
         </select>
     </div>
 )
@@ -303,18 +301,21 @@ const Select = ({ label, value, onChange, options }: SelectProps) => (
 interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; }
 const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => (
     <div>
-        <label className="text-sm text-white/80 mb-2 block">{label}</label>
+        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
         <div className="flex items-center gap-3">
-            <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border-white/10 rounded-xl cursor-pointer" />
-            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6]" />
+            <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border border-white/10 rounded-xl cursor-pointer p-1" />
+            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6] transition uppercase" />
         </div>
     </div>
 )
 
-interface ToggleProps { label: string; checked: boolean; onChange: (value: boolean) => void; }
-const Toggle = ({ label, checked, onChange }: ToggleProps) => (
-    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
-        <p className="text-white font-medium">{label}</p>
+interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; }
+const Toggle = ({ label, description, checked, onChange }: ToggleProps) => (
+    <div className="flex items-center justify-between p-4 bg-white/5 border-white/10 rounded-xl">
+        <div>
+            <p className="text-white font-medium">{label}</p>
+            {description && <p className="text-sm text-gray-400">{description}</p>}
+        </div>
         <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition ${checked? 'bg-[#3B82F6]' : 'bg-white/20'}`}>
             <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked? 'translate-x-6' : 'translate-x-1'}`}></div>
         </button>
@@ -324,8 +325,10 @@ const Toggle = ({ label, checked, onChange }: ToggleProps) => (
 interface UploadBoxProps { label: string; currentUrl?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; }
 const UploadBox = ({ label, currentUrl, onFileSelect }: UploadBoxProps) => (
     <div>
-        <label className="text-sm text-white/80 mb-2 block">{label}</label>
-        {currentUrl && <img src={currentUrl} alt={label} className="w-24 h-24 object-contain mb-2 rounded-lg bg-white/5 p-2" />}
-        <input type="file" accept="image/*" onChange={onFileSelect} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30"/>
+        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
+        <div className="flex items-center gap-4">
+            {currentUrl? <img src={currentUrl} alt={label} className="w-24 h-24 object-contain rounded-lg bg-white/5 p-2 border-white/10" /> : <div className="w-24 h-24 rounded-lg bg-white/5 border-dashed border-white/20 flex items-center justify-center"><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
+            <input type="file" accept="image/*" onChange={onFileSelect} className="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B82F6]/20 file:text-[#3B82F6] hover:file:bg-[#3B82F6]/30 file:font-semibold file:cursor-pointer cursor-pointer"/>
+        </div>
     </div>
 )
