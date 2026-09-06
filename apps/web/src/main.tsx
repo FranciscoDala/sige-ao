@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
@@ -28,18 +28,23 @@ const queryClient = new QueryClient({
 // Bloqueia se não estiver logado
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    return isAuth? children : <Navigate to="/" replace />
+    return isAuth ? children : <Navigate to="/" replace />
+}
+
+// 👇 NOVO: Bloqueia rota de escola se for MINISTERIO
+const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
+    const nivel = authService.getNivel()?.toUpperCase()
+    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
+    return <>{children}</>
 }
 
 // Bloqueia se já estiver logado
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    // 👇 CORRIGIDO: Pega o nivel da raiz primeiro
-    const nivel = authService.getNivel()?.toUpperCase()
+    const nivel = authService.getNivel()?.toUpperCase() // 👈 USA O DA RAIZ
 
     if (!isAuth) return children
 
-    // Se já logado, manda pro painel certo
     if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
     return <Navigate to="/dashboard" replace />
 }
@@ -70,7 +75,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                             </PrivateRoute>
                         }
                     >
-                        <Route index element={<EscolaListPage />} /> {/* /admin = Lista de Escolas */}
+                        <Route index element={<EscolaListPage />} />
                         <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
                         <Route path="users" element={<UsersPage />} />
                         <Route path="ajuda" element={<AjudaPage />} />
@@ -82,7 +87,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         path="/dashboard"
                         element={
                             <PrivateRoute>
-                                <MainLayout />
+                                <SchoolRouteGuard> {/* 👈 TRANCADO AQUI */}
+                                    <MainLayout />
+                                </SchoolRouteGuard>
                             </PrivateRoute>
                         }
                     >
