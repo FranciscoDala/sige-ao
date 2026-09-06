@@ -6,7 +6,7 @@ from uuid import UUID
 import logging
 import uuid
 
-from pydantic import ValidationError
+from fastapi.responses import JSONResponse
 
 from app.db.database import get_db
 from app.models.models_escola import Escola, NivelEnsino
@@ -224,7 +224,8 @@ def get_escola_do_usuario(current_user: dict) -> UUID:
 
 
 
-@router.get("/me", response_model=EscolaResponse)
+
+@router.get("/me") # 👈 TIREI O response_model
 async def obter_minha_escola(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -234,15 +235,37 @@ async def obter_minha_escola(
     escola = result.scalar_one_or_none()
     if not escola: raise HTTPException(status_code=404, detail="Escola nao encontrada")
 
-    logger.info(f"[ME RAW] {escola.__dict__}") # 👈 VAI MOSTRAR TUDO QUE VEIO DO DB
-
-    try:
-        return EscolaResponse.model_validate(escola) # 👈 VALIDA MANUAL
-    except ValidationError as e:
-        logger.error(f"[ME ERROR] {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+    # Converte manual pra dict e trata null
+    data = {
+        "id": escola.id,
+        "nome": escola.nome,
+        "sigla": escola.sigla,
+        "id_curto": escola.id_curto,
+        "nif": escola.nif,
+        "nivel_ensino": escola.nivel_ensino.value if escola.nivel_ensino else None, # 👈 ESSENCIAL
+        "endereco": escola.endereco,
+        "telefone": escola.telefone,
+        "email": escola.email,
+        "provincia": escola.provincia,
+        "municipio": escola.municipio,
+        "cor_primaria": escola.cor_primaria,
+        "cor_secundaria": escola.cor_secundaria,
+        "cor_fundo": escola.cor_fundo,
+        "tema": escola.tema,
+        "fonte_titulo": escola.fonte_titulo,
+        "fonte_corpo": escola.fonte_corpo,
+        "estilo_card": escola.estilo_card,
+        "logo_url": escola.logo_url,
+        "banner_url": escola.banner_url,
+        "favicon_url": escola.favicon_url,
+        "permitir_auto_cadastro": escola.permitir_auto_cadastro,
+        "usar_modulo_propina": escola.usar_modulo_propina,
+        "usar_modulo_biblioteca": escola.usar_modulo_biblioteca,
+        "config_json": escola.config_json,
+        "ativo": escola.ativo,
+        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None # 👈 ESSENCIAL
+    }
+    return JSONResponse(content=data)
 
 
 
