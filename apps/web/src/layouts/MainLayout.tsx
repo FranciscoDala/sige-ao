@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp // 👈 ADD CircleHelp
+    LayoutGrid, Users, GraduationCap, BookOpen, ClipboardList, DollarSign, Settings, Power, Search, Bell, School, Menu, X, User, Loader2, CircleHelp, CalendarDays, FileText
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -11,8 +11,14 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
-    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' }, // 👈 Painel = Lista de Escolas
-    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
+    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
+    { icon: Users, label: 'Alunos', path: '/dashboard/alunos', type: 'Definição' },
+    { icon: GraduationCap, label: 'Turmas', path: '/dashboard/turmas', type: 'Definição' },
+    { icon: BookOpen, label: 'Disciplinas', path: '/dashboard/disciplinas', type: 'Definição' },
+    { icon: ClipboardList, label: 'Notas', path: '/dashboard/notas', type: 'Definição' },
+    { icon: CalendarDays, label: 'Frequência', path: '/dashboard/frequencia', type: 'Definição' },
+    { icon: DollarSign, label: 'Financeiro', path: '/dashboard/financeiro', type: 'Definição' },
+    { icon: FileText, label: 'Matrículas', path: '/dashboard/matriculas', type: 'Definição' },
     { icon: CircleHelp, label: 'Ajuda(Help)', path: '/dashboard/ajuda', type: 'Definição' },
     { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true },
 ]
@@ -25,7 +31,7 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-type SearchResult = { id: string; nome: string; path: string; type: 'Escola' | 'Usuário' | 'Definição'; sub?: string; Icon: any }
+type SearchResult = { id: string; nome: string; path: string; type: 'Aluno' | 'Turma' | 'Definição'; sub?: string; Icon: any }
 
 export default function MainLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -36,7 +42,7 @@ export default function MainLayout() {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([])
     const [searching, setSearching] = useState(false)
 
-    const [user, setUser] = useState(() => authService.getUser() || { nome: 'Super Admin', email: 'admin@sige.ao' })
+    const [user, setUser] = useState(() => authService.getUser() || { nome: 'Diretor', email: 'diretor@escola.ao' })
 
     const searchInputRef = useRef<HTMLInputElement>(null)
     const navigate = useNavigate()
@@ -70,7 +76,7 @@ export default function MainLayout() {
     const handleConfirmLogout = () => {
         authService.logout()
         toast.success("Sessão terminada")
-        navigate('/login')
+        navigate('/')
     }
 
     useEffect(() => {
@@ -78,25 +84,25 @@ export default function MainLayout() {
         const delay = setTimeout(async () => {
             setSearching(true)
             try {
-                const res = await api.get(`/escolas/search/global?q=${searchQuery}`)
+                const res = await api.get(`/escola/search/global?q=${searchQuery}`)
                 const results: SearchResult[] = [
-                    ...res.data.escolas?.map((e: any) => ({
-                        id: e.id,
-                        nome: e.nome,
-                        sub: e.provincia,
-                        path: `/dashboard/schools/${e.id}`,
-                        type: 'Escola' as const,
-                        Icon: Building2
+                  ...res.data.alunos?.map((a: any) => ({
+                        id: a.id,
+                        nome: a.nome,
+                        sub: a.turma,
+                        path: `/dashboard/alunos/${a.id}`,
+                        type: 'Aluno' as const,
+                        Icon: Users
                     })) || [],
-                    ...res.data.usuarios?.map((u: any) => ({
-                        id: u.id,
-                        nome: u.nome,
-                        sub: u.email,
-                        path: `/dashboard/users/${u.id}`,
-                        type: 'Usuário' as const,
-                        Icon: User
+                  ...res.data.turmas?.map((t: any) => ({
+                        id: t.id,
+                        nome: t.nome,
+                        sub: `${t.quantidade_alunos} alunos`,
+                        path: `/dashboard/turmas/${t.id}`,
+                        type: 'Turma' as const,
+                        Icon: GraduationCap
                     })) || [],
-                    ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                  ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -106,7 +112,7 @@ export default function MainLayout() {
                 ]
                 setSearchResults(results)
             } catch (err: any) {
-                if (err.response?.status !== 404) {
+                if (err.response?.status!== 404) {
                     toast.error(`Erro na pesquisa: ${err.response?.data?.detail || err.message}`)
                 }
                 setSearchResults([])
@@ -122,20 +128,22 @@ export default function MainLayout() {
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
+            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20">
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
+                            <School className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
                             <h1 className="text-xl font-bold text-white whitespace-nowrap">SIGE</h1>
-                            <span className="text-xs bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">Admin</span>
+                            <span className="text-xs bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">Escola</span>
                         </div>
-                        <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
+                        <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}>
+                            <X className="w-5 h-5 text-gray-400" />
+                        </button>
                     </div>
-                    <nav className="space-y-1 flex-1">
-                        {menuItems.filter(item => !item.hidden).map(item => { // 👈 FILTRA AQUI
+                    <nav className="space-y-1 flex-1 overflow-y-auto">
+                        {menuItems.filter(item =>!item.hidden).map(item => {
                             const isActive = item.path === '/dashboard'
-                                ? location.pathname === '/dashboard'
+                              ? location.pathname === '/dashboard'
                                 : location.pathname.startsWith(item.path)
 
                             return (
@@ -143,7 +151,7 @@ export default function MainLayout() {
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
-                                        ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                      ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
                                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
@@ -155,10 +163,12 @@ export default function MainLayout() {
                     </nav>
                     <div className="border-t border-white/10 pt-4 mt-4">
                         <div className="flex items-center gap-3 px-1">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div>
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0">
+                                <User className="w-5 h-5 text-white" />
+                            </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
-                                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                                <p className="text-xs text-gray-400 truncate">{(user as any).escola_nome || user.email}</p> {/* 👈 CORRIGIDO */}
                             </div>
                         </div>
                     </div>
@@ -167,16 +177,16 @@ export default function MainLayout() {
 
             <div className="flex-1 w-full lg:ml-[260px]">
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
-                    <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6 text-white" /></button>
 
-                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen ? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
+                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
                             <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
                             <input
                                 ref={searchInputRef}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Buscar escola, usuário..."
+                                placeholder="Buscar aluno, turma..."
                                 className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
@@ -197,14 +207,14 @@ export default function MainLayout() {
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            <button onClick={() => window.innerWidth < 768 ? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <Search className="w-5 h-5 text-white" />
                             </button>
-                            <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
+                            <button className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5 text-white" /></button>
                             <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <User className="w-5 h-5 text-white" /><span className="text-sm font-semibold text-white hidden lg:inline">{user.nome.split(' ')[0]}</span>
                             </button>
-                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">
+                            <button onClick={() => setLogoutOpen(true)} className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition group flex-shrink-0" title="Sair">
                                 <Power className="w-5 h-5 text-red-400 group-hover:text-red-300 transition" />
                             </button>
                         </div>
@@ -231,7 +241,7 @@ export default function MainLayout() {
                             ref={searchInputRef}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Pesquisar escolas, usuários..."
+                            placeholder="Pesquisar alunos, turmas..."
                             className="w-full pl-12 pr-4 py-3.5 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400"
                         />
                     </div>

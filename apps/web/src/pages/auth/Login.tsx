@@ -32,11 +32,12 @@ export default function Login() {
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Redireciona se já estiver logado
+    // Redireciona se já estiver logado - BATE COM /admin E /dashboard
     useEffect(() => {
         if (authService.isAuthenticated()) {
             const user = authService.getUser()
-            if (user?.nivel === 'MINISTERIO') {
+            const nivel = user?.nivel?.toUpperCase() // 👈 padroniza igual no main.tsx
+            if (nivel === 'MINISTERIO') {
                 navigate('/admin', { replace: true }) // 👈 Painel Administrativo
             } else {
                 navigate('/dashboard', { replace: true }) // 👈 Painel da Escola
@@ -90,27 +91,27 @@ export default function Login() {
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
-           .then((res) => {
+          .then((res) => {
                 authService.login({
-                   ...res.data,
+                  ...res.data,
                     user: {
-                       ...res.data.user,
+                      ...res.data.user,
                         escola_id: res.data.user.escola_id?? undefined
                     }
                 })
                 toast.success(`Bem-vindo, ${res.data.user.nome}!`)
 
-                // 👇 REDIRECIONAMENTO PELO NIVEL
-                const nivel = res.data.user.nivel
+                // 👇 REDIRECIONAMENTO PELO NIVEL - BATE COM /admin E /dashboard
+                const nivel = res.data.user.nivel?.toUpperCase() // 👈 padroniza
                 setTimeout(() => {
                     if (nivel === 'MINISTERIO') {
                         navigate('/admin', { replace: true }) // Painel Administrativo de Escolas
                     } else {
-                        navigate('/dashboard', { replace: true }) // Painel da Escola com nível de acesso
+                        navigate('/dashboard', { replace: true }) // Painel da Escola
                     }
                 }, 800)
             })
-           .catch((err: AxiosError<{ detail: string }>) => {
+          .catch((err: AxiosError<{ detail: string }>) => {
                 const msg = err.response?.data?.detail || "Usuário ou senha inválidos"
 
                 if (msg.toLowerCase().includes('escola inativa')) {
@@ -128,7 +129,7 @@ export default function Login() {
                     toast.error(msg)
                 }
             })
-           .finally(() => setLoading(false))
+          .finally(() => setLoading(false))
     }
 
     const inputClass = "w-full pl-12 pr-4 py-3.5 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50"

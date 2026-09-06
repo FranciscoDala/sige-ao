@@ -1,8 +1,9 @@
+
 import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp
+    LayoutGrid, Building2, Settings, Power, Search, Bell, ShieldCheck, Menu, X, User, Loader2, Users, CircleHelp // 👈 ADD CircleHelp
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -11,11 +12,10 @@ import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
 const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
-    { icon: LayoutGrid, label: 'Painel', path: '/admin', type: 'Definição' }, // 👈 Lista de Escolas
-    { icon: Building2, label: 'Escolas', path: '/admin', type: 'Definição' },
-    { icon: Users, label: 'Usuários', path: '/admin/users', type: 'Definição' },
-    { icon: CircleHelp, label: 'Ajuda(Help)', path: '/admin/ajuda', type: 'Definição' },
-    { icon: Settings, label: 'Configurações', path: '/admin/settings', type: 'Definição', hidden: true },
+    { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' }, // 👈 Painel = Lista de Escolas
+    { icon: Users, label: 'Usuários', path: '/dashboard/users', type: 'Definição' },
+    { icon: CircleHelp, label: 'Ajuda(Help)', path: '/dashboard/ajuda', type: 'Definição' },
+    { icon: Settings, label: 'Configurações', path: '/dashboard/settings', type: 'Definição', hidden: true },
 ]
 
 const getToken = (): string | null => localStorage.getItem('access_token');
@@ -28,7 +28,7 @@ api.interceptors.request.use((config) => {
 
 type SearchResult = { id: string; nome: string; path: string; type: 'Escola' | 'Usuário' | 'Definição'; sub?: string; Icon: any }
 
-export default function AdminLayout() { // 👈 Nome mudou
+export default function MainLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
@@ -71,7 +71,7 @@ export default function AdminLayout() { // 👈 Nome mudou
     const handleConfirmLogout = () => {
         authService.logout()
         toast.success("Sessão terminada")
-        navigate('/')
+        navigate('/login')
     }
 
     useEffect(() => {
@@ -85,7 +85,7 @@ export default function AdminLayout() { // 👈 Nome mudou
                         id: e.id,
                         nome: e.nome,
                         sub: e.provincia,
-                        path: `/admin/escolas/${e.id}`, // 👈 /admin
+                        path: `/dashboard/schools/${e.id}`,
                         type: 'Escola' as const,
                         Icon: Building2
                     })) || [],
@@ -93,7 +93,7 @@ export default function AdminLayout() { // 👈 Nome mudou
                         id: u.id,
                         nome: u.nome,
                         sub: u.email,
-                        path: `/admin/users/${u.id}`, // 👈 /admin
+                        path: `/dashboard/users/${u.id}`,
                         type: 'Usuário' as const,
                         Icon: User
                     })) || [],
@@ -127,16 +127,16 @@ export default function AdminLayout() { // 👈 Nome mudou
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 h-full flex flex-col shadow-2xl shadow-black/20">
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-8 h-8 text-[#FFD700] flex-shrink-0" /> {/* 👈 Dourado pra Admin */}
+                            <ShieldCheck className="w-8 h-8 text-[#3B82F6] flex-shrink-0" />
                             <h1 className="text-xl font-bold text-white whitespace-nowrap">SIGE</h1>
-                            <span className="text-xs bg-[#FFD700]/20 text-[#FFD700] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">MINEDU</span> {/* 👈 Badge MINEDU */}
+                            <span className="text-xs bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">Admin</span>
                         </div>
                         <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
                     <nav className="space-y-1 flex-1">
-                        {menuItems.filter(item => !item.hidden).map(item => {
-                            const isActive = item.path === '/admin'
-                                ? location.pathname === '/admin'
+                        {menuItems.filter(item => !item.hidden).map(item => { // 👈 FILTRA AQUI
+                            const isActive = item.path === '/dashboard'
+                                ? location.pathname === '/dashboard'
                                 : location.pathname.startsWith(item.path)
 
                             return (
@@ -144,7 +144,7 @@ export default function AdminLayout() { // 👈 Nome mudou
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition ${isActive
-                                        ? 'bg-[#FFD700]/20 text-[#FFD700] font-semibold border-[#FFD700]/30' // 👈 Dourado ativo
+                                        ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
                                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
@@ -156,7 +156,7 @@ export default function AdminLayout() { // 👈 Nome mudou
                     </nav>
                     <div className="border-t border-white/10 pt-4 mt-4">
                         <div className="flex items-center gap-3 px-1">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#CF0921] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div> {/* 👈 Gradiente MINEDU */}
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-5 h-5 text-white" /></div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
                                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
@@ -178,15 +178,15 @@ export default function AdminLayout() { // 👈 Nome mudou
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar escola, usuário..."
-                                className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#FFD700] text-sm text-white placeholder-gray-400" // 👈 Foco dourado
+                                className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
                                 <div className="absolute top-14 w-full bg-[#1E293B]/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
-                                    {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#FFD700]" /></div>} {/* 👈 Dourado */}
+                                    {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]" /></div>}
                                     {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="p-4 text-gray-400 text-sm">Nenhum resultado</p>}
                                     {searchResults.map(item => (
                                         <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
-                                            <item.Icon className="w-5 h-5 text-[#FFD700] flex-shrink-0" /> {/* 👈 Dourado */}
+                                            <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
                                             <div className="min-w-0">
                                                 <p className="text-white font-medium truncate">{item.nome}</p>
                                                 <p className="text-xs text-gray-400">{item.type} {item.sub && `• ${item.sub}`}</p>
@@ -233,17 +233,17 @@ export default function AdminLayout() { // 👈 Nome mudou
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar escolas, usuários..."
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#FFD700] text-white placeholder-gray-400" // 👈 Foco dourado
+                            className="w-full pl-12 pr-4 py-3.5 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-white placeholder-gray-400"
                         />
                     </div>
 
                     <div className="flex-1 overflow-y-auto bg-white/5 rounded-2xl border-white/10 p-2">
                         {!searchQuery && <p className="text-center text-gray-400 pt-10">Digite para começar a pesquisar</p>}
-                        {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#FFD700]" /></div>} {/* 👈 Dourado */}
+                        {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#3B82F6]" /></div>}
                         {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center text-gray-400 pt-10">Nenhum resultado encontrado</p>}
                         {searchResults.map(item => (
                             <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
-                                <item.Icon className="w-5 h-5 text-[#FFD700] flex-shrink-0" /> {/* 👈 Dourado */}
+                                <item.Icon className="w-5 h-5 text-[#3B82F6] flex-shrink-0" />
                                 <div className="min-w-0">
                                     <p className="text-white font-medium truncate">{item.nome}</p>
                                     <p className="text-xs text-gray-400">{item.type} {item.sub && `• ${item.sub}`}</p>
