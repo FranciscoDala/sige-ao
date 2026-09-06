@@ -23,8 +23,11 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not usuario.ativo:
         raise HTTPException(status_code=403, detail="Usuário inativo")
 
+    # 👇 CORRIGIDO: Trata None e "" como Super Admin
+    is_super_admin_login = dados.escola_id is None or dados.escola_id == ""
+
     # 2. LOGIN SUPER ADMIN - escola_id vazio
-    if dados.escola_id is None:
+    if is_super_admin_login:
         result = await db.execute(
             select(UsuarioEscola).where(
                 and_(
@@ -41,19 +44,19 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token = create_access_token({
             "sub": str(usuario.id),
             "email": usuario.email,
-            "nivel": NivelAcesso.MINISTERIO.value, # 👈 JÁ ESTAVA CERTO AQUI
+            "nivel": NivelAcesso.MINISTERIO.value,
             "escola_id": None
         })
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
-            nivel=NivelAcesso.MINISTERIO.value, # 👈 CORRIGIDO: .value
+            nivel=NivelAcesso.MINISTERIO.value,
             expires_in=28800,
             user=UserInToken(
                 id=usuario.id,
                 email=usuario.email,
                 nome=usuario.nome,
-                nivel=NivelAcesso.MINISTERIO.value, # 👈 CORRIGIDO: .value
+                nivel=NivelAcesso.MINISTERIO.value,
                 escola_id=None
             )
         )
@@ -90,13 +93,13 @@ async def login(dados: LoginRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        nivel=vinculo.nivel.value, # 👈 CORRIGIDO: .value
+        nivel=vinculo.nivel.value,
         expires_in=28800,
         user=UserInToken(
             id=usuario.id,
             email=usuario.email,
             nome=usuario.nome,
-            nivel=vinculo.nivel.value, # 👈 CORRIGIDO: .value
+            nivel=vinculo.nivel.value,
             escola_id=vinculo.escola_id
         )
     )

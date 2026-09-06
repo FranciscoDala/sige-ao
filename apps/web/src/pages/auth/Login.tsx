@@ -88,7 +88,12 @@ export default function Login() {
             return
         }
 
-        const payload = { email, senha, ...(!isSuperAdmin && { escola_id: escolaId }) }
+        // 👇 CORRIGIDO: se for admin manda null, se for escola manda o id
+        const payload = {
+            email,
+            senha,
+            escola_id: isSuperAdmin ? null : escolaId
+        }
         setLoading(true)
 
         axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, { timeout: REQUEST_TIMEOUT })
