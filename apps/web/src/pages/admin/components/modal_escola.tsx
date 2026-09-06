@@ -298,7 +298,7 @@ export default function EscolaModal({ open, onClose, onSave, escola, saving }: P
                     </div>
 
                     {/* FOOTER IGUAL AO USUARIOMODAL */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
                         <button
                             type="button"
                             onClick={onClose}
