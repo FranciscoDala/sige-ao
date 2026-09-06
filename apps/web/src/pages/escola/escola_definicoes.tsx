@@ -125,16 +125,19 @@ export default function DefinicoesEscolaPage() {
             const token = authService.getToken()
             if (!token) throw new Error("Token não encontrado. Faça login novamente.")
 
-            // 👇 1. CRIA PAYLOAD E REMOVE CAMPOS VAZIOS
+            // 👇 SANITIZA STRINGS: tira acento agudo ´ e espaços
+            const clean = (s: string) => s?.replace(/´/g, "'").trim() || undefined
+
+            // 1. CRIA PAYLOAD E REMOVE CAMPOS VAZIOS/NULOS
             const rawPayload = {
-                nome: form.nome,
-                sigla: form.sigla || undefined,
-                nif: form.nif || undefined,
-                email: form.email || undefined,
-                telefone: form.telefone || undefined,
-                endereco: form.endereco || undefined,
-                provincia: form.provincia || undefined,
-                municipio: form.municipio || undefined,
+                nome: clean(form.nome),
+                sigla: clean(form.sigla),
+                nif: clean(form.nif),
+                email: clean(form.email),
+                telefone: clean(form.telefone),
+                endereco: clean(form.endereco),
+                provincia: clean(form.provincia),
+                municipio: clean(form.municipio),
                 cor_primaria: form.cor_primaria,
                 cor_secundaria: form.cor_secundaria,
                 cor_fundo: form.cor_fundo,
@@ -147,11 +150,12 @@ export default function DefinicoesEscolaPage() {
                 usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
 
+            // Remove undefined, null e ""
             const payload = Object.fromEntries(
-                Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== '')
+                Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== null && v !== '')
             )
 
-            console.log("ENVIANDO PAYLOAD:", payload) // 👈 pra debugar
+            console.log("ENVIANDO PAYLOAD:", payload)
 
             // 1. SALVA OS DADOS JSON
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
@@ -165,7 +169,8 @@ export default function DefinicoesEscolaPage() {
 
             if (!res.ok) {
                 const err = await res.json()
-                console.log("ERRO BACKEND:", err) // 👈 pra debugar
+                console.log("ERRO BACKEND COMPLETO:", JSON.stringify(err, null, 2))
+                // 👇 Trata array de erro do FastAPI 422
                 if (Array.isArray(err.detail)) {
                     const msg = err.detail.map((e: any) => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
                     throw new Error(msg)
@@ -181,7 +186,7 @@ export default function DefinicoesEscolaPage() {
                 const logoRes = await fetch(`${API_URL}/escolas/me/logo`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}` // 👈 SEM Content-Type aqui
+                        'Authorization': `Bearer ${token}` // SEM Content-Type no FormData
                     },
                     body: formData
                 })
