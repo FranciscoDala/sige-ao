@@ -34,8 +34,8 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 // Bloqueia se já estiver logado
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    const user = authService.getUser()
-    const nivel = user?.nivel?.toUpperCase() // 👈 FORÇA MAIUSCULO
+    // 👇 CORRIGIDO: Pega o nivel da raiz primeiro
+    const nivel = authService.getNivel()?.toUpperCase()
 
     if (!isAuth) return children
 
@@ -89,11 +89,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <Route index element={<div>Bem-vindo ao painel da escola</div>} />
                         <Route path="alunos" element={<div>Alunos</div>} />
                         <Route path="turmas" element={<div>Turmas</div>} />
-                        <Route path="disciplinas" element={<div>Disciplinas</div>} /> {/* 👈 ADICIONEI */}
-                        <Route path="notas" element={<div>Notas</div>} /> {/* 👈 ADICIONEI */}
-                        <Route path="frequencia" element={<div>Frequência</div>} /> {/* 👈 ADICIONEI */}
-                        <Route path="financeiro" element={<div>Financeiro</div>} /> {/* 👈 ADICIONEI */}
-                        <Route path="matriculas" element={<div>Matrículas</div>} /> {/* 👈 ADICIONEI */}
+                        <Route path="disciplinas" element={<div>Disciplinas</div>} />
+                        <Route path="notas" element={<div>Notas</div>} />
+                        <Route path="frequencia" element={<div>Frequência</div>} />
+                        <Route path="financeiro" element={<div>Financeiro</div>} />
+                        <Route path="matriculas" element={<div>Matrículas</div>} />
                         <Route path="ajuda" element={<AjudaPage />} />
                         <Route path="settings" element={<div>Configurações Escola</div>} />
                     </Route>
