@@ -8,7 +8,7 @@ import './globals.css'
 
 // LAYOUTS
 import MainLayout from './layouts/MainLayout' // Layout do painel da escola
-import AdminLayout from './layouts/AdminLayout' // 👈 Cria esse layout pra MINISTERIO
+import AdminLayout from './layouts/AdminLayout' // Layout do MINISTERIO
 
 // PAGES
 import Login from './pages/auth/Login'
@@ -28,18 +28,19 @@ const queryClient = new QueryClient({
 // Bloqueia se não estiver logado
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    return isAuth ? children : <Navigate to="/" replace />
+    return isAuth? children : <Navigate to="/" replace />
 }
 
 // Bloqueia se já estiver logado
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
     const user = authService.getUser()
+    const nivel = user?.nivel?.toUpperCase() // 👈 FORÇA MAIUSCULO
 
     if (!isAuth) return children
 
     // Se já logado, manda pro painel certo
-    if (user?.nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
+    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
     return <Navigate to="/dashboard" replace />
 }
 
@@ -85,7 +86,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                             </PrivateRoute>
                         }
                     >
-                        <Route index element={<div>Bem-vindo ao painel da escola</div>} /> {/* 👈 Dashboard da escola */}
+                        <Route index element={<div>Bem-vindo ao painel da escola</div>} />
                         <Route path="alunos" element={<div>Alunos</div>} />
                         <Route path="turmas" element={<div>Turmas</div>} />
                         <Route path="ajuda" element={<AjudaPage />} />
