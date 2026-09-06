@@ -27,43 +27,27 @@ const queryClient = new QueryClient({
     }
 })
 
-// 👇 CORRIGIDO: Não bloqueia mais a tela
-const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-    useEffect(() => {
-        const applyTheme = (tema: any) => {
-            if (!tema) return
-            const root = document.documentElement
-            root.style.setProperty('--cor-primaria', tema.cor_primaria || '#3B82F6')
-            root.style.setProperty('--cor-secundaria', tema.cor_secundaria || '#8B5CF6')
-            root.style.setProperty('--cor-fundo', tema.cor_fundo || '#FFFFFF')
-            root.style.setProperty('--fonte-titulo', tema.fonte_titulo || 'Poppins')
-            root.style.setProperty('--fonte-corpo', tema.fonte_corpo || 'Inter')
-            root.setAttribute('data-tema', tema.tema || 'escuro')
-            root.setAttribute('data-card-style', tema.estilo_card || 'arredondado')
-        }
-
-        const temaSalvo = localStorage.getItem('escola_tema')
-        if (temaSalvo) {
-            applyTheme(JSON.parse(temaSalvo))
-        } else {
-            // aplica tema padrão se não tiver nada salvo
-            applyTheme({})
-        }
-
-        const handleUpdate = () => {
-            const t = localStorage.getItem('escola_tema')
-            if (t) applyTheme(JSON.parse(t))
-        }
-        window.addEventListener('escola-tema-updated', handleUpdate)
-        return () => window.removeEventListener('escola-tema-updated', handleUpdate)
-    }, [])
-
-    return <>{children}</> // 👈 SEMPRE RENDERIZA
+// 👇 NOVO: Aplica o tema salvo no localStorage assim que carrega
+const applySavedTheme = () => {
+    const t = localStorage.getItem('escola_tema')
+    if (!t) return
+    try {
+        const tema = JSON.parse(t)
+        const root = document.documentElement
+        root.style.setProperty('--cor-primaria', tema.cor_primaria || '#3B82F6')
+        root.style.setProperty('--cor-secundaria', tema.cor_secundaria || '#8B5CF6')
+        root.style.setProperty('--cor-fundo', tema.cor_fundo || '#FFFFFF')
+        root.setAttribute('data-tema', tema.tema || 'escuro')
+        root.setAttribute('data-card-style', tema.estilo_card || 'arredondado')
+    } catch (e) {
+        console.error("Erro ao aplicar tema salvo", e)
+    }
 }
+applySavedTheme() // 👈 roda antes de renderizar
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
-    return isAuth? children : <Navigate to="/" replace />
+    return isAuth ? children : <Navigate to="/" replace />
 }
 
 const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
@@ -84,25 +68,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
             <Toaster position="top-center" richColors />
-            <ThemeProvider>
-                <HashRouter>
-                    <Routes>
-                        <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
-                        <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
-                            <Route index element={<SchoolsPage />} />
-                            <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
-                            <Route path="users" element={<UsersPage />} />
-                            <Route path="ajuda" element={<AjudaPage />} />
-                            <Route path="settings" element={<div>Configurações Admin</div>} />
-                        </Route>
-                        <Route path="/dashboard" element={<PrivateRoute><SchoolRouteGuard><MainLayout /></SchoolRouteGuard></PrivateRoute>}>
-                            <Route index element={<EscolaListPage />} />
-                            <Route path="definicoes" element={<DefinicoesEscolaPage />} />
-                        </Route>
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </HashRouter>
-            </ThemeProvider>
+            <HashRouter>
+                <Routes>
+                    <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+                    <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+                        <Route index element={<SchoolsPage />} />
+                        <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
+                        <Route path="users" element={<UsersPage />} />
+                        <Route path="ajuda" element={<AjudaPage />} />
+                        <Route path="settings" element={<div>Configurações Admin</div>} />
+                    </Route>
+                    <Route path="/dashboard" element={<PrivateRoute><SchoolRouteGuard><MainLayout /></SchoolRouteGuard></PrivateRoute>}>
+                        <Route index element={<EscolaListPage />} />
+                        <Route path="definicoes" element={<DefinicoesEscolaPage />} />
+                    </Route>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </HashRouter>
         </QueryClientProvider>
     </React.StrictMode>
 )

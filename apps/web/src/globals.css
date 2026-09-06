@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&display=swap');
+/* 1. Importa todas fontes que tu usa + Zalando */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Zalando+Sans+Expanded:wght@400;500;600;700&display=swap');
 
 :root {
     --cor-primaria: #3B82F6;
@@ -13,12 +14,16 @@
 }
 
 * {
+    /* 👇 PRIMEIRO VEM A VARIAVEL, DEPOIS ZALANDO DE FALLBACK */
     font-family: var(--fonte-corpo), "Zalando Sans Expanded", sans-serif;
     font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--fonte-titulo), "Zalando Sans Expanded", sans-serif;
+    font-weight: 600;
 }
 
 body {
@@ -27,10 +32,25 @@ body {
     min-height: 100vh;
 }
 
+/* 👇 TEMA CLARO/ESCURO DINAMICO */
 [data-tema="claro"] body {
-    background-color: #F8FAFC;
+    background-color: var(--cor-fundo);
     color: #1E293B;
 }
 
-[data-card-style="quadrado"].rounded-2xl { border-radius: 0.5rem; }
-[data-card-style="minimalista"].rounded-2xl { border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.1); }
+[data-tema="escuro"] body {
+    background-color: #0F172A;
+    color: #E5E7EB;
+}
+
+/* 👇 ESTILO DOS CARDS DINAMICO */
+[data-card-style="quadrado"] .rounded-2xl {
+    border-radius: 0.5rem;
+}
+[data-card-style="minimalista"] .rounded-2xl {
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+[data-card-style="arredondado"] .rounded-2xl {
+    border-radius: 1rem;
+}
