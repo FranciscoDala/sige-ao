@@ -220,7 +220,7 @@ export default function DefinicoesEscolaPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border"
                                 style={{
                                     backgroundColor: isActive ? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
                                     color: isActive ? corPrimaria : textSecondary,
@@ -237,7 +237,7 @@ export default function DefinicoesEscolaPage() {
             </div>
 
             {/* Container principal SEM PADDING E SEM BORDA EXTRA */}
-            <div className="rounded-2xl p-0">
+            <div className="rounded-2xl p-0 bg-transparent">
                 {activeTab === 'identificacao' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Building2 className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
