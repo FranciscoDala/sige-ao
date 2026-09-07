@@ -106,8 +106,8 @@ export default function MainLayout() {
     }
 
     const toggleTema = async () => {
-        const novoTema = isClaro? 'escuro' : 'claro'
-        const novoTemaData = {...tema, tema: novoTema }
+        const novoTema = isClaro ? 'escuro' : 'claro'
+        const novoTemaData = { ...tema, tema: novoTema }
 
         applyTheme(novoTemaData)
         window.dispatchEvent(new Event('escola-tema-updated'))
@@ -127,7 +127,7 @@ export default function MainLayout() {
             setSearching(true)
             try {
                 const results: SearchResult[] = [
-                   ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                    ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -147,23 +147,37 @@ export default function MainLayout() {
     const corPrimaria = tema?.cor_primaria || '#3B82F6'
     const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
 
-    const textPrimary = useMemo(() => isClaro? '#1E293B' : 'white', [isClaro])
-    const textSecondary = useMemo(() => isClaro? '#475569' : '#9CA3AF', [isClaro])
-    const bgCard = useMemo(() => isClaro? 'bg-black/5' : 'bg-white/5', [isClaro])
-    const borderCard = useMemo(() => isClaro? 'border-black/10' : 'border-white/10', [isClaro])
-    const hoverBg = useMemo(() => isClaro? 'hover:bg-black/5' : 'hover:bg-white/10', [isClaro])
+    const textPrimary = useMemo(() => isClaro ? '#1E293B' : 'white', [isClaro])
+    const textSecondary = useMemo(() => isClaro ? '#475569' : '#9CA3AF', [isClaro])
+    const bgCard = useMemo(() => isClaro ? 'bg-black/5' : 'bg-white/5', [isClaro])
+    const borderCard = useMemo(() => isClaro ? 'border-black/10' : 'border-white/10', [isClaro])
+    const hoverBg = useMemo(() => isClaro ? 'hover:bg-black/5' : 'hover:bg-white/10', [isClaro])
 
     const getCardStyle = () => {
         const estilo = tema?.estilo_card || 'arredondado'
-        const base = `${bgCard} backdrop-blur-xl ${borderCard}`
 
-        switch (estilo) {
-            case 'quadrado': return `${base} rounded-none`
-            case 'minimalista': return `${base} rounded-lg border-0`
-            case 'elevado': return `${base} rounded-2xl shadow-2xl shadow-black/20`
-            case 'borda_colorida': return `${base} rounded-2xl border-2`
-            case 'glass': return `bg-white/10 backdrop-blur-2xl ${borderCard} rounded-2xl`
-            default: return `${base} rounded-2xl`
+        // 👇 REGRA NOVA: Se for claro, fundo sólido. Se for escuro, vidro
+        if (isClaro) {
+            const baseClaro = `bg-white border border-black/10 shadow-lg`
+            switch (estilo) {
+                case 'quadrado': return `${baseClaro} rounded-none`
+                case 'minimalista': return `${baseClaro} rounded-lg border-0`
+                case 'elevado': return `${baseClaro} rounded-2xl shadow-2xl`
+                case 'borda_colorida': return `${baseClaro} rounded-2xl border-2`
+                case 'glass': return `${baseClaro} rounded-2xl` // glass vira solido no claro
+                default: return `${baseClaro} rounded-2xl`
+            }
+        } else {
+            // Dark continua com vidro
+            const baseEscuro = `bg-white/5 backdrop-blur-xl border-white/10`
+            switch (estilo) {
+                case 'quadrado': return `${baseEscuro} rounded-none`
+                case 'minimalista': return `${baseEscuro} rounded-lg border-0`
+                case 'elevado': return `${baseEscuro} rounded-2xl shadow-2xl shadow-black/20`
+                case 'borda_colorida': return `${baseEscuro} rounded-2xl border-2`
+                case 'glass': return `bg-white/10 backdrop-blur-2xl border-white/10 rounded-2xl`
+                default: return `${baseEscuro} rounded-2xl`
+            }
         }
     }
     const cardClass = getCardStyle()
@@ -173,7 +187,7 @@ export default function MainLayout() {
             className="min-h-screen w-full relative flex overflow-x-hidden"
             style={{
                 background: isClaro
-                   ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
+                    ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
                     : `linear-gradient(to bottom right, ${corPrimaria}15, ${corSecundaria}10, #0F172A)`
             }}
         >
@@ -203,7 +217,7 @@ export default function MainLayout() {
                     <div className={`${cardClass} px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10`}>
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6" style={{ color: textPrimary }} /></button>
 
-                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
+                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen ? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
                             <Search className="absolute left-4 top-3.5 w-5 h-5" style={{ color: textSecondary }} />
                             <input
                                 ref={searchInputRef}
@@ -211,21 +225,21 @@ export default function MainLayout() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar no menu..."
                                 className={`w-full pl-12 pr-4 py-3 ${bgCard} ${borderCard} rounded-xl focus:outline-none text-sm`}
-                                style={{ borderColor: isSearchOpen? corPrimaria : '', color: textPrimary }}
+                                style={{ borderColor: isSearchOpen ? corPrimaria : '', color: textPrimary }}
                             />
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
+                            <button onClick={() => window.innerWidth < 768 ? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <Search className="w-5 h-5" style={{ color: textPrimary }} />
                             </button>
 
                             <button
                                 onClick={toggleTema}
                                 className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}
-                                title={isClaro? 'Mudar para tema escuro' : 'Mudar para tema claro'}
+                                title={isClaro ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
                             >
-                                {isClaro? <Moon className="w-5 h-5" style={{ color: textPrimary }} /> : <Sun className="w-5 h-5" style={{ color: textPrimary }} />}
+                                {isClaro ? <Moon className="w-5 h-5" style={{ color: textPrimary }} /> : <Sun className="w-5 h-5" style={{ color: textPrimary }} />}
                             </button>
 
                             <button className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}><Bell className="w-5 h-5" style={{ color: textPrimary }} /></button>
@@ -246,7 +260,7 @@ export default function MainLayout() {
             </div>
 
             {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[60] flex flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
+                <div className="fixed inset-0 z-[60] flex flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro ? 'var(--cor-fundo)' : '#0F172A' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Pesquisar</h2>
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
@@ -261,7 +275,7 @@ export default function MainLayout() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar no menu..."
                             className={`w-full pl-12 pr-4 py-3.5 ${bgCard} ${borderCard} rounded-xl focus:outline-none`}
-                            style={{ borderColor: searchQuery? corPrimaria : '', color: textPrimary }}
+                            style={{ borderColor: searchQuery ? corPrimaria : '', color: textPrimary }}
                         />
                     </div>
                     <div className={`flex-1 overflow-y-auto ${cardClass} p-2`}>
