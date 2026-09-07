@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, and_
 from uuid import UUID
 from typing import List
+from datetime import date # 👈 ADICIONA
 
 from app.db.database import get_db
 from app.models.models_anoLetivo import AnoLetivo
@@ -12,6 +13,8 @@ from app.core.security import get_current_user
 router = APIRouter(prefix="/anos-letivos", tags=["Anos Letivos"])
 
 def get_escola_do_usuario(current_user: dict) -> UUID:
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Token invalido ou expirado. Faca login novamente")
     escola_id = current_user.get("escola_id")
     if not escola_id:
         raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
@@ -29,13 +32,18 @@ async def criar_ano_letivo(
 ):
     escola_id = get_escola_do_usuario(current_user)
 
-    result = await db.execute(
-        select(AnoLetivo).where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.nome == dados.nome))
-    )
+    result = await db.execute(select(AnoLetivo).where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.nome == dados.nome)))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail=f"Ano letivo {dados.nome} ja existe para esta escola")
 
-    novo_ano = AnoLetivo(escola_id=escola_id, **dados.model_dump())
+    # 👇 CORRIGIDO: Força converter pra date
+    payload = dados.model_dump()
+    if isinstance(payload['data_inicio'], str):
+        payload['data_inicio'] = date.fromisoformat(payload['data_inicio'])
+    if isinstance(payload['data_fim'], str):
+        payload['data_fim'] = date.fromisoformat(payload['data_fim'])
+
+    novo_ano = AnoLetivo(escola_id=escola_id, **payload)
     db.add(novo_ano)
     await db.commit()
     await db.refresh(novo_ano)
@@ -50,8 +58,8 @@ async def listar_anos_letivos(
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(
         select(AnoLetivo)
-       .where(AnoLetivo.escola_id == escola_id)
-       .order_by(AnoLetivo.data_inicio.desc())
+      .where(AnoLetivo.escola_id == escola_id)
+      .order_by(AnoLetivo.data_inicio.desc())
     )
     anos = result.scalars().all()
 
@@ -61,8 +69,8 @@ async def listar_anos_letivos(
         novo = AnoLetivo(
             escola_id=escola_id,
             nome=ano_atual,
-            data_inicio="2026-09-01",
-            data_fim="2027-07-15",
+            data_inicio=date(2026, 9, 1), # 👈 USA date() AQUI TAMBEM
+            data_fim=date(2027, 7, 15),
             status="ATIVO"
         )
         db.add(novo)
@@ -80,9 +88,7 @@ async def ativar_ano_letivo(
 ):
     escola_id = get_escola_do_usuario(current_user)
 
-    result = await db.execute(
-        select(AnoLetivo).where(and_(AnoLetivo.id == ano_id, AnoLetivo.escola_id == escola_id))
-    )
+    result = await db.execute(select(AnoLetivo).where(and_(AnoLetivo.id == ano_id, AnoLetivo.escola_id == escola_id)))
     ano_para_ativar = result.scalar_one_or_none()
     if not ano_para_ativar:
         raise HTTPException(status_code=404, detail="Ano letivo nao encontrado")
@@ -94,14 +100,14 @@ async def ativar_ano_letivo(
     # 2. Fechar o atual ATIVO
     await db.execute(
         update(AnoLetivo)
-       .where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.status == 'ATIVO'))
-       .values(status='FECHADO')
+      .where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.status == 'ATIVO'))
+      .values(status='FECHADO')
     )
     # 3. Ativar o novo
     await db.execute(
         update(AnoLetivo)
-       .where(AnoLetivo.id == ano_id)
-       .values(status='ATIVO')
+      .where(AnoLetivo.id == ano_id)
+      .values(status='ATIVO')
     )
     await db.commit()
     return {"message": f"Ano letivo {ano_para_ativar.nome} ativado com sucesso"}
