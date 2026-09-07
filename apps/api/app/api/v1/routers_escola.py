@@ -181,6 +181,25 @@ async def atualizar_definicoes_escola(
 
 
 
+@router.put("/me/tema")
+async def atualizar_tema_escola(
+    payload: dict, # { "tema": "claro" }
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(check_diretor_ou_ministerio)
+):
+    escola_id = get_escola_do_usuario(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola nao encontrada")
+
+    escola.tema = payload.get("tema", "claro")
+
+    await db.commit()
+    await db.refresh(escola)
+    return {"tema": escola.tema}
+
+
 @router.post("/me/logo", response_model=EscolaResponse)
 async def upload_minha_logo(
     logo: UploadFile = File(...),
