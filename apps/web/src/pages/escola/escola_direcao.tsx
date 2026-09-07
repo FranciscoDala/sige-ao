@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, Laptop, Loader2, ChevronDown, Lock } from 'lucide-react'
+import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, Laptop, Loader2, ChevronDown, Lock, Plus, Check } from 'lucide-react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -71,6 +71,7 @@ export default function EscolaDirecaoPage() {
     const [activeTab, setActiveTab] = useState('turmas')
     const [loading, setLoading] = useState(true)
     const [corPrimariaHex, setCorPrimariaHex] = useState('#0056b3')
+    const [erro, setErro] = useState<string | null>(null) // 👈 NOVO
 
     const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
     const [anoLetivoAtivo, setAnoLetivoAtivo] = useState<AnoLetivo | null>(null)
@@ -78,38 +79,71 @@ export default function EscolaDirecaoPage() {
     const STORAGE_KEY_TAB = 'direcao_active_tab'
     const STORAGE_KEY_ANO = 'direcao_active_ano'
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [resEscola, resAnos] = await Promise.all([
-                    api.get('/escolas/me'),
-                    api.get('/anos-letivos')
-                ])
+    const carregarDados = async () => {
+        setLoading(true)
+        setErro(null)
+        try {
+            // 👇 Busca separado pra não quebrar se 1 falhar
+            const resEscola = await api.get('/escolas/me')
+            const resAnos = await api.get('/anos-letivos')
 
-                const nivelEscola = resEscola.data.nivel_ensino as NivelEnsino
-                setNivel(nivelEscola)
-                setCorPrimariaHex(resEscola.data.cor_primaria || '#0056b3')
-                const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
-                setTabs(tabsDoNivel)
-                setAnosLetivos(resAnos.data)
+            const nivelEscola = resEscola.data.nivel_ensino as NivelEnsino
+            setNivel(nivelEscola)
+            setCorPrimariaHex(resEscola.data.cor_primaria || '#0056b3')
+            const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
+            setTabs(tabsDoNivel)
+            setAnosLetivos(resAnos.data)
 
-                const anoSalvoId = localStorage.getItem(STORAGE_KEY_ANO)
-                const anoAtivo = resAnos.data.find((a: AnoLetivo) => a.status === 'ATIVO')
-                const anoSelecionado = anoSalvoId? resAnos.data.find((a: AnoLetivo) => a.id === Number(anoSalvoId)) : anoAtivo
-                setAnoLetivoAtivo(anoSelecionado || anoAtivo || resAnos.data[0] || null)
+            const anoSalvoId = localStorage.getItem(STORAGE_KEY_ANO)
+            const anoAtivo = resAnos.data.find((a: AnoLetivo) => a.status === 'ATIVO')
+            const anoSelecionado = anoSalvoId? resAnos.data.find((a: AnoLetivo) => a.id === Number(anoSalvoId)) : anoAtivo
+            setAnoLetivoAtivo(anoSelecionado || anoAtivo || resAnos.data[0] || null)
 
-                const savedTab = localStorage.getItem(STORAGE_KEY_TAB)
-                const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
-                setActiveTab(isValidTab? savedTab! : tabsDoNivel[0].id)
+            const savedTab = localStorage.getItem(STORAGE_KEY_TAB)
+            const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
+            setActiveTab(isValidTab? savedTab! : tabsDoNivel[0].id)
 
-            } catch (e) {
-                console.error("Erro ao buscar dados iniciais", e)
-            } finally {
-                setLoading(false)
+        } catch (e: any) {
+            console.error("Erro ao buscar dados iniciais", e)
+            if (e.response?.status === 404) {
+                setErro("Escola nao encontrada ou token expirado. Faça login novamente.")
+            } else {
+                setErro(e.response?.data?.detail || "Erro ao carregar dados")
             }
+        } finally {
+            setLoading(false)
         }
-        fetchData()
+    }
+
+    useEffect(() => {
+        carregarDados()
     }, [])
+
+    const handleCriarAno = async () => {
+        const nome = prompt("Nome do Ano Letivo? Ex: 2026/2027")
+        if(!nome) return
+        try {
+            await api.post('/anos-letivos', {
+                nome,
+                data_inicio: `${nome.split('/')[0]}-09-01`,
+                data_fim: `${nome.split('/')[1]}-07-15`,
+                status: 'PLANEJAMENTO' // 👈 bate com backend
+            })
+            await carregarDados() // Recarrega sem dar F5
+        } catch(e: any) {
+            alert(e.response?.data?.detail || "Erro ao criar ano")
+        }
+    }
+
+    const handleAtivarAno = async (id: number) => {
+        if(!confirm("Tem certeza? O ano atual sera fechado.")) return
+        try {
+            await api.put(`/anos-letivos/${id}/ativar`)
+            await carregarDados()
+        } catch(e: any) {
+            alert(e.response?.data?.detail || "Erro ao ativar ano")
+        }
+    }
 
     useEffect(() => {
         if (!loading) {
@@ -121,7 +155,6 @@ export default function EscolaDirecaoPage() {
     const corPrimaria = corPrimariaHex
     const textPrimary = 'var(--text-primary)'
     const textSecondary = 'var(--text-secondary)'
-
     const bgActive = `${corPrimaria}20`
     const bgInactive = 'rgba(0,0,0,0.03)'
     const borderActive = `${corPrimaria}4D`
@@ -133,6 +166,8 @@ export default function EscolaDirecaoPage() {
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
         </div>
     )
+
+    if(erro) return <div className="p-6 rounded-xl bg-red-50 text-red-700">{erro}</div>
 
     return (
         <div className="space-y-6">
@@ -148,21 +183,42 @@ export default function EscolaDirecaoPage() {
                     </div>
                 </div>
 
-                {/* SELETOR DE ANO LETIVO */}
-                <div className="relative min-w-[280px]">
-                    <select
-                        value={anoLetivoAtivo?.id || ''}
-                        onChange={(e) => setAnoLetivoAtivo(anosLetivos.find(a => a.id === Number(e.target.value)) || null)}
-                        className="appearance-none w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium border shadow-sm cursor-pointer"
-                        style={{ backgroundColor: bgInactive, color: textPrimary, borderColor: borderInactive }}
+                {/* SELETOR DE ANO LETIVO + BOTÕES */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleCriarAno}
+                        className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium text-white shadow-sm"
+                        style={{backgroundColor: corPrimaria}}
                     >
-                        {anosLetivos.map(ano => (
-                            <option key={ano.id} value={ano.id}>
-                                {ano.nome} - {ano.status}
-                            </option>
-                        ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 absolute right-3 top-3.5 pointer-events-none" style={{ color: textSecondary }} />
+                        <Plus className="w-4 h-4"/> Novo Ano
+                    </button>
+
+                    <div className="relative min-w-[280px]">
+                        <select
+                            value={anoLetivoAtivo?.id || ''}
+                            onChange={(e) => setAnoLetivoAtivo(anosLetivos.find(a => a.id === Number(e.target.value)) || null)}
+                            className="appearance-none w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium border shadow-sm cursor-pointer"
+                            style={{ backgroundColor: bgInactive, color: textPrimary, borderColor: borderInactive }}
+                        >
+                            {anosLetivos.map(ano => (
+                                <option key={ano.id} value={ano.id}>
+                                    {ano.nome} - {ano.status}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 absolute right-3 top-3.5 pointer-events-none" style={{ color: textSecondary }} />
+                    </div>
+
+                    {anoLetivoAtivo?.status !== 'ATIVO' && (
+                        <button
+                            onClick={() => handleAtivarAno(anoLetivoAtivo!.id)}
+                            title="Ativar este ano"
+                            className="p-2.5 rounded-xl shadow-sm"
+                            style={{backgroundColor: bgActive}}
+                        >
+                            <Check className="w-5 h-5" style={{color: corPrimaria}}/>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -187,7 +243,7 @@ export default function EscolaDirecaoPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                disabled={isFechado &&!['turmas'].includes(tab.id)} // 👈 só consulta em turmas
+                                disabled={isFechado && !['turmas'].includes(tab.id)} // 👈 só consulta em turmas
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 style={{
                                     backgroundColor: isActive? bgActive : bgInactive,

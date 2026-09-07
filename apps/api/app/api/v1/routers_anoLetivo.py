@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, and_ # 👈 importei and_
+from sqlalchemy import select, update, and_
 from uuid import UUID
 from typing import List
 
@@ -29,7 +29,9 @@ async def criar_ano_letivo(
 ):
     escola_id = get_escola_do_usuario(current_user)
 
-    result = await db.execute(select(AnoLetivo).where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.nome == dados.nome)))
+    result = await db.execute(
+        select(AnoLetivo).where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.nome == dados.nome))
+    )
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail=f"Ano letivo {dados.nome} ja existe para esta escola")
 
@@ -48,10 +50,27 @@ async def listar_anos_letivos(
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(
         select(AnoLetivo)
-      .where(AnoLetivo.escola_id == escola_id)
-      .order_by(AnoLetivo.data_inicio.desc())
+       .where(AnoLetivo.escola_id == escola_id)
+       .order_by(AnoLetivo.data_inicio.desc())
     )
-    return result.scalars().all()
+    anos = result.scalars().all()
+
+    # 👇 Se não tiver nenhum ano, cria 2026/2027 automaticamente ATIVO
+    if not anos:
+        ano_atual = "2026/2027"
+        novo = AnoLetivo(
+            escola_id=escola_id,
+            nome=ano_atual,
+            data_inicio="2026-09-01",
+            data_fim="2027-07-15",
+            status="ATIVO"
+        )
+        db.add(novo)
+        await db.commit()
+        await db.refresh(novo)
+        return [novo]
+
+    return anos
 
 @router.put("/{ano_id}/ativar")
 async def ativar_ano_letivo(
@@ -61,12 +80,13 @@ async def ativar_ano_letivo(
 ):
     escola_id = get_escola_do_usuario(current_user)
 
-    result = await db.execute(select(AnoLetivo).where(and_(AnoLetivo.id == ano_id, AnoLetivo.escola_id == escola_id)))
+    result = await db.execute(
+        select(AnoLetivo).where(and_(AnoLetivo.id == ano_id, AnoLetivo.escola_id == escola_id))
+    )
     ano_para_ativar = result.scalar_one_or_none()
     if not ano_para_ativar:
         raise HTTPException(status_code=404, detail="Ano letivo nao encontrado")
 
-    # 👇 Pegar como string pra Pylance parar de chorar
     status_atual = str(ano_para_ativar.status)
     if status_atual == 'ATIVO':
         raise HTTPException(status_code=400, detail="Este ano ja esta ativo")
@@ -74,14 +94,14 @@ async def ativar_ano_letivo(
     # 2. Fechar o atual ATIVO
     await db.execute(
         update(AnoLetivo)
-      .where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.status == 'ATIVO'))
-      .values(status='FECHADO')
+       .where(and_(AnoLetivo.escola_id == escola_id, AnoLetivo.status == 'ATIVO'))
+       .values(status='FECHADO')
     )
     # 3. Ativar o novo
     await db.execute(
         update(AnoLetivo)
-      .where(AnoLetivo.id == ano_id)
-      .values(status='ATIVO')
+       .where(AnoLetivo.id == ano_id)
+       .values(status='ATIVO')
     )
     await db.commit()
     return {"message": f"Ano letivo {ano_para_ativar.nome} ativado com sucesso"}
