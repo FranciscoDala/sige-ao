@@ -114,15 +114,9 @@ export default function EscolaDirecaoPage() {
                 </div>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs - SEM BG NO CONTAINER */}
             <div className="w-full">
-                <div
-                    className="flex gap-2 p-1 rounded-xl overflow-x-auto scrollbar-hide"
-                    style={{
-                        backgroundColor: bgCard,
-                        border: '1px solid var(--border-card)'
-                    }}
-                >
+                <div className="flex gap-1 p-0 overflow-x-auto scrollbar-hide"> {/* 👈 tirei bgCard e border */}
                     {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
@@ -130,9 +124,9 @@ export default function EscolaDirecaoPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0 ${!isActive ? 'shadow-sm' : ''}`}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0 hover:bg-white/5"
                                 style={{
-                                    backgroundColor: isActive? corPrimaria : 'transparent', // 👈 transparente
+                                    backgroundColor: isActive? corPrimaria : 'transparent', // 👈 só ativo tem bg
                                     color: isActive? 'white' : textSecondary
                                 }}
                             >
@@ -142,8 +136,8 @@ export default function EscolaDirecaoPage() {
                         )
                     })}
                 </div>
-                {/* Linha de baixo voltou com opacidade 15% */}
-                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} /> {/* 👈 15% opacity */}
+                {/* Linha de baixo 15% */}
+                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
             {/* Conteúdo da Tab */}
