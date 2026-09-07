@@ -237,7 +237,7 @@ export default function DefinicoesEscolaPage() {
             </div>
 
             {/* Container principal SEM PADDING E SEM BORDA EXTRA */}
-            <div className="rounded-2xl p-0 bg-transparent">
+            <div className="rounded-2xl p-0 bg-transparent shadow-none -mt-2">
                 {activeTab === 'identificacao' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Building2 className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
