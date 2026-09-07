@@ -112,9 +112,10 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
+            {/* LARGURA REDUZIDA: max-w-[420px] no desktop */}
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className={`w-full max-w-[680px] ${cardClass} flex flex-col max-h-[90vh] overflow-hidden`}
+                className={`w-full max-w-[420px] ${cardClass} flex flex-col max-h-[90vh] overflow-hidden`}
                 style={{ borderColor: borderCard }}
             >
                 {/* Header */}
@@ -140,41 +141,41 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                     <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0">
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
-                                <label className={labelClass} style={{ color: textPrimary }}>
+                            <div>
+                                <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
                                     <Calendar className="w-4 h-4" style={{ color: corPrimaria }} />Nome do Ano *
                                 </label>
                                 <input
                                     value={form.nome}
                                     onChange={e => handleChange('nome', e.target.value)}
-                                    className={`${inputClass} sm:col-span-3`}
+                                    className={inputClass}
                                     style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
                                     placeholder="Ex: 2026/2027"
                                     required
                                 />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
-                                <label className={labelClass} style={{ color: textPrimary }}>
+                            <div>
+                                <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
                                     <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Início *
                                 </label>
                                 <input
                                     type="date"
                                     value={form.data_inicio}
                                     onChange={e => handleChange('data_inicio', e.target.value)}
-                                    className={`${inputClass} sm:col-span-3`}
+                                    className={inputClass}
                                     style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
                                     required
                                 />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
-                                <label className={labelClass} style={{ color: textPrimary }}>
+                            <div>
+                                <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
                                     <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Fim *
                                 </label>
                                 <input
                                     type="date"
                                     value={form.data_fim}
                                     onChange={e => handleChange('data_fim', e.target.value)}
-                                    className={`${inputClass} sm:col-span-3`}
+                                    className={inputClass}
                                     style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
                                     required
                                 />
@@ -190,7 +191,7 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                         <button
                             type="submit"
                             disabled={saving}
-                            className="w-full sm:w-auto sm:flex-1 h-11 font-bold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition hover:scale-[1.02]"
+                            className="w-full sm:flex-1 h-11 font-bold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition hover:scale-[1.02]"
                             style={{
                                 background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
                                 borderRadius: tema?.estilo_card === 'quadrado' ? '0.5rem' : tema?.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem'
@@ -202,7 +203,7 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                         <button
                             type="button"
                             onClick={onClose}
-                            className="w-full sm:w-auto sm:flex-1 px-6 h-11 font-semibold rounded-xl border transition hover:opacity-90"
+                            className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl border transition hover:opacity-90"
                             style={{
                                 borderColor: 'rgba(239, 68, 68, 0.3)',
                                 background: 'rgba(239, 68, 68, 0.1)',
