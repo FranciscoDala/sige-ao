@@ -200,7 +200,9 @@ export default function DefinicoesEscolaPage() {
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
                         borderRadius: form.estilo_card === 'quadrado' ? '0.5rem' : form.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem'
                     }}
-                ></button>
+                >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading ? 'Salvando...' : 'Salvar Definições'}
+                </button>
             </div>
 
             <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl p-2`}>
