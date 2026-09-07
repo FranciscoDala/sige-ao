@@ -185,9 +185,9 @@ export default function DefinicoesEscolaPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header com ícone */}
+            {/* Header - IGUAL DIREÇÃO */}
             <div className="flex items-center gap-3">
-                <Settings className="w-7 h-7" style={{ color: corPrimaria }} />
+                <Settings className="w-7 h-7" style={{ color: corPrimaria || '#6366F1' }} />
                 <div>
                     <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Definições da Escola</h1>
                     <p className="text-sm" style={{ color: textSecondary }}>Personalize as informações e aparência do painel</p>
