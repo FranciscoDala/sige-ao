@@ -63,6 +63,7 @@ export default function EscolaDirecaoPage() {
     const [tabs, setTabs] = useState<Tab[]>(TABS_POR_NIVEL.PRIMARIO)
     const [activeTab, setActiveTab] = useState('turmas')
     const [loading, setLoading] = useState(true)
+    const [corPrimariaHex, setCorPrimariaHex] = useState('#0056b3') // 👈 pegar cor real
 
     const STORAGE_KEY = 'direcao_active_tab'
 
@@ -72,6 +73,7 @@ export default function EscolaDirecaoPage() {
                 const res = await api.get('/escolas/me')
                 const nivelEscola = res.data.nivel_ensino as NivelEnsino
                 setNivel(nivelEscola)
+                setCorPrimariaHex(res.data.cor_primaria || '#0056b3') // 👈 salvar cor real
                 const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
                 setTabs(tabsDoNivel)
 
@@ -94,10 +96,17 @@ export default function EscolaDirecaoPage() {
         }
     }, [activeTab, loading])
 
-    const corPrimaria = 'var(--cor-primaria)'
+    const corPrimaria = corPrimariaHex // 👈 usar hex real
     const textPrimary = 'var(--text-primary)'
     const textSecondary = 'var(--text-secondary)'
     const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
+
+    // 👇 Cores iguais Definições
+    const bgActive = `${corPrimaria}20` // 12%
+    const bgInactive = 'rgba(0,0,0,0.03)'
+    const borderActive = `${corPrimaria}4D` // 30%
+    const borderInactive = 'rgba(0,0,0,0.08)'
+    const lineColor = `${corPrimaria}26` // 15%
 
     if (loading) return (
         <div className="flex justify-center p-10">
@@ -130,9 +139,9 @@ export default function EscolaDirecaoPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
                                 style={{
-                                    backgroundColor: isActive ? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
+                                    backgroundColor: isActive ? bgActive : bgInactive, // 👈 igual definições
                                     color: isActive ? corPrimaria : textSecondary,
-                                    borderColor: isActive ? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
+                                    borderColor: isActive ? borderActive : borderInactive
                                 }}
                             >
                                 <Icon className="w-4 h-4" style={{ color: isActive ? corPrimaria : textSecondary }} />
@@ -141,12 +150,12 @@ export default function EscolaDirecaoPage() {
                         )
                     })}
                 </div>
-                {/* 👇 LINHA IGUAL DEFINIÇÕES - 15% de opacidade */}
-                <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
+                {/* 👇 LINHA IGUAL DEFINIÇÕES */}
+                <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: lineColor }} />
             </div>
 
-            {/* Conteúdo da Tab */}
-            <div className="rounded-2xl p-4" style={{ background: bgCard, border: '1px solid var(--border-card)' }}>
+            {/* Conteúdo da Tab - SEM PADDING IGUAL DEFINIÇÕES */}
+            <div className="rounded-2xl p-0"> {/* 👈 p-0 */}
                 {activeTab === 'turmas' && <div>Conteúdo de Turmas aqui</div>}
                 {activeTab === 'cursos' && <div>Conteúdo de Cursos aqui</div>}
                 {activeTab === 'salas' && <div>Conteúdo de Salas aqui</div>}
