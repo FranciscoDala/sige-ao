@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, Laptop, Loader2, ChevronDown, Lock, Plus, Check } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import AnoLetivoModal from './components/modal_anoLetivo' // 👈 IMPORT
+import AnoLetivoModal from './components/modal_anoLetivo'
 
 const API_URL = import.meta.env.VITE_API_URL
 const api = axios.create({ baseURL: API_URL })
@@ -15,6 +15,7 @@ api.interceptors.request.use((config) => {
 type NivelEnsino = 'PRIMARIO' | 'I_CICLO' | 'II_CICLO' | 'COMPLEXO' | 'MEDIO_TECNICO' | 'SUPERIOR'
 type Tab = { id: string; label: string; icon: any }
 type AnoLetivo = { id: number; nome: string; status: 'ATIVO' | 'FECHADO' | 'PLANEJAMENTO'; data_inicio: string; data_fim: string }
+type Option = { value: string; label: string }
 
 const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
     PRIMARIO: [
@@ -67,9 +68,10 @@ export default function EscolaDirecaoPage() {
     const [activeTab, setActiveTab] = useState('turmas')
     const [loading, setLoading] = useState(true)
     const [corPrimariaHex, setCorPrimariaHex] = useState('#0056b3')
+    const [isClaro, setIsClaro] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
     const [savingAno, setSavingAno] = useState(false)
-    const [modalAnoOpen, setModalAnoOpen] = useState(false) // 👈 NOVO
+    const [modalAnoOpen, setModalAnoOpen] = useState(false)
 
     const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
     const [anoLetivoAtivo, setAnoLetivoAtivo] = useState<AnoLetivo | null>(null)
@@ -87,18 +89,20 @@ export default function EscolaDirecaoPage() {
             const nivelEscola = resEscola.data.nivel_ensino as NivelEnsino
             setNivel(nivelEscola)
             setCorPrimariaHex(resEscola.data.cor_primaria || '#0056b3')
+            setIsClaro(resEscola.data.tema === 'claro')
+
             const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
             setTabs(tabsDoNivel)
             setAnosLetivos(resAnos.data)
 
             const anoSalvoId = localStorage.getItem(STORAGE_KEY_ANO)
             const anoAtivo = resAnos.data.find((a: AnoLetivo) => a.status === 'ATIVO')
-            const anoSelecionado = anoSalvoId? resAnos.data.find((a: AnoLetivo) => a.id === Number(anoSalvoId)) : anoAtivo
+            const anoSelecionado = anoSalvoId ? resAnos.data.find((a: AnoLetivo) => a.id === Number(anoSalvoId)) : anoAtivo
             setAnoLetivoAtivo(anoSelecionado || anoAtivo || resAnos.data[0] || null)
 
             const savedTab = localStorage.getItem(STORAGE_KEY_TAB)
             const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
-            setActiveTab(isValidTab? savedTab! : tabsDoNivel[0].id)
+            setActiveTab(isValidTab ? savedTab! : tabsDoNivel[0].id)
 
         } catch (e: any) {
             console.error("Erro ao buscar dados iniciais", e)
@@ -112,11 +116,9 @@ export default function EscolaDirecaoPage() {
         }
     }
 
-    useEffect(() => {
-        carregarDados()
-    }, [])
+    useEffect(() => { carregarDados() }, [])
 
-    const handleSalvarAno = async (data: any) => { // 👈 TROQUEI O PROMPT
+    const handleSalvarAno = async (data: any) => {
         setSavingAno(true)
         try {
             await api.post('/anos-letivos', data)
@@ -149,12 +151,13 @@ export default function EscolaDirecaoPage() {
     }, [activeTab, anoLetivoAtivo, loading])
 
     const corPrimaria = corPrimariaHex
-    const textPrimary = 'var(--text-primary)'
-    const textSecondary = 'var(--text-secondary)'
+    const corSecundaria = '#FFC107'
+    const textPrimary = isClaro ? '#1E293B' : 'white'
+    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
     const bgActive = `${corPrimaria}20`
-    const bgInactive = 'rgba(0,0,0,0.03)'
     const borderActive = `${corPrimaria}4D`
-    const borderInactive = 'rgba(0,0,0,0.08)'
     const lineColor = `${corPrimaria}26`
 
     if (loading) return <div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} /></div>
@@ -172,32 +175,38 @@ export default function EscolaDirecaoPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* BTNS E SELECT COM FLEX-WRAP PRA NÃO GRUDAR NO MOBILE */}
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
-                            onClick={() => setModalAnoOpen(true)} // 👈 ABRE MODAL
-                            className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium text-white shadow-sm"
-                            style={{backgroundColor: corPrimaria}}
+                            onClick={() => setModalAnoOpen(true)}
+                            className="h-11 px-5 font-semibold rounded-xl flex items-center justify-center gap-2 text-white hover:scale-[1.02] transition"
+                            style={{
+                                background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
+                                borderRadius: '0.75rem'
+                            }}
                         >
                             <Plus className="w-4 h-4"/> Novo Ano
                         </button>
 
-                        <div className="relative min-w-[280px]">
-                            <select
-                                value={anoLetivoAtivo?.id || ''}
-                                onChange={(e) => setAnoLetivoAtivo(anosLetivos.find(a => a.id === Number(e.target.value)) || null)}
-                                className="appearance-none w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium border shadow-sm cursor-pointer"
-                                style={{ backgroundColor: bgInactive, color: textPrimary, borderColor: borderInactive }}
-                            >
-                                {anosLetivos.map(ano => (
-                                    <option key={ano.id} value={ano.id}>{ano.nome} - {ano.status}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="w-4 h-4 absolute right-3 top-3.5 pointer-events-none" style={{ color: textSecondary }} />
-                        </div>
+                        <CustomSelectAno
+                            value={anoLetivoAtivo?.id || ''}
+                            onChange={(id) => setAnoLetivoAtivo(anosLetivos.find(a => a.id === Number(id)) || null)}
+                            options={anosLetivos.map(a => ({ value: String(a.id), label: `${a.nome} - ${a.status}` }))}
+                            cor={corPrimaria}
+                            textColor={textPrimary}
+                            isClaro={isClaro}
+                            bg={bgCard}
+                            border={borderCard}
+                        />
 
-                        {anoLetivoAtivo?.status!== 'ATIVO' && (
-                            <button onClick={() => handleAtivarAno(anoLetivoAtivo!.id)} title="Ativar este ano" className="p-2.5 rounded-xl shadow-sm" style={{backgroundColor: bgActive}}>
-                                <Check className="w-5 h-5" style={{color: corPrimaria}}/>
+                        {anoLetivoAtivo?.status !== 'ATIVO' && (
+                            <button
+                                onClick={() => handleAtivarAno(anoLetivoAtivo!.id)}
+                                title="Ativar este ano"
+                                className="h-11 px-4 rounded-xl transition hover:scale-[1.02]"
+                                style={{ backgroundColor: bgActive }}
+                            >
+                                <Check className="w-5 h-5" style={{ color: corPrimaria }}/>
                             </button>
                         )}
                     </div>
@@ -217,8 +226,18 @@ export default function EscolaDirecaoPage() {
                             const isActive = activeTab === tab.id
                             const isFechado = anoLetivoAtivo?.status === 'FECHADO'
                             return (
-                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} disabled={isFechado &&!['turmas'].includes(tab.id)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: isActive? bgActive : bgInactive, color: isActive? corPrimaria : textSecondary, borderColor: isActive? borderActive : borderInactive }}>
-                                    <Icon className="w-4 h-4" style={{ color: isActive? corPrimaria : textSecondary }} />
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    disabled={isFechado && !['turmas'].includes(tab.id)}
+                                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border disabled:opacity-50 disabled:cursor-not-allowed"
+                                    style={{
+                                        backgroundColor: isActive ? bgActive : bgCard,
+                                        color: isActive ? corPrimaria : textSecondary,
+                                        borderColor: isActive ? borderActive : borderCard
+                                    }}
+                                >
+                                    <Icon className="w-4 h-4" style={{ color: isActive ? corPrimaria : textSecondary }} />
                                     {tab.label}
                                 </button>
                             )
@@ -243,7 +262,7 @@ export default function EscolaDirecaoPage() {
                 <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
             </div>
 
-            <AnoLetivoModal // 👈 CHAMANDO A MODAL
+            <AnoLetivoModal
                 open={modalAnoOpen}
                 onClose={() => setModalAnoOpen(false)}
                 onSave={handleSalvarAno}
@@ -251,5 +270,68 @@ export default function EscolaDirecaoPage() {
                 ano={null}
             />
         </>
+    )
+}
+
+// ===== CUSTOM SELECT PADRONIZADO IGUAL DA DEFINICOES =====
+interface CustomSelectAnoProps {
+    value: string | number;
+    onChange: (value: string) => void;
+    options: Option[];
+    cor: string;
+    textColor: string;
+    isClaro: boolean;
+    bg: string;
+    border: string
+}
+
+const CustomSelectAno = ({ value, onChange, options, cor, textColor, isClaro, bg, border }: CustomSelectAnoProps) => {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+    const selected = options.find(o => o.value === String(value))
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler)
+    }, [])
+
+    return (
+        <div ref={ref} className="relative min-w-[240px]">
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="w-full h-11 px-4 rounded-xl flex items-center justify-between text-left transition"
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }}
+            >
+                <span className="truncate">{selected?.label || 'Selecione'}</span>
+                <ChevronDown className={`w-5 h-5 transition flex-shrink-0 ${open ? 'rotate-180' : ''}`} style={{ color: textColor }} />
+            </button>
+            {open && (
+                <div
+                    className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border"
+                    style={{ backgroundColor: isClaro ? '#FFFFFF' : '#1A1A1A', borderColor: border }}
+                >
+                    <div className="max-h-60 overflow-y-auto">
+                        {options.map(opt => (
+                            <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => { onChange(opt.value); setOpen(false) }}
+                                className="w-full text-left px-4 py-3 transition"
+                                style={{
+                                    color: value === opt.value ? cor : textColor,
+                                    backgroundColor: value === opt.value ? `${cor}20` : 'transparent'
+                                }}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
     )
 }

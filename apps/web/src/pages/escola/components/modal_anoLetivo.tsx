@@ -188,18 +188,6 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                         style={{ borderColor: borderCard, background: isClaro ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.2)' }}
                     >
                         <button
-                            type="button"
-                            onClick={onClose}
-                            className="w-full sm:w-auto sm:flex-1 px-6 h-11 font-semibold rounded-xl border transition hover:opacity-90"
-                            style={{
-                                borderColor: 'rgba(239, 68, 68, 0.3)',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                color: '#EF4444'
-                            }}
-                        >
-                            Cancelar
-                        </button>
-                        <button
                             type="submit"
                             disabled={saving}
                             className="w-full sm:w-auto sm:flex-1 h-11 font-bold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition hover:scale-[1.02]"
@@ -210,6 +198,18 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             {saving ? "Salvando..." : isEdit ? "Salvar" : "Cadastrar"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full sm:w-auto sm:flex-1 px-6 h-11 font-semibold rounded-xl border transition hover:opacity-90"
+                            style={{
+                                borderColor: 'rgba(239, 68, 68, 0.3)',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#EF4444'
+                            }}
+                        >
+                            Cancelar
                         </button>
                     </div>
                 </form>
