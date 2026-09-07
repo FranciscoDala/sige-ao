@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, FlaskConical, Laptop, Loader2 } from 'lucide-react'
+import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, Laptop, Loader2, ChevronDown } from 'lucide-react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -12,6 +12,7 @@ api.interceptors.request.use((config) => {
 
 type NivelEnsino = 'PRIMARIO' | 'I_CICLO' | 'II_CICLO' | 'COMPLEXO' | 'MEDIO_TECNICO' | 'SUPERIOR'
 type Tab = { id: string; label: string; icon: any }
+type AnoLetivo = { id: number; nome: string; status: 'ATIVO' | 'FECHADO' | 'PLANEJAMENTO'; data_inicio: string; data_fim: string }
 
 const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
     PRIMARIO: [
@@ -63,50 +64,67 @@ export default function EscolaDirecaoPage() {
     const [tabs, setTabs] = useState<Tab[]>(TABS_POR_NIVEL.PRIMARIO)
     const [activeTab, setActiveTab] = useState('turmas')
     const [loading, setLoading] = useState(true)
-    const [corPrimariaHex, setCorPrimariaHex] = useState('#0056b3') // 👈 pegar cor real
+    const [corPrimariaHex, setCorPrimariaHex] = useState('#0056b3')
 
-    const STORAGE_KEY = 'direcao_active_tab'
+    // 👇 NOVO: Estados do Ano Letivo
+    const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
+    const [anoLetivoAtivo, setAnoLetivoAtivo] = useState<AnoLetivo | null>(null)
+
+    const STORAGE_KEY_TAB = 'direcao_active_tab'
+    const STORAGE_KEY_ANO = 'direcao_active_ano'
 
     useEffect(() => {
-        const fetchNivel = async () => {
+        const fetchData = async () => {
             try {
                 const res = await api.get('/escolas/me')
                 const nivelEscola = res.data.nivel_ensino as NivelEnsino
                 setNivel(nivelEscola)
-                setCorPrimariaHex(res.data.cor_primaria || '#0056b3') // 👈 salvar cor real
+                setCorPrimariaHex(res.data.cor_primaria || '#0056b3')
                 const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
                 setTabs(tabsDoNivel)
 
-                const savedTab = localStorage.getItem(STORAGE_KEY)
+                // 👇 Buscar anos letivos da escola
+                const resAnos = await api.get('/anos-letivos')
+                setAnosLetivos(resAnos.data)
+
+                const anoSalvoId = localStorage.getItem(STORAGE_KEY_ANO)
+                const anoAtivo = resAnos.data.find((a: AnoLetivo) => a.status === 'ATIVO')
+                const anoSelecionado = anoSalvoId ? resAnos.data.find((a: AnoLetivo) => a.id === Number(anoSalvoId)) : anoAtivo
+
+                setAnoLetivoAtivo(anoSelecionado || anoAtivo)
+
+                const savedTab = localStorage.getItem(STORAGE_KEY_TAB)
                 const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
                 setActiveTab(isValidTab ? savedTab! : tabsDoNivel[0].id)
 
             } catch (e) {
-                console.error("Erro ao buscar nivel", e)
+                console.error("Erro ao buscar dados iniciais", e)
             } finally {
                 setLoading(false)
             }
         }
-        fetchNivel()
+        fetchData()
     }, [])
 
     useEffect(() => {
         if (!loading) {
-            localStorage.setItem(STORAGE_KEY, activeTab)
+            localStorage.setItem(STORAGE_KEY_TAB, activeTab)
+            if (anoLetivoAtivo) localStorage.setItem(STORAGE_KEY_ANO, String(anoLetivoAtivo.id))
         }
-    }, [activeTab, loading])
+    }, [activeTab, anoLetivoAtivo, loading])
 
-    const corPrimaria = corPrimariaHex // 👈 usar hex real
+    const corPrimaria = corPrimariaHex
     const textPrimary = 'var(--text-primary)'
     const textSecondary = 'var(--text-secondary)'
-    const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
 
-    // 👇 Cores iguais Definições
-    const bgActive = `${corPrimaria}20` // 12%
+    const bgActive = `${corPrimaria}20`
     const bgInactive = 'rgba(0,0,0,0.03)'
-    const borderActive = `${corPrimaria}4D` // 30%
+    const borderActive = `${corPrimaria}4D`
     const borderInactive = 'rgba(0,0,0,0.08)'
-    const lineColor = `${corPrimaria}26` // 15%
+    const lineColor = `${corPrimaria}26`
+
+    // 👇 Agora todas as tabs internas devem receber anoLetivoAtivo.id como prop
+    // Ex: <TurmasTab ano_letivo_id={anoLetivoAtivo?.id} />
 
     if (loading) return (
         <div className="flex justify-center p-10">
@@ -116,30 +134,51 @@ export default function EscolaDirecaoPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-3">
-                <Building className="w-7 h-7" style={{ color: corPrimaria }} />
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Direção Escolar</h1>
-                    <p style={{ color: textSecondary }}>
-                        Ensino: {nivel.replace('_', ' ')}
-                    </p>
+            {/* Header + Seletor Ano Letivo */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <Building className="w-7 h-7" style={{ color: corPrimaria }} />
+                    <div>
+                        <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Direção Escolar</h1>
+                        <p style={{ color: textSecondary }}>
+                            Ensino: {nivel.replace('_', ' ')}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 👇 SELETOR DE ANO LETIVO */}
+                <div className="relative">
+                    <select
+                        value={anoLetivoAtivo?.id || ''}
+                        onChange={(e) => setAnoLetivoAtivo(anosLetivos.find(a => a.id === Number(e.target.value)) || null)}
+                        className="appearance-none h-11 pl-4 pr-10 rounded-xl text-sm font-medium border shadow-sm cursor-pointer"
+                        style={{ backgroundColor: bgInactive, color: textPrimary, borderColor: borderInactive }}
+                    >
+                        {anosLetivos.map(ano => (
+                            <option key={ano.id} value={ano.id}>
+                                Ano Letivo: {ano.nome} - {ano.status}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 absolute right-3 top-3.5 pointer-events-none" style={{ color: textSecondary }} />
                 </div>
             </div>
 
-            {/* Tabs - PADRÃO DEFINIÇÕES */}
+            {/* Tabs */}
             <div className="w-full">
                 <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
+                        const isFechado = anoLetivoAtivo?.status === 'FECHADO'
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
+                                disabled={isFechado && tab.id !== 'turmas'} // 👈 Trava edição se ano fechado
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 style={{
-                                    backgroundColor: isActive ? bgActive : bgInactive, // 👈 igual definições
+                                    backgroundColor: isActive ? bgActive : bgInactive,
                                     color: isActive ? corPrimaria : textSecondary,
                                     borderColor: isActive ? borderActive : borderInactive
                                 }}
@@ -150,18 +189,17 @@ export default function EscolaDirecaoPage() {
                         )
                     })}
                 </div>
-                {/* 👇 LINHA IGUAL DEFINIÇÕES */}
                 <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: lineColor }} />
             </div>
 
-            {/* Conteúdo da Tab - SEM PADDING IGUAL DEFINIÇÕES */}
-            <div className="rounded-2xl p-0"> {/* 👈 p-0 */}
-                {activeTab === 'turmas' && <div>Conteúdo de Turmas aqui</div>}
-                {activeTab === 'cursos' && <div>Conteúdo de Cursos aqui</div>}
-                {activeTab === 'salas' && <div>Conteúdo de Salas aqui</div>}
-                {activeTab === 'professores' && <div>Conteúdo de Professores aqui</div>}
-                {activeTab === 'disciplinas' && <div>Conteúdo de Disciplinas aqui</div>}
-                {activeTab === 'horarios' && <div>Conteúdo de Horários aqui</div>}
+            {/* Conteúdo da Tab */}
+            <div className="rounded-2xl p-0">
+                {activeTab === 'turmas' && <div>Conteúdo de Turmas - Ano: {anoLetivoAtivo?.nome}</div>}
+                {activeTab === 'cursos' && <div>Conteúdo de Cursos - Ano: {anoLetivoAtivo?.nome}</div>}
+                {activeTab === 'salas' && <div>Conteúdo de Salas - Ano: {anoLetivoAtivo?.nome}</div>}
+                {activeTab === 'professores' && <div>Conteúdo de Professores - Ano: {anoLetivoAtivo?.nome}</div>}
+                {activeTab === 'disciplinas' && <div>Conteúdo de Disciplinas - Ano: {anoLetivoAtivo?.nome}</div>}
+                {activeTab === 'horarios' && <div>Conteúdo de Horários - Ano: {anoLetivoAtivo?.nome}</div>}
             </div>
 
             <style>{`
