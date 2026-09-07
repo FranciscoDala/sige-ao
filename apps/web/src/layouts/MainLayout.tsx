@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
+
+import { Building } from 'lucide-react' // 👈 adiciona esse ícone
+
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
@@ -11,8 +14,10 @@ import Sidebar from './components/mainLayout_sidebar' // 👈 NOVO
 
 const API_URL = import.meta.env.VITE_API_URL
 
+
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
+    { icon: Building, label: 'Direção', path: '/dashboard/direcao', type: 'Gestão' }, // 👈 NOVO
     { icon: Settings, label: 'Definições', path: '/dashboard/definicoes', type: 'Definição' },
 ]
 

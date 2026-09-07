@@ -17,6 +17,7 @@ import UsersPage from './pages/admin/UsersPage'
 import AjudaPage from './pages/admin/AjudaPage'
 import EscolaListPage from './pages/escola/EscolaListPage'
 import DefinicoesEscolaPage from './pages/escola/escola_definicoes'
+import DirecaoPage from './pages/escola/escola_direcao'
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -49,7 +50,7 @@ const applySavedTheme = () => {
 // 👇 Componente pra escutar mudança de tema sem F5
 const ThemeListener = () => {
     useEffect(() => {
-        applySavedTheme() // aplica na primeira carga
+        applySavedTheme()
 
         const handleTemaUpdated = () => applySavedTheme()
         window.addEventListener('escola-tema-updated', handleTemaUpdated)
@@ -82,10 +83,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
             <Toaster position="top-center" richColors />
-            <ThemeListener /> {/* 👈 Adiciona aqui pra escutar o tema */}
+            <ThemeListener />
             <HashRouter>
                 <Routes>
                     <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+
                     <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
                         <Route index element={<SchoolsPage />} />
                         <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
@@ -93,10 +95,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <Route path="ajuda" element={<AjudaPage />} />
                         <Route path="settings" element={<div>Configurações Admin</div>} />
                     </Route>
+
                     <Route path="/dashboard" element={<PrivateRoute><SchoolRouteGuard><MainLayout /></SchoolRouteGuard></PrivateRoute>}>
                         <Route index element={<EscolaListPage />} />
                         <Route path="definicoes" element={<DefinicoesEscolaPage />} />
+                        <Route path="direcao" element={<DirecaoPage />} /> {/* 👈 ROTA NOVA */}
                     </Route>
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </HashRouter>
