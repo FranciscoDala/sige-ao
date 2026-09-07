@@ -99,7 +99,6 @@ export default function EscolaDirecaoPage() {
     const textSecondary = 'var(--text-secondary)'
     const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
 
-    // 👇 PADRONIZADO IGUAL DEFINIÇÕES
     if (loading) return (
         <div className="flex justify-center p-10">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
@@ -119,7 +118,7 @@ export default function EscolaDirecaoPage() {
                 </div>
             </div>
 
-            {/* Tabs - Com bg sutil nas inativas */}
+            {/* Tabs - PADRÃO DEFINIÇÕES */}
             <div className="w-full">
                 <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
@@ -142,7 +141,7 @@ export default function EscolaDirecaoPage() {
                         )
                     })}
                 </div>
-                {/* Linha de baixo 15% */}
+                {/* 👇 LINHA IGUAL DEFINIÇÕES - 15% de opacidade */}
                 <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
