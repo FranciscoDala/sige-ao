@@ -31,10 +31,15 @@ const FONTE_OPTIONS: Option[] = [
     { value: 'Inter', label: 'Inter' },
     { value: 'Open Sans', label: 'Open Sans' },
 ]
+
+// 👇 NOVA LISTA DE ESTILOS DE CARD
 const ESTILO_CARD_OPTIONS: Option[] = [
     { value: 'arredondado', label: 'Arredondado' },
     { value: 'quadrado', label: 'Quadrado' },
     { value: 'minimalista', label: 'Minimalista' },
+    { value: 'elevado', label: 'Elevado com Sombra' },
+    { value: 'borda_colorida', label: 'Borda Colorida' },
+    { value: 'glass', label: 'Glass Morphism' },
 ]
 
 export default function DefinicoesEscolaPage() {
@@ -53,13 +58,13 @@ export default function DefinicoesEscolaPage() {
         email: '', telefone: '', endereco: '', provincia: '', municipio: '',
         logo_url: '', banner_url: '', favicon_url: '',
         cor_primaria: '#0056b3', cor_secundaria: '#FFC107', cor_fundo: '#FFFFFF',
-        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado',
+        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado', // 👈 default
         permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-    ...(isJson? { 'Content-Type': 'application/json' } : {})
+  ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     const corPrimaria = form.cor_primaria
@@ -104,6 +109,11 @@ export default function DefinicoesEscolaPage() {
     const handleFileChange = (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
+            const maxSize = type === 'favicon'? 1 * 1024 * 1024 : 5 * 1024 * 1024
+            if (file.size > maxSize) {
+                toast.error(`Arquivo muito grande. Máximo ${maxSize / 1024 / 1024}MB`)
+                return
+            }
             const url = URL.createObjectURL(file)
             if (type === 'logo') { setLogoFile(file); setLogoPreview(url) }
             if (type === 'banner') { setBannerFile(file); setBannerPreview(url) }
@@ -121,7 +131,7 @@ export default function DefinicoesEscolaPage() {
                 nome: clean(form.nome), sigla: clean(form.sigla), nif: clean(form.nif), email: clean(form.email),
                 telefone: clean(form.telefone), endereco: clean(form.endereco), provincia: clean(form.provincia), municipio: clean(form.municipio),
                 cor_primaria: form.cor_primaria, cor_secundaria: form.cor_secundaria, cor_fundo: form.cor_fundo, tema: form.tema,
-                fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card,
+                fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card, // 👈 JÁ ESTÁ MANDANDO
                 permitir_auto_cadastro: form.permitir_auto_cadastro, usar_modulo_propina: form.usar_modulo_propina, usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
             const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v!== undefined && v!== null && v!== ''))
@@ -137,17 +147,16 @@ export default function DefinicoesEscolaPage() {
             }
             let updatedData = await res.json()
 
-            // Upload de arquivos
-            const uploadFile = async (file: File, endpoint: string) => {
+            const uploadFile = async (file: File, endpoint: string, fieldName: string) => {
                 const formData = new FormData()
-                formData.append('file', file)
+                formData.append(fieldName, file)
                 const fileRes = await fetch(`${API_URL}${endpoint}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData })
                 if (!fileRes.ok) throw new Error((await fileRes.json()).detail || `Erro ao salvar ${endpoint}`)
                 return await fileRes.json()
             }
-            if (logoFile) updatedData = await uploadFile(logoFile, '/escolas/me/logo')
-            if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner')
-            if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon')
+            if (logoFile) updatedData = await uploadFile(logoFile, '/escolas/me/logo', 'logo')
+            if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner', 'file')
+            if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon', 'file')
 
             const escolaData: EscolaForm = {...form,...updatedData }
             setForm(escolaData)
@@ -259,6 +268,7 @@ export default function DefinicoesEscolaPage() {
                             <CustomSelect label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                             <CustomSelect label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                             <CustomSelect label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
+                            {/* 👇 SELECT DE ESTILO DE CARD ADICIONADO */}
                             <CustomSelect label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                         </div>
                     </div>
@@ -285,8 +295,8 @@ export default function DefinicoesEscolaPage() {
             </div>
 
             <style>{`
-              .scrollbar-hide::-webkit-scrollbar { display: none; }
-              .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Settings, Power, Search, Bell, School, Menu, X, User, Loader2
+    LayoutGrid, Settings, Power, Search, Bell, School, Menu, X, User, Loader2, Sun, Moon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
@@ -42,42 +42,49 @@ export default function MainLayout() {
 
     const isClaro = tema?.tema === 'claro'
 
-    // 👇 Busca tema do banco ao montar
+    // 👇 FUNÇÃO CENTRALIZADA PRA APLICAR TEMA
+    const applyTheme = (data: any) => {
+        setTema(data)
+        localStorage.setItem('escola_tema', JSON.stringify(data))
+
+        const root = document.documentElement
+        root.style.setProperty('--cor-primaria', data.cor_primaria || '#3B82F6')
+        root.style.setProperty('--cor-secundaria', data.cor_secundaria || '#8B5CF6')
+        root.style.setProperty('--cor-fundo', data.cor_fundo || '#FFFFFF')
+        root.setAttribute('data-tema', data.tema || 'escuro')
+        root.setAttribute('data-card-style', data.estilo_card || 'arredondado')
+        root.setAttribute('data-fonte-titulo', data.fonte_titulo || 'Poppins')
+        root.setAttribute('data-fonte-corpo', data.fonte_corpo || 'Inter')
+    }
+
     useEffect(() => {
         const fetchTema = async () => {
             try {
                 const res = await api.get('/escolas/me')
-                const data = res.data
-                setTema(data)
-                localStorage.setItem('escola_tema', JSON.stringify(data))
-
-                const root = document.documentElement
-                root.style.setProperty('--cor-primaria', data.cor_primaria || '#3B82F6')
-                root.style.setProperty('--cor-secundaria', data.cor_secundaria || '#8B5CF6')
-                root.style.setProperty('--cor-fundo', data.cor_fundo || '#FFFFFF')
-                root.setAttribute('data-tema', data.tema || 'escuro')
-                root.setAttribute('data-card-style', data.estilo_card || 'arredondado')
+                applyTheme(res.data)
             } catch (e) {
                 console.error("Erro ao buscar tema", e)
             }
         }
         fetchTema()
-    }, [])
 
-    useEffect(() => {
+        const handleTemaUpdated = () => {
+            const t = localStorage.getItem('escola_tema')
+            if (t) applyTheme(JSON.parse(t))
+        }
         const updateUser = () => {
             const u = authService.getUser()
             if (u) setUser(u)
-            const t = localStorage.getItem('escola_tema')
-            if (t) setTema(JSON.parse(t))
         }
-        window.addEventListener('storage', updateUser)
+
+        window.addEventListener('storage', handleTemaUpdated)
         window.addEventListener('user-updated', updateUser)
-        window.addEventListener('escola-tema-updated', updateUser)
+        window.addEventListener('escola-tema-updated', handleTemaUpdated) // 👈 APLICA SEM F5
+
         return () => {
-            window.removeEventListener('storage', updateUser)
+            window.removeEventListener('storage', handleTemaUpdated)
             window.removeEventListener('user-updated', updateUser)
-            window.removeEventListener('escola-tema-updated', updateUser)
+            window.removeEventListener('escola-tema-updated', handleTemaUpdated)
         }
     }, [])
 
@@ -99,13 +106,30 @@ export default function MainLayout() {
         navigate('/')
     }
 
+    // 👇 NOVO: TROCAR TEMA DIRETO NO HEADER
+    const toggleTema = async () => {
+        const novoTema = isClaro? 'escuro' : 'claro'
+        const novoTemaData = {...tema, tema: novoTema }
+
+        applyTheme(novoTemaData) // aplica na hora
+        window.dispatchEvent(new Event('escola-tema-updated')) // avisa outras abas
+
+        try {
+            await api.put('/escolas/me/tema', { tema: novoTema }) // salva no banco
+            toast.success(`Tema alterado para ${novoTema}`)
+        } catch (e) {
+            toast.error('Erro ao salvar tema')
+            applyTheme(tema) // volta se deu erro
+        }
+    }
+
     useEffect(() => {
         if (!searchQuery.trim() || searchQuery.length < 2) { setSearchResults([]); return }
         const delay = setTimeout(async () => {
             setSearching(true)
             try {
                 const results: SearchResult[] = [
-                  ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -125,19 +149,39 @@ export default function MainLayout() {
     const corPrimaria = tema?.cor_primaria || '#3B82F6'
     const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
 
-    // 👇 TEMA CLARO = TUDO PRETO
     const textPrimary = isClaro? '#1E293B' : 'white'
     const textSecondary = isClaro? '#475569' : '#9CA3AF'
     const bgCard = isClaro? 'bg-black/5' : 'bg-white/5'
     const borderCard = isClaro? 'border-black/10' : 'border-white/10'
     const hoverBg = isClaro? 'hover:bg-black/5' : 'hover:bg-white/10'
 
+    const getCardStyle = () => {
+        const estilo = tema?.estilo_card || 'arredondado'
+        const base = `${bgCard} backdrop-blur-xl ${borderCard}`
+
+        switch(estilo) {
+            case 'quadrado':
+                return `${base} rounded-none`
+            case 'minimalista':
+                return `${base} rounded-lg border-0`
+            case 'elevado':
+                return `${base} rounded-2xl shadow-2xl shadow-black/20`
+            case 'borda_colorida':
+                return `${base} rounded-2xl border-2`
+            case 'glass':
+                return `bg-white/10 backdrop-blur-2xl ${borderCard} rounded-2xl`
+            default: // arredondado
+                return `${base} rounded-2xl`
+        }
+    }
+    const cardClass = getCardStyle()
+
     return (
         <div
             className="min-h-screen w-full relative flex overflow-x-hidden"
             style={{
                 background: isClaro
-                  ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
+                ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
                     : `linear-gradient(to bottom right, ${corPrimaria}15, ${corSecundaria}10, #0F172A)`
             }}
         >
@@ -146,9 +190,8 @@ export default function MainLayout() {
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            {/* 👇 SIDEBAR AGORA PEGA TEMA CLARO */}
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20`}>
+                <div className={`${cardClass} p-4 h-full flex-col shadow-2xl shadow-black/20`}>
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <School className="w-8 h-8 flex-shrink-0" style={{ color: corPrimaria }} />
@@ -162,15 +205,11 @@ export default function MainLayout() {
                     <nav className="space-y-1 flex-1 overflow-y-auto">
                         {menuItems.map(item => {
                             const isActive = item.path === '/dashboard'? location.pathname === '/dashboard' : location.pathname.startsWith(item.path)
-
                             return (
                                 <button
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive
-                                      ? 'font-semibold border-opacity-30'
-                                        : `${hoverBg} border-transparent`
-                                        }`}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive? 'font-semibold border-opacity-30' : `${hoverBg} border-transparent`}`}
                                     style={{
                                         backgroundColor: isActive? `${corPrimaria}20` : 'transparent',
                                         color: isActive? corPrimaria : textSecondary,
@@ -198,9 +237,8 @@ export default function MainLayout() {
             </aside>
 
             <div className="flex-1 w-full lg:ml-[260px]">
-                {/* 👇 HEADER AGORA PEGA TEMA CLARO */}
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
-                    <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10`}>
+                    <div className={`${cardClass} px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10`}>
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6" style={{ color: textPrimary }} /></button>
 
                         <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
@@ -211,10 +249,7 @@ export default function MainLayout() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar no menu..."
                                 className={`w-full pl-12 pr-4 py-3 ${bgCard} ${borderCard} rounded-xl focus:outline-none text-sm`}
-                                style={{
-                                    borderColor: isSearchOpen? corPrimaria : '',
-                                    color: textPrimary,
-                                }}
+                                style={{ borderColor: isSearchOpen? corPrimaria : '', color: textPrimary }}
                             />
                         </div>
 
@@ -222,6 +257,16 @@ export default function MainLayout() {
                             <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <Search className="w-5 h-5" style={{ color: textPrimary }} />
                             </button>
+
+                            {/* 👇 NOVO BOTAO TEMA */}
+                            <button
+                                onClick={toggleTema}
+                                className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}
+                                title={isClaro? 'Mudar para tema escuro' : 'Mudar para tema claro'}
+                            >
+                                {isClaro? <Moon className="w-5 h-5" style={{ color: textPrimary }} /> : <Sun className="w-5 h-5" style={{ color: textPrimary }} />}
+                            </button>
+
                             <button className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}><Bell className="w-5 h-5" style={{ color: textPrimary }} /></button>
                             <button className={`hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <User className="w-5 h-5" style={{ color: textPrimary }} />
@@ -239,19 +284,14 @@ export default function MainLayout() {
                 </main>
             </div>
 
-            {/* 👇 MODAL PESQUISA TEMA CLARO */}
             {isSearchModalOpen && (
-                <div
-                    className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in"
-                    style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}
-                >
+                <div className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Pesquisar</h2>
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
                             <X className="w-6 h-6" style={{ color: textSecondary }} />
                         </button>
                     </div>
-
                     <div className="relative mb-4">
                         <Search className="absolute left-4 top-3.5 w-5 h-5" style={{ color: textSecondary }} />
                         <input
@@ -260,14 +300,10 @@ export default function MainLayout() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar no menu..."
                             className={`w-full pl-12 pr-4 py-3.5 ${bgCard} ${borderCard} rounded-xl focus:outline-none`}
-                            style={{
-                                borderColor: searchQuery? corPrimaria : '',
-                                color: textPrimary,
-                            }}
+                            style={{ borderColor: searchQuery? corPrimaria : '', color: textPrimary }}
                         />
                     </div>
-
-                    <div className={`flex-1 overflow-y-auto ${bgCard} rounded-2xl ${borderCard} p-2`}>
+                    <div className={`flex-1 overflow-y-auto ${cardClass} p-2`}>
                         {!searchQuery && <p className="text-center pt-10" style={{ color: textSecondary }}>Digite para começar a pesquisar</p>}
                         {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} /></div>}
                         {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center pt-10" style={{ color: textSecondary }}>Nenhum resultado encontrado</p>}

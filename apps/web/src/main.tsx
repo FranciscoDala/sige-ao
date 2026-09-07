@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
     }
 })
 
-// 👇 NOVO: Aplica o tema salvo no localStorage assim que carrega
+// 👇 Aplica o tema salvo no localStorage assim que carrega
 const applySavedTheme = () => {
     const t = localStorage.getItem('escola_tema')
     if (!t) return
@@ -39,11 +39,13 @@ const applySavedTheme = () => {
         root.style.setProperty('--cor-fundo', tema.cor_fundo || '#FFFFFF')
         root.setAttribute('data-tema', tema.tema || 'escuro')
         root.setAttribute('data-card-style', tema.estilo_card || 'arredondado')
+        root.setAttribute('data-fonte-titulo', tema.fonte_titulo || 'Poppins')
+        root.setAttribute('data-fonte-corpo', tema.fonte_corpo || 'Inter')
     } catch (e) {
         console.error("Erro ao aplicar tema salvo", e)
     }
 }
-applySavedTheme() // 👈 roda antes de renderizar
+applySavedTheme() // 👈 roda antes de renderizar pra não piscar
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()

@@ -200,6 +200,46 @@ async def upload_minha_logo(
     await db.refresh(escola)
     return escola
 
+
+@router.post("/me/banner", response_model=EscolaResponse)
+async def upload_meu_banner(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    escola_id = get_escola_do_usuario(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola nao encontrada")
+
+    upload_data = await upload_to_cloudinary(file, folder=f"escolas/{escola_id}/banner")
+    escola.banner_url = upload_data["optimized_url"]
+
+    await db.commit()
+    await db.refresh(escola)
+    return escola
+
+@router.post("/me/favicon", response_model=EscolaResponse)
+async def upload_meu_favicon(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    escola_id = get_escola_do_usuario(current_user)
+    result = await db.execute(select(Escola).where(Escola.id == escola_id))
+    escola = result.scalar_one_or_none()
+    if not escola:
+        raise HTTPException(status_code=404, detail="Escola nao encontrada")
+
+    upload_data = await upload_to_cloudinary(file, folder=f"escolas/{escola_id}/favicon")
+    escola.favicon_url = upload_data["optimized_url"]
+
+    await db.commit()
+    await db.refresh(escola)
+    return escola
+
+
 @router.get("/search/global")
 async def search_global(
     q: str = Query(..., min_length=2, description="Termo de pesquisa"),

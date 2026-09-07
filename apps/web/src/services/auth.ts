@@ -3,16 +3,19 @@ export interface UserData {
     email: string;
     nome: string;
     escola_id?: string | null
+    escola_nome?: string // 👈 NOVO: pra mostrar no header
     nivel: string
 }
 
 export const authService = {
     login: (data: any) => {
         const nivel = data.nivel || data.user?.nivel || data.user?.NivelAcesso || 'DIRETOR'
+
         const userToSave: UserData = {
            ...data.user,
             nivel: nivel,
-            escola_id: data.user.escola_id?? undefined
+            escola_id: data.user?.escola_id ?? data.user?.escola?.id ?? undefined, // 👈 PEGA DOS 2 LUGARES
+            escola_nome: data.user?.escola?.nome ?? undefined // 👈 SALVA O NOME PRA HEADER
         }
 
         localStorage.setItem('access_token', data.access_token)
@@ -22,6 +25,7 @@ export const authService = {
         // 👇 SE VIER TEMA DO LOGIN, SALVA TAMBEM
         if (data.user?.escola) {
             localStorage.setItem('escola_tema', JSON.stringify(data.user.escola))
+            window.dispatchEvent(new Event('escola-tema-updated')) // 👈 APLICA NA HORA NO LOGIN
         }
     },
     logout: () => {
