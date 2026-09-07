@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, FlaskConical, Laptop } from 'lucide-react'
+import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, FlaskConical, Laptop, Loader2 } from 'lucide-react' // 👈 add Loader2
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -94,12 +94,17 @@ export default function EscolaDirecaoPage() {
         }
     }, [activeTab, loading])
 
-    if (loading) return <div style={{ color: 'var(--text-secondary)' }}>Carregando...</div>
-
     const corPrimaria = 'var(--cor-primaria)'
     const textPrimary = 'var(--text-primary)'
     const textSecondary = 'var(--text-secondary)'
     const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
+
+    // 👇 SPINNER COM COR DO DB
+    if (loading) return (
+        <div className="flex items-center justify-center h-[60vh]">
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
+        </div>
+    )
 
     return (
         <div className="space-y-6">
@@ -114,9 +119,9 @@ export default function EscolaDirecaoPage() {
                 </div>
             </div>
 
-            {/* Tabs - SEM BG NO CONTAINER */}
+            {/* Tabs - Com bg sutil nas inativas */}
             <div className="w-full">
-                <div className="flex gap-1 p-0 overflow-x-auto scrollbar-hide"> {/* 👈 tirei bgCard e border */}
+                <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
@@ -124,20 +129,21 @@ export default function EscolaDirecaoPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0 hover:bg-white/5"
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
                                 style={{
-                                    backgroundColor: isActive? corPrimaria : 'transparent', // 👈 só ativo tem bg
-                                    color: isActive? 'white' : textSecondary
+                                    backgroundColor: isActive ? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
+                                    color: isActive ? corPrimaria : textSecondary,
+                                    borderColor: isActive ? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
                                 }}
                             >
-                                <Icon className="w-4 h-4" />
+                                <Icon className="w-4 h-4" style={{ color: isActive ? corPrimaria : textSecondary }} />
                                 {tab.label}
                             </button>
                         )
                     })}
                 </div>
                 {/* Linha de baixo 15% */}
-                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
+                <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
             {/* Conteúdo da Tab */}
@@ -151,8 +157,8 @@ export default function EscolaDirecaoPage() {
             </div>
 
             <style>{`
-               .scrollbar-hide::-webkit-scrollbar { display: none; }
-               .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+              .scrollbar-hide::-webkit-scrollbar { display: none; }
+              .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
