@@ -2,11 +2,12 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
-    LayoutGrid, Settings, Power, Search, Bell, School, Menu, X, User, Loader2, Sun, Moon
+    LayoutGrid, Settings, Power, Search, Bell, Menu, Loader2, Sun, Moon, X, User // 👈 ADICIONEI X E USER
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../services/auth'
 import ConfirmLogoutModal from '../pages/admin/components/modal_confirmLogout'
+import Sidebar from './components/mainLayout_sidebar' // 👈 NOVO
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -42,11 +43,9 @@ export default function MainLayout() {
 
     const isClaro = tema?.tema === 'claro'
 
-    // 👇 FUNÇÃO CENTRALIZADA PRA APLICAR TEMA
     const applyTheme = (data: any) => {
         setTema(data)
         localStorage.setItem('escola_tema', JSON.stringify(data))
-
         const root = document.documentElement
         root.style.setProperty('--cor-primaria', data.cor_primaria || '#3B82F6')
         root.style.setProperty('--cor-secundaria', data.cor_secundaria || '#8B5CF6')
@@ -106,7 +105,6 @@ export default function MainLayout() {
         navigate('/')
     }
 
-    // 👇 TROCAR TEMA DIRETO NO HEADER
     const toggleTema = async () => {
         const novoTema = isClaro? 'escuro' : 'claro'
         const novoTemaData = {...tema, tema: novoTema }
@@ -160,18 +158,12 @@ export default function MainLayout() {
         const base = `${bgCard} backdrop-blur-xl ${borderCard}`
 
         switch (estilo) {
-            case 'quadrado':
-                return `${base} rounded-none`
-            case 'minimalista':
-                return `${base} rounded-lg border-0`
-            case 'elevado':
-                return `${base} rounded-2xl shadow-2xl shadow-black/20`
-            case 'borda_colorida':
-                return `${base} rounded-2xl border-2`
-            case 'glass':
-                return `bg-white/10 backdrop-blur-2xl ${borderCard} rounded-2xl`
-            default: // arredondado
-                return `${base} rounded-2xl`
+            case 'quadrado': return `${base} rounded-none`
+            case 'minimalista': return `${base} rounded-lg border-0`
+            case 'elevado': return `${base} rounded-2xl shadow-2xl shadow-black/20`
+            case 'borda_colorida': return `${base} rounded-2xl border-2`
+            case 'glass': return `bg-white/10 backdrop-blur-2xl ${borderCard} rounded-2xl`
+            default: return `${base} rounded-2xl`
         }
     }
     const cardClass = getCardStyle()
@@ -188,54 +180,23 @@ export default function MainLayout() {
             <div className="fixed top-0 left-1/4 w-96 h-96 rounded-full blur-[120px] -z-10" style={{ backgroundColor: `${corPrimaria}20` }}></div>
             <div className="fixed bottom-0 right-1/4 w-96 h-96 rounded-full blur-[120px] -z-10" style={{ backgroundColor: `${corSecundaria}20` }}></div>
 
-            {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
-
-            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className={`${cardClass} p-4 h-full flex-col shadow-2xl shadow-black/20`}>
-                    <div className="flex items-center justify-between mb-8 px-1">
-                        <div className="flex items-center gap-3">
-                            <School className="w-8 h-8 flex-shrink-0" style={{ color: corPrimaria }} />
-                            <h1 className="text-xl font-bold whitespace-nowrap" style={{ color: textPrimary }}>SIGE</h1>
-                            <span className="text-xs px-2 py-0.5 rounded-md font-semibold flex-shrink-0" style={{ backgroundColor: `${corPrimaria}33`, color: corPrimaria }}>Escola</span>
-                        </div>
-                        <button className={`lg:hidden p-2 ${hoverBg} rounded-lg transition`} onClick={() => setIsMobileMenuOpen(false)}>
-                            <X className="w-5 h-5" style={{ color: textSecondary }} />
-                        </button>
-                    </div>
-                    <nav className="space-y-1 flex-1 overflow-y-auto">
-                        {menuItems.map(item => {
-                            const isActive = item.path === '/dashboard'? location.pathname === '/dashboard' : location.pathname.startsWith(item.path)
-                            return (
-                                <button
-                                    key={item.path}
-                                    onClick={() => handleNavigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive? 'font-semibold border-opacity-30' : `${hoverBg} border-transparent`}`}
-                                    style={{
-                                        backgroundColor: isActive? `${corPrimaria}20` : 'transparent',
-                                        // 👇 CORRIGIDO: Item ativo agora usa branco pra contraste
-                                        color: isActive? 'white' : textSecondary,
-                                        borderColor: isActive? `${corPrimaria}4D` : 'transparent'
-                                    }}
-                                >
-                                    <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: isActive? 'white' : textSecondary }} />
-                                    <span className="whitespace-nowrap">{item.label}</span>
-                                </button>
-                            )
-                        })}
-                    </nav>
-                    <div className={`border-t pt-4 mt-4`} style={{ borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
-                        <div className="flex items-center gap-3 px-1">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(to bottom right, ${corPrimaria}, ${corSecundaria})` }}>
-                                <User className="w-5 h-5 text-white" /> {/* 👈 Já estava white, mantido */}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold truncate" style={{ color: textPrimary }}>{user.nome}</p>
-                                <p className="text-xs truncate" style={{ color: textSecondary }}>{(user as any).escola_nome || user.email}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
+            {/* 👇 SIDEBAR SEPARADO */}
+            <Sidebar
+                menuItems={menuItems}
+                onNavigate={handleNavigate}
+                onClose={() => setIsMobileMenuOpen(false)}
+                isOpen={isMobileMenuOpen}
+                corPrimaria={corPrimaria}
+                corSecundaria={corSecundaria}
+                textPrimary={textPrimary}
+                textSecondary={textSecondary}
+                bgCard={bgCard}
+                borderCard={borderCard}
+                hoverBg={hoverBg}
+                cardClass={cardClass}
+                user={user}
+                tema={tema}
+            />
 
             <div className="flex-1 w-full lg:ml-[260px]">
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
@@ -285,7 +246,7 @@ export default function MainLayout() {
             </div>
 
             {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
+                <div className="fixed inset-0 z-[60] flex flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Pesquisar</h2>
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
