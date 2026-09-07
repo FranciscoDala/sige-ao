@@ -47,7 +47,7 @@ body {
 [data-card-style="minimalista"] .rounded-2xl { border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: none; }
 [data-card-style="arredondado"] .rounded-2xl { border-radius: 1rem; }
 [data-card-style="elevado"] .rounded-2xl { border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-[data-card-style="borda_colorida"] .rounded-2xl { border-radius: 1rem; border: 2px solid var(--cor-primaria); } /* 👈 NOVO */
+[data-card-style="borda_colorida"] .rounded-2xl { border-radius: 1rem; border: 2px solid var(--cor-primaria); }
 [data-card-style="glass"] .rounded-2xl {
     border-radius: 1rem;
     background: rgba(255,255,255,0.1);
@@ -66,8 +66,7 @@ body {
     border: 2px solid var(--cor-primaria);
 }
 
-/* 👇 FONTES DINAMICAS - NOVO */
-:root { --fonte-titulo: 'Poppins'; --fonte-corpo: 'Inter'; }
+/* 👇 FONTES DINAMICAS */
 [data-fonte-titulo="Montserrat"] { --fonte-titulo: 'Montserrat'; }
 [data-fonte-titulo="Roboto"] { --fonte-titulo: 'Roboto'; }
 [data-fonte-titulo="Open Sans"] { --fonte-titulo: 'Open Sans'; }
@@ -83,7 +82,19 @@ body {
 /* 👇 EXTRA: adapta bg/border no claro */
 [data-tema="claro"] .bg-white\/5 { background-color: rgba(0, 0, 0, 0.04) !important; }
 [data-tema="claro"] .border-white\/10 { border-color: rgba(0, 0, 0, 0.08) !important; }
-[data-tema="claro"] .text-white { color: #1E293B !important; }
 [data-tema="claro"] .text-gray-400 { color: #64748B !important; }
 [data-tema="claro"] .text-gray-300 { color: #334155 !important; }
+[data-tema="claro"] .text-gray-500 { color: #64748B !important; }
 [data-tema="claro"] .backdrop-blur-xl { backdrop-filter: blur(20px) saturate(150%); }
+
+/* 👇 CORRECAO CRITICA: NUNCA mexer no .text-white */
+/* Antes tinha: [data-tema="claro"] .text-white { color: #1E293B !important; } */
+/* Isso quebrava botões com gradiente. Agora text-white é sempre branco */
+
+/* 👇 FORÇA BRANCO EM BOTOES COM GRADIENTE NO TEMA CLARO */
+[data-tema="claro"] button[style*="linear-gradient"] {
+    color: white !important;
+}
+[data-tema="claro"] button[style*="linear-gradient"] svg {
+    color: white !important;
+}
