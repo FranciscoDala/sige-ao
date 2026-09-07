@@ -14,7 +14,53 @@ interface Props {
 
 export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: Props) {
     const [form, setForm] = useState({ nome: "", data_inicio: "", data_fim: "", status: "PLANEJAMENTO" })
-    const isEdit =!!ano
+    const [tema, setTema] = useState<any>(null)
+    const isEdit = !!ano
+
+    useEffect(() => {
+        const t = localStorage.getItem('escola_tema')
+        if (t) setTema(JSON.parse(t))
+        const handleTemaUpdated = () => {
+            const t2 = localStorage.getItem('escola_tema')
+            if (t2) setTema(JSON.parse(t2))
+        }
+        window.addEventListener('escola-tema-updated', handleTemaUpdated)
+        return () => window.removeEventListener('escola-tema-updated', handleTemaUpdated)
+    }, [])
+
+    const isClaro = tema?.tema === 'claro'
+    const corPrimaria = tema?.cor_primaria || '#3B82F6'
+    const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
+    const textPrimary = isClaro ? '#1E293B' : 'white'
+    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+
+    const getCardStyle = () => {
+        const estilo = tema?.estilo_card || 'arredondado'
+        if (isClaro) {
+            const baseClaro = `bg-white border`
+            switch (estilo) {
+                case 'quadrado': return `${baseClaro} rounded-none`
+                case 'minimalista': return `${baseClaro} rounded-lg border-0`
+                case 'elevado': return `${baseClaro} rounded-2xl shadow-2xl`
+                case 'borda_colorida': return `${baseClaro} rounded-2xl border-2`
+                case 'glass': return `${baseClaro} rounded-2xl`
+                default: return `${baseClaro} rounded-2xl`
+            }
+        } else {
+            const baseEscuro = `bg-white/5 backdrop-blur-xl border`
+            switch (estilo) {
+                case 'quadrado': return `${baseEscuro} rounded-none`
+                case 'minimalista': return `${baseEscuro} rounded-lg border-0`
+                case 'elevado': return `${baseEscuro} rounded-2xl shadow-2xl shadow-black/20`
+                case 'borda_colorida': return `${baseEscuro} rounded-2xl border-2`
+                case 'glass': return `bg-white/10 backdrop-blur-2xl border rounded-2xl`
+                default: return `${baseEscuro} rounded-2xl`
+            }
+        }
+    }
+    const cardClass = getCardStyle()
 
     useEffect(() => {
         if (!open) return
@@ -59,46 +105,111 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
         onSave(form)
     }
 
-    const handleChange = (field: string, value: string) => setForm(prev => ({...prev, [field]: value }))
-    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
-    const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
+    const handleChange = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+
+    const inputClass = `w-full h-11 px-4 rounded-xl focus:outline-none focus:ring-2 transition`
+    const labelClass = "text-sm font-medium flex items-center gap-2"
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
-            <div onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()} className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex-col max-h-[90vh] overflow-hidden shadow-2xl">
-                <div className="p-5 pb-3 border-b border-white/10 shrink-0">
+            <div
+                onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                className={`w-full max-w-[680px] ${cardClass} flex flex-col max-h-[90vh] overflow-hidden`}
+                style={{ borderColor: borderCard }}
+            >
+                {/* Header */}
+                <div className="p-5 pb-3 border-b shrink-0" style={{ borderColor: borderCard }}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-bold text-white">{isEdit? "Editar Ano Letivo" : "Cadastrar Ano Letivo"}</h2>
-                            <p className="text-sm mt-1 text-gray-400">{isEdit? "Atualizar período letivo" : "Definir novo período escolar"}</p>
+                            <h2 className="text-lg font-bold" style={{ color: textPrimary }}>
+                                {isEdit ? "Editar Ano Letivo" : "Cadastrar Ano Letivo"}
+                            </h2>
+                            <p className="text-sm mt-1" style={{ color: textSecondary }}>
+                                {isEdit ? "Atualizar período letivo" : "Definir novo período escolar"}
+                            </p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-lg transition hover:bg-black/10"
+                        >
+                            <X className="w-5 h-5" style={{ color: textSecondary }} />
+                        </button>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                     <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0">
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                                <label className={labelClass}><Calendar className="w-4 h-4" />Nome do Ano *</label>
-                                <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="Ex: 2026/2027" required />
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                                <label className={labelClass} style={{ color: textPrimary }}>
+                                    <Calendar className="w-4 h-4" style={{ color: corPrimaria }} />Nome do Ano *
+                                </label>
+                                <input
+                                    value={form.nome}
+                                    onChange={e => handleChange('nome', e.target.value)}
+                                    className={`${inputClass} sm:col-span-3`}
+                                    style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
+                                    placeholder="Ex: 2026/2027"
+                                    required
+                                />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                                <label className={labelClass}><CalendarDays className="w-4 h-4" />Data Início *</label>
-                                <input type="date" value={form.data_inicio} onChange={e => handleChange('data_inicio', e.target.value)} className={`${inputClass} sm:col-span-3`} required />
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                                <label className={labelClass} style={{ color: textPrimary }}>
+                                    <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Início *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={form.data_inicio}
+                                    onChange={e => handleChange('data_inicio', e.target.value)}
+                                    className={`${inputClass} sm:col-span-3`}
+                                    style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
+                                    required
+                                />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
-                                <label className={labelClass}><CalendarDays className="w-4 h-4" />Data Fim *</label>
-                                <input type="date" value={form.data_fim} onChange={e => handleChange('data_fim', e.target.value)} className={`${inputClass} sm:col-span-3`} required />
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-2 sm:gap-4">
+                                <label className={labelClass} style={{ color: textPrimary }}>
+                                    <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Fim *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={form.data_fim}
+                                    onChange={e => handleChange('data_fim', e.target.value)}
+                                    className={`${inputClass} sm:col-span-3`}
+                                    style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary }}
+                                    required
+                                />
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
-                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border-red-500/20 text-red-400 transition order-2 sm:order-1">Cancelar</button>
-                        <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
-                            {saving? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            {saving? "Salvando..." : isEdit? "Salvar" : "Cadastrar"}
+                    {/* Footer com botões lado a lado no desktop */}
+                    <div
+                        className="p-4 border-t flex flex-col sm:flex-row gap-3 shrink-0"
+                        style={{ borderColor: borderCard, background: isClaro ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.2)' }}
+                    >
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-full sm:w-auto sm:flex-1 px-6 h-11 font-semibold rounded-xl border transition hover:opacity-90"
+                            style={{
+                                borderColor: 'rgba(239, 68, 68, 0.3)',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#EF4444'
+                            }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="w-full sm:w-auto sm:flex-1 h-11 font-bold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition hover:scale-[1.02]"
+                            style={{
+                                background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
+                                borderRadius: tema?.estilo_card === 'quadrado' ? '0.5rem' : tema?.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem'
+                            }}
+                        >
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            {saving ? "Salvando..." : isEdit ? "Salvar" : "Cadastrar"}
                         </button>
                     </div>
                 </form>
