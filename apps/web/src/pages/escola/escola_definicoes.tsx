@@ -71,8 +71,8 @@ export default function DefinicoesEscolaPage() {
     const isClaro = form.tema === 'claro'
     const textPrimary = isClaro? '#1E293B' : 'white'
     const textSecondary = isClaro? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro? 'bg-black/5' : 'bg-white/5'
-    const borderCard = isClaro? 'border-black/10' : 'border-white/10'
+    const bgCard = isClaro? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
 
     useEffect(() => {
         const fetchEscola = async () => {
@@ -205,7 +205,7 @@ export default function DefinicoesEscolaPage() {
                 </button>
             </div>
 
-            {/* Tabs - ESTILO IGUAL DIREÇÃO */}
+            {/* Tabs */}
             <div className="w-full">
                 <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
@@ -217,9 +217,9 @@ export default function DefinicoesEscolaPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
                                 style={{
-                                    backgroundColor: isActive? `${corPrimaria}20` : 'rgba(0,0,0,0.03)', // 👈 bg sutil
-                                    color: isActive? corPrimaria : textSecondary, // 👈 texto primary quando ativo
-                                    borderColor: isActive? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)' // 👈 borda sutil
+                                    backgroundColor: isActive? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
+                                    color: isActive? corPrimaria : textSecondary,
+                                    borderColor: isActive? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
                                 }}
                             >
                                 <Icon className="w-4 h-4" style={{ color: isActive? corPrimaria : textSecondary }} />
@@ -228,11 +228,11 @@ export default function DefinicoesEscolaPage() {
                         )
                     })}
                 </div>
-                {/* Linha de baixo 15% */}
                 <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
-            <div className={`rounded-2xl p-4 lg:p-6`} style={{ background: bgCard, border: `1px solid ${borderCard}` }}>
+            {/* Container principal SEM PADDING E SEM BORDA EXTRA */}
+            <div className="rounded-2xl p-0">
                 {activeTab === 'identificacao' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Building2 className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
@@ -262,11 +262,15 @@ export default function DefinicoesEscolaPage() {
                 {activeTab === 'visual' && (
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-4"><Palette className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Aparência</h2></div>
+
+                        {/* UploadBox COM BORDA */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <UploadBox label="Logo da Escola" currentUrl={logoPreview || undefined} fileName={logoFile?.name} onFileSelect={handleFileChange('logo')} cor={corPrimaria} onRemove={() => { setLogoFile(null); setLogoPreview(form.logo_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
                             <UploadBox label="Banner do Painel" currentUrl={bannerPreview || undefined} fileName={bannerFile?.name} onFileSelect={handleFileChange('banner')} cor={corPrimaria} onRemove={() => { setBannerFile(null); setBannerPreview(form.banner_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
                             <UploadBox label="Favicon" currentUrl={faviconPreview || undefined} fileName={faviconFile?.name} onFileSelect={handleFileChange('favicon')} cor={corPrimaria} onRemove={() => { setFaviconFile(null); setFaviconPreview(form.favicon_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
                         </div>
+
+                        {/* Cores e Selects COM BORDA */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} textColor={textPrimary} bg={bgCard} border={borderCard} />
                             <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} textColor={textPrimary} bg={bgCard} border={borderCard} />
@@ -302,8 +306,8 @@ export default function DefinicoesEscolaPage() {
             </div>
 
             <style>{`
-          .scrollbar-hide::-webkit-scrollbar { display: none; }
-          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+             .scrollbar-hide::-webkit-scrollbar { display: none; }
+             .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
@@ -311,19 +315,20 @@ export default function DefinicoesEscolaPage() {
 
 // ===== COMPONENTES PADRONIZADOS =====
 interface InputProps { label: string; value: string; onChange?: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; cor?: string; textColor?: string; bg?: string; border?: string }
-const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#3B82F6', textColor = 'white', bg = 'bg-white/5', border = 'border-white/10' }: InputProps) => (
+const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#3B82F6', textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: InputProps) => (
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5" style={{ color: textColor }}>{icon}</div>}
-            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
-                style={{ color: textColor, background: bg, border: `1px solid ${border}`, boxShadow: `0 0 0 2px ${cor}20` }} />
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)}
+                className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
 )
 
 interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: Option[]; cor?: string; textColor?: string; isClaro?: boolean; bg?: string; border?: string }
-const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textColor = 'white', isClaro = false, bg = 'bg-white/5', border = 'border-white/10' }: SelectProps) => {
+const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textColor = 'white', isClaro = false, bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: SelectProps) => {
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const selected = options.find(o => o.value === value)
@@ -332,16 +337,18 @@ const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textCo
     return (
         <div ref={ref} className="relative">
             <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
-            <button type="button" onClick={() => setOpen(!open)} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between text-left transition`} style={{ color: textColor, background: bg, border: `1px solid ${border}` }}>
+            <button type="button" onClick={() => setOpen(!open)}
+                className={`w-full px-4 py-3 rounded-xl flex items-center justify-between text-left transition`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }}>
                 <span>{selected?.label || 'Selecione'}</span>
                 <ChevronDown className={`w-5 h-5 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
             {open && (
-                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
+                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: border }}>
                     <div className="max-h-60 overflow-y-auto">
                         {options.map(opt => (
                             <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
-                                className={`w-full text-left px-4 py-3 transition hover:bg-black/5`}
+                                className={`w-full text-left px-4 py-3 transition`}
                                 style={{ color: value === opt.value? cor : textColor, backgroundColor: value === opt.value? `${cor}20` : 'transparent' }}>
                                 {opt.label}
                             </button>
@@ -354,18 +361,22 @@ const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textCo
 }
 
 interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; textColor?: string; bg?: string; border?: string }
-const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'bg-white/5', border = 'border-white/10' }: ColorPickerProps) => (
+const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: ColorPickerProps) => (
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="flex items-center gap-3">
-            <input type="color" value={value} onChange={e => onChange(e.target.value)} className={`w-14 h-12 rounded-xl cursor-pointer p-1`} style={{ background: bg, border: `1px solid ${border}` }} />
-            <input type="text" value={value} onChange={e => onChange(e.target.value)} className={`flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition uppercase`} style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
+            <input type="color" value={value} onChange={e => onChange(e.target.value)}
+                className={`w-14 h-12 rounded-xl cursor-pointer p-1`}
+                style={{ background: bg, border: `1px solid ${border}` }} />
+            <input type="text" value={value} onChange={e => onChange(e.target.value)}
+                className={`flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition uppercase`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
 )
 
 interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string; textColor?: string; textSecondary?: string; bg?: string; border?: string }
-const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF', bg = 'bg-white/5', border = 'border-white/10' }: ToggleProps) => (
+const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: ToggleProps) => (
     <div className={`flex items-center justify-between p-4 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
         <div>
             <p className="font-medium" style={{ color: textColor }}>{label}</p>
@@ -378,11 +389,11 @@ const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textCo
 )
 
 interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; cor?: string; onRemove: () => void; textColor?: string; bg?: string; border?: string }
-const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white', bg = 'bg-white/5', border = 'border-white/10' }: UploadBoxProps) => (
+const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: UploadBoxProps) => (
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className={`flex flex-col items-center gap-3 p-4 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
-            {currentUrl? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg border-dashed flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
+            {currentUrl? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
             <div className="flex-1 w-full text-center">
                 <label className="w-full px-4 py-2.5 rounded-lg font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition hover:opacity-90" style={{ backgroundColor: `${cor}20`, color: cor }}>
                     <Upload className="w-4 h-4" /> {fileName? 'Trocar' : 'Selecionar'}
