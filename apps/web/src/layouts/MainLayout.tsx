@@ -51,13 +51,12 @@ export default function MainLayout() {
                 setTema(data)
                 localStorage.setItem('escola_tema', JSON.stringify(data))
 
-                // Aplica no :root
                 const root = document.documentElement
                 root.style.setProperty('--cor-primaria', data.cor_primaria || '#3B82F6')
                 root.style.setProperty('--cor-secundaria', data.cor_secundaria || '#8B5CF6')
                 root.style.setProperty('--cor-fundo', data.cor_fundo || '#FFFFFF')
                 root.setAttribute('data-tema', data.tema || 'escuro')
-                root.setAttribute('data-card-style', data.estilo_card || 'arredondado') // 👈 NOVO
+                root.setAttribute('data-card-style', data.estilo_card || 'arredondado')
             } catch (e) {
                 console.error("Erro ao buscar tema", e)
             }
@@ -106,7 +105,7 @@ export default function MainLayout() {
             setSearching(true)
             try {
                 const results: SearchResult[] = [
-                   ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                  ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -125,15 +124,20 @@ export default function MainLayout() {
 
     const corPrimaria = tema?.cor_primaria || '#3B82F6'
     const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
+
+    // 👇 TEMA CLARO = TUDO PRETO
     const textPrimary = isClaro? '#1E293B' : 'white'
-    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const textSecondary = isClaro? '#475569' : '#9CA3AF'
+    const bgCard = isClaro? 'bg-black/5' : 'bg-white/5'
+    const borderCard = isClaro? 'border-black/10' : 'border-white/10'
+    const hoverBg = isClaro? 'hover:bg-black/5' : 'hover:bg-white/10'
 
     return (
         <div
             className="min-h-screen w-full relative flex overflow-x-hidden"
             style={{
                 background: isClaro
-                   ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
+                  ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
                     : `linear-gradient(to bottom right, ${corPrimaria}15, ${corSecundaria}10, #0F172A)`
             }}
         >
@@ -142,15 +146,16 @@ export default function MainLayout() {
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
+            {/* 👇 SIDEBAR AGORA PEGA TEMA CLARO */}
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20">
+                <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl p-4 h-full flex-col shadow-2xl shadow-black/20`}>
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
                             <School className="w-8 h-8 flex-shrink-0" style={{ color: corPrimaria }} />
                             <h1 className="text-xl font-bold whitespace-nowrap" style={{ color: textPrimary }}>SIGE</h1>
                             <span className="text-xs px-2 py-0.5 rounded-md font-semibold flex-shrink-0" style={{ backgroundColor: `${corPrimaria}33`, color: corPrimaria }}>Escola</span>
                         </div>
-                        <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}>
+                        <button className={`lg:hidden p-2 ${hoverBg} rounded-lg transition`} onClick={() => setIsMobileMenuOpen(false)}>
                             <X className="w-5 h-5" style={{ color: textSecondary }} />
                         </button>
                     </div>
@@ -163,8 +168,8 @@ export default function MainLayout() {
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive
-                                       ? 'font-semibold border-opacity-30'
-                                        : `hover:bg-white/5 border-transparent`
+                                      ? 'font-semibold border-opacity-30'
+                                        : `${hoverBg} border-transparent`
                                         }`}
                                     style={{
                                         backgroundColor: isActive? `${corPrimaria}20` : 'transparent',
@@ -178,7 +183,7 @@ export default function MainLayout() {
                             )
                         })}
                     </nav>
-                    <div className="border-t border-white/10 pt-4 mt-4">
+                    <div className={`border-t pt-4 mt-4`} style={{ borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
                         <div className="flex items-center gap-3 px-1">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(to bottom right, ${corPrimaria}, ${corSecundaria})` }}>
                                 <User className="w-5 h-5 text-white" />
@@ -193,8 +198,9 @@ export default function MainLayout() {
             </aside>
 
             <div className="flex-1 w-full lg:ml-[260px]">
+                {/* 👇 HEADER AGORA PEGA TEMA CLARO */}
                 <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-3 lg:p-6">
-                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
+                    <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10`}>
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6" style={{ color: textPrimary }} /></button>
 
                         <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
@@ -204,21 +210,20 @@ export default function MainLayout() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar no menu..."
-                                className="w-full pl-12 pr-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none text-sm"
+                                className={`w-full pl-12 pr-4 py-3 ${bgCard} ${borderCard} rounded-xl focus:outline-none text-sm`}
                                 style={{
                                     borderColor: isSearchOpen? corPrimaria : '',
                                     color: textPrimary,
-                                    backgroundColor: isClaro? 'rgba(0,0,0,0.03)' : ''
                                 }}
                             />
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <Search className="w-5 h-5" style={{ color: textPrimary }} />
                             </button>
-                            <button className="p-2.5 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0"><Bell className="w-5 h-5" style={{ color: textPrimary }} /></button>
-                            <button className="hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
+                            <button className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}><Bell className="w-5 h-5" style={{ color: textPrimary }} /></button>
+                            <button className={`hidden sm:flex items-center gap-2 p-2.5 lg:px-4 lg:py-3 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <User className="w-5 h-5" style={{ color: textPrimary }} />
                                 <span className="text-sm font-semibold hidden lg:inline" style={{ color: textPrimary }}>{user.nome.split(' ')[0]}</span>
                             </button>
@@ -234,6 +239,7 @@ export default function MainLayout() {
                 </main>
             </div>
 
+            {/* 👇 MODAL PESQUISA TEMA CLARO */}
             {isSearchModalOpen && (
                 <div
                     className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in"
@@ -253,21 +259,20 @@ export default function MainLayout() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar no menu..."
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/5 border-white/10 rounded-xl focus:outline-none"
+                            className={`w-full pl-12 pr-4 py-3.5 ${bgCard} ${borderCard} rounded-xl focus:outline-none`}
                             style={{
                                 borderColor: searchQuery? corPrimaria : '',
                                 color: textPrimary,
-                                backgroundColor: isClaro? 'rgba(0,0,0,0.03)' : ''
                             }}
                         />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto bg-white/5 rounded-2xl border-white/10 p-2">
+                    <div className={`flex-1 overflow-y-auto ${bgCard} rounded-2xl ${borderCard} p-2`}>
                         {!searchQuery && <p className="text-center pt-10" style={{ color: textSecondary }}>Digite para começar a pesquisar</p>}
                         {searching && <div className="p-4 flex justify-center"><Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} /></div>}
                         {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center pt-10" style={{ color: textSecondary }}>Nenhum resultado encontrado</p>}
                         {searchResults.map(item => (
-                            <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl text-left transition">
+                            <button key={item.id} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 p-3 ${hoverBg} rounded-xl text-left transition`}>
                                 <item.Icon className="w-5 h-5 flex-shrink-0" style={{ color: corPrimaria }} />
                                 <div className="min-w-0">
                                     <p className="font-medium truncate" style={{ color: textPrimary }}>{item.nome}</p>

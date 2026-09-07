@@ -55,13 +55,13 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-      ...(isJson? { 'Content-Type': 'application/json' } : {})
+     ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     const corPrimaria = form.cor_primaria
     const corSecundaria = form.cor_secundaria
     const isClaro = form.tema === 'claro'
-    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textPrimary = isClaro? '#1E293B' : 'white' // 👈 TUDO PRETO NO CLARO
     const textSecondary = isClaro? '#64748B' : '#9CA3AF'
 
     useEffect(() => {
@@ -173,8 +173,9 @@ export default function DefinicoesEscolaPage() {
                 </button>
             </div>
 
+            {/* 👇 SCROLL INVISIVEL NAS ABAS */}
             <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-2">
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                     {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
@@ -202,9 +203,9 @@ export default function DefinicoesEscolaPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input label="Nome Completo" value={form.nome} onChange={v => handleChange('nome', v)} cor={corPrimaria} textColor={textPrimary} />
                             <Input label="Sigla" value={form.sigla} onChange={v => handleChange('sigla', v)} cor={corPrimaria} textColor={textPrimary} />
-                            <Input label="ID Curto" value={form.id_curto} onChange={v => handleChange('id_curto', v)} disabled cor={corPrimaria} textColor={textPrimary} />
+                            <Input label="ID Curto" value={form.id_curto} onChange={() => {}} disabled cor={corPrimaria} textColor={textPrimary} />
                             <Input label="NIF" value={form.nif} onChange={v => handleChange('nif', v)} cor={corPrimaria} textColor={textPrimary} />
-                            <Input label="Nível de Ensino" value={form.nivel_ensino} disabled cor={corPrimaria} textColor={textPrimary} />
+                            <Input label="Nível de Ensino" value={form.nivel_ensino} onChange={() => {}} disabled cor={corPrimaria} textColor={textPrimary} />
                         </div>
                     </div>
                 )}
@@ -226,18 +227,18 @@ export default function DefinicoesEscolaPage() {
                     <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-4"><Palette className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Aparência</h2></div>
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <UploadBox label="Logo da Escola" currentUrl={logoPreview || undefined} fileName={logoFile?.name} onFileSelect={handleLogoChange} cor={corPrimaria} onRemove={() => { setLogoFile(null); setLogoPreview(form.logo_url) }} />
+                            <UploadBox label="Logo da Escola" currentUrl={logoPreview || undefined} fileName={logoFile?.name} onFileSelect={handleLogoChange} cor={corPrimaria} onRemove={() => { setLogoFile(null); setLogoPreview(form.logo_url) }} textColor={textPrimary} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} />
-                            <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} />
-                            <ColorPicker label="Cor de Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} />
+                            <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} textColor={textPrimary} />
+                            <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} textColor={textPrimary} />
+                            <ColorPicker label="Cor de Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} textColor={textPrimary} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <CustomSelect label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} cor={corPrimaria} textColor={textPrimary} />
-                            <CustomSelect label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} />
-                            <CustomSelect label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} />
-                            <CustomSelect label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} cor={corPrimaria} textColor={textPrimary} />
+                            <CustomSelect label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} />
+                            <CustomSelect label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} />
+                            <CustomSelect label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} />
+                            <CustomSelect label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} />
                         </div>
                     </div>
                 )}
@@ -245,88 +246,93 @@ export default function DefinicoesEscolaPage() {
                 {activeTab === 'modulos' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Settings className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Módulos Ativos</h2></div>
-                        <Toggle label="Módulo de Propinas" description="Ativa o controle financeiro e emissão de faturas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} cor={corPrimaria} />
-                        <Toggle label="Módulo Biblioteca" description="Controle de livros e empréstimos" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} cor={corPrimaria} />
-                        <Toggle label="Auto Cadastro" description="Permitir que novos usuários se cadastrem" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} cor={corPrimaria} />
+                        <Toggle label="Módulo de Propinas" description="Ativa o controle financeiro e emissão de faturas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} />
+                        <Toggle label="Módulo Biblioteca" description="Controle de livros e empréstimos" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} />
+                        <Toggle label="Auto Cadastro" description="Permitir que novos usuários se cadastrem" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} />
                     </div>
                 )}
             </div>
+
+            {/* 👇 CSS pra esconder scroll */}
+            <style>{`
+               .scrollbar-hide::-webkit-scrollbar { display: none; }
+               .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
         </div>
     )
 }
 
-// ===== COMPONENTES PADRONIZADOS NOVOS =====
-interface InputProps {
-  label: string;
-  value: string;
-  onChange?: (value: string) => void; // 👈 opcional agora
-  type?: string;
-  icon?: ReactNode;
-  disabled?: boolean;
-  cor?: string;
-  textColor?: string
-}
-
+// ===== COMPONENTES PADRONIZADOS =====
+interface InputProps { label: string; value: string; onChange?: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; cor?: string; textColor?: string }
 const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#3B82F6', textColor = 'white' }: InputProps) => (
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5" style={{ color: textColor }}>{icon}</div>}
-            <input
-              type={type}
-              value={value}
-              disabled={disabled}
-              onChange={(e) => onChange?.(e.target.value)} // 👈 safe call
-              className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: textColor, boxShadow: `0 0 0 2px ${cor}20` }}
-            />
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 bg-white/5 border rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={{ borderColor: 'rgba(255,255,255,0.1)', color: textColor, boxShadow: `0 0 0 2px ${cor}20` }} />
         </div>
     </div>
 )
 
-interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: Option[]; cor?: string; textColor?: string }
-const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textColor = 'white' }: SelectProps) => {
+interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: Option[]; cor?: string; textColor?: string; isClaro?: boolean }
+const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textColor = 'white', isClaro = false }: SelectProps) => {
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const selected = options.find(o => o.value === value)
     useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current &&!ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
+
     return (
-        <div ref={ref}>
+        <div ref={ref} className="relative"> {/* 👈 relative pra dropdown pegar 100% */}
             <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
             <button type="button" onClick={() => setOpen(!open)} className="w-full px-4 py-3 bg-white/5 border rounded-xl flex items-center justify-between text-left transition" style={{ borderColor: 'rgba(255,255,255,0.1)', color: textColor }}>
                 <span>{selected?.label || 'Selecione'}</span>
                 <ChevronDown className={`w-5 h-5 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
             {open && (
-                <div className="absolute z-10 w-[calc(100%-2rem)] md:w-auto mt-2 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                    {options.map(opt => (
-                        <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
-                            className={`w-full text-left px-4 py-3 transition ${value === opt.value? 'bg-white/10 font-semibold' : 'hover:bg-white/5'}`}
-                            style={{ color: value === opt.value? cor : textColor }}>{opt.label}</button>
-                    ))}
+                <div
+                    className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" // 👈 w-full = mesma largura
+                    style={{
+                        backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A',
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }}
+                >
+                    <div className="max-h-60 overflow-y-auto">
+                        {options.map(opt => (
+                            <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
+                                className={`w-full text-left px-4 py-3 transition hover:bg-white/10`}
+                                style={{
+                                    color: value === opt.value? cor : textColor,
+                                    backgroundColor: value === opt.value? `${cor}20` : 'transparent'
+                                }}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
     )
 }
 
-interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; }
-const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => (
+interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; textColor?: string }
+const ColorPicker = ({ label, value, onChange, textColor = 'white' }: ColorPickerProps) => (
     <div>
-        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
+        <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="flex items-center gap-3">
             <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-14 h-12 bg-white/5 border-white/10 rounded-xl cursor-pointer p-1" />
-            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 transition uppercase" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+            <input type="text" value={value} onChange={e => onChange(e.target.value)} className="flex-1 px-4 py-3 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:ring-2 transition uppercase" style={{ borderColor: 'rgba(255,255,255,0.1)', color: textColor }} />
         </div>
     </div>
 )
 
-interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string }
-const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6' }: ToggleProps) => (
+interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string; textColor?: string; textSecondary?: string }
+const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF' }: ToggleProps) => (
     <div className="flex items-center justify-between p-4 bg-white/5 border-white/10 rounded-xl">
         <div>
-            <p className="font-medium" style={{ color: 'white' }}>{label}</p>
-            {description && <p className="text-sm" style={{ color: '#9CA3AF' }}>{description}</p>}
+            <p className="font-medium" style={{ color: textColor }}>{label}</p>
+            {description && <p className="text-sm" style={{ color: textSecondary }}>{description}</p>}
         </div>
         <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition`} style={{ backgroundColor: checked? cor : 'rgba(255,255,255,0.2)' }}>
             <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked? 'translate-x-6' : 'translate-x-1'}`}></div>
@@ -334,10 +340,10 @@ const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6' }: Togg
     </div>
 )
 
-interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; cor?: string; onRemove: () => void }
-const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove }: UploadBoxProps) => (
+interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; cor?: string; onRemove: () => void; textColor?: string }
+const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white' }: UploadBoxProps) => (
     <div className="lg:col-span-3">
-        <label className="text-sm font-medium text-white/80 mb-2 block">{label}</label>
+        <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-white/5 border-white/10 rounded-xl">
             {currentUrl? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className="w-20 h-20 rounded-lg bg-white/5 border-dashed border-white/20 flex items-center justify-center flex-shrink-0"><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
             <div className="flex-1 w-full">
@@ -345,9 +351,9 @@ const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6',
                     <Upload className="w-4 h-4" /> {fileName? 'Trocar Arquivo' : 'Selecionar Arquivo'}
                     <input type="file" accept="image/*" onChange={onFileSelect} className="hidden" />
                 </label>
-                <p className="text-sm mt-2 truncate" style={{ color: '#9CA3AF' }}>{fileName || 'Nenhum ficheiro selecionado'}</p>
+                <p className="text-sm mt-2 truncate" style={{ color: textColor }}>{fileName || 'Nenhum ficheiro selecionado'}</p>
             </div>
-            {currentUrl && <button onClick={onRemove} className="p-2 hover:bg-white/10 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>}
+            {currentUrl && <button onClick={onRemove} className="p-2 hover:bg-white/10 rounded-lg"><X className="w-4 h-4" style={{ color: textColor }} /></button>}
         </div>
     </div>
 )
