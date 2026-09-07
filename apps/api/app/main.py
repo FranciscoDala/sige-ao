@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from app.db.database import engine, Base
 from app.core.config import settings
-from app.api.v1 import routers_escola, routers_auth, routers_usuario
+from app.api.v1 import routers_escola, routers_auth, routers_usuario, routers_anoLetivo # 👈 1. IMPORTAR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 def import_all_models():
     logger.info("Forçando import de todos os models...")
     from app.models import models_escola
+    from app.models import models_anoLetivo # 👈 2. FORÇAR IMPORT DO NOVO MODEL
+
     tabelas = sorted(list(Base.metadata.tables.keys()))
     logger.info(f"Models registrados: {', '.join(tabelas)}")
     logger.info(f"Total: {len(tabelas)} tabelas mapeadas.")
@@ -77,6 +79,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 app.include_router(routers_auth.router, prefix="/api/v1")
 app.include_router(routers_escola.router, prefix="/api/v1")
 app.include_router(routers_usuario.router, prefix="/api/v1")
+app.include_router(routers_anoLetivo.router, prefix="/api/v1") # 👈 3. REGISTRAR O ROUTER
 
 @app.get("/health")
 async def health():
