@@ -73,7 +73,7 @@ export default function EscolaDirecaoPage() {
                 setNivel(nivelEscola)
                 const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
                 setTabs(tabsDoNivel)
-                setActiveTab(tabsDoNivel[0].id) // seta primeira aba do nível
+                setActiveTab(tabsDoNivel[0].id)
             } catch (e) {
                 console.error("Erro ao buscar nivel", e)
             } finally {
@@ -83,11 +83,12 @@ export default function EscolaDirecaoPage() {
         fetchNivel()
     }, [])
 
-    if (loading) return <div>Carregando...</div>
+    if (loading) return <div style={{ color: 'var(--text-secondary)' }}>Carregando...</div>
 
     const corPrimaria = 'var(--cor-primaria)'
     const textPrimary = 'var(--text-primary)'
     const textSecondary = 'var(--text-secondary)'
+    const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
 
     return (
         <div className="space-y-6">
@@ -95,40 +96,47 @@ export default function EscolaDirecaoPage() {
             <div className="flex items-center gap-3">
                 <Building className="w-7 h-7" style={{ color: corPrimaria }} />
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Direção</h1>
+                    <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Direção Escolar</h1>
                     <p style={{ color: textSecondary }}>
-                        Nível: {nivel.replace('_', ' ')}
+                        Ensino: {nivel.replace('_', ' ')}
                     </p>
                 </div>
             </div>
 
-            {/* Tabs com scroll-x invisível */}
-            <div
-                className="flex gap-2 border-b pb-2 overflow-x-auto scrollbar-hide"
-                style={{ borderColor: 'var(--border-card)' }}
-            >
-                {tabs.map(tab => {
-                    const Icon = tab.icon
-                    const isActive = activeTab === tab.id
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0"
-                            style={{
-                                backgroundColor: isActive ? `${corPrimaria}20` : 'transparent',
-                                color: isActive ? corPrimaria : textSecondary
-                            }}
-                        >
-                            <Icon className="w-4 h-4" />
-                            {tab.label}
-                        </button>
-                    )
-                })}
+            {/* Tabs com background e linha primary */}
+            <div className="w-full">
+                <div
+                    className="flex gap-2 p-1 rounded-xl overflow-x-auto scrollbar-hide"
+                    style={{
+                        backgroundColor: bgCard,
+                        border: '1px solid var(--border-card)'
+                    }}
+                >
+                    {tabs.map(tab => {
+                        const Icon = tab.icon
+                        const isActive = activeTab === tab.id
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0"
+                                style={{
+                                    backgroundColor: isActive? corPrimaria : 'transparent',
+                                    color: isActive? 'white' : textSecondary
+                                }}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                            </button>
+                        )
+                    })}
+                </div>
+                {/* Linha de baixo na cor primary */}
+                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: corPrimaria }} />
             </div>
 
             {/* Conteúdo da Tab */}
-            <div>
+            <div className="rounded-2xl p-4" style={{ background: bgCard, border: '1px solid var(--border-card)' }}>
                 {activeTab === 'turmas' && <div>Conteúdo de Turmas aqui</div>}
                 {activeTab === 'cursos' && <div>Conteúdo de Cursos aqui</div>}
                 {activeTab === 'salas' && <div>Conteúdo de Salas aqui</div>}
@@ -139,8 +147,8 @@ export default function EscolaDirecaoPage() {
 
             <style>{`
                 /* Esconde scrollbar no mobile */
-                .scrollbar-hide::-webkit-scrollbar { display: none; }
-                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+               .scrollbar-hide::-webkit-scrollbar { display: none; }
+               .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
