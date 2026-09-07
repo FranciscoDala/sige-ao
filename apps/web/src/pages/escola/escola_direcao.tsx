@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, FlaskConical, Laptop, Loader2 } from 'lucide-react' // 👈 add Loader2
+import { Building, Users, DoorOpen, BookOpen, Calendar, GraduationCap, FlaskConical, Laptop, Loader2 } from 'lucide-react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -99,9 +99,9 @@ export default function EscolaDirecaoPage() {
     const textSecondary = 'var(--text-secondary)'
     const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
 
-    // 👇 SPINNER COM COR DO DB
+    // 👇 PADRONIZADO IGUAL DEFINIÇÕES
     if (loading) return (
-        <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex justify-center p-10">
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} />
         </div>
     )

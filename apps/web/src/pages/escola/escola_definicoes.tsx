@@ -63,17 +63,16 @@ export default function DefinicoesEscolaPage() {
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-        ...(isJson ? { 'Content-Type': 'application/json' } : {})
+       ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     const corPrimaria = form.cor_primaria
     const corSecundaria = form.cor_secundaria
     const isClaro = form.tema === 'claro'
-    const textPrimary = isClaro ? '#1E293B' : 'white'
-    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro ? 'bg-black/5' : 'bg-white/5'
-    const borderCard = isClaro ? 'border-black/10' : 'border-white/10'
-    const hoverBg = isClaro ? 'hover:bg-black/5' : 'hover:bg-white/10'
+    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro? 'bg-black/5' : 'bg-white/5'
+    const borderCard = isClaro? 'border-black/10' : 'border-white/10'
 
     useEffect(() => {
         const fetchEscola = async () => {
@@ -81,14 +80,14 @@ export default function DefinicoesEscolaPage() {
                 const res = await fetch(`${API_URL}/escolas/me`, { headers: getAuthHeader() })
                 if (!res.ok) throw new Error('Erro ao carregar dados')
                 const data = await res.json()
-                const escolaData: EscolaForm = { ...form, ...data }
+                const escolaData: EscolaForm = {...form,...data }
                 setForm(escolaData)
                 setLogoPreview(escolaData.logo_url)
                 setBannerPreview(escolaData.banner_url)
                 setFaviconPreview(escolaData.favicon_url)
                 const userAtual = authService.getUser()
                 if (userAtual && escolaData.nome) {
-                    localStorage.setItem('user', JSON.stringify({ ...userAtual, escola_nome: escolaData.nome }))
+                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
                     window.dispatchEvent(new Event('user-updated'))
                 }
             } catch (error: any) {
@@ -102,13 +101,13 @@ export default function DefinicoesEscolaPage() {
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
-        setForm(prev => ({ ...prev, [key]: value }))
+        setForm(prev => ({...prev, [key]: value }))
     }
 
     const handleFileChange = (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            const maxSize = type === 'favicon' ? 1 * 1024 * 1024 : 5 * 1024 * 1024
+            const maxSize = type === 'favicon'? 1 * 1024 * 1024 : 5 * 1024 * 1024
             if (file.size > maxSize) {
                 toast.error(`Arquivo muito grande. Máximo ${maxSize / 1024 / 1024}MB`)
                 return
@@ -133,7 +132,7 @@ export default function DefinicoesEscolaPage() {
                 fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card,
                 permitir_auto_cadastro: form.permitir_auto_cadastro, usar_modulo_propina: form.usar_modulo_propina, usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
-            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== null && v !== ''))
+            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v!== undefined && v!== null && v!== ''))
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -157,7 +156,7 @@ export default function DefinicoesEscolaPage() {
             if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner', 'file')
             if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon', 'file')
 
-            const escolaData: EscolaForm = { ...form, ...updatedData }
+            const escolaData: EscolaForm = {...form,...updatedData }
             setForm(escolaData)
             setLogoPreview(escolaData.logo_url)
             setBannerPreview(escolaData.banner_url)
@@ -185,7 +184,7 @@ export default function DefinicoesEscolaPage() {
     if (loadingData) return <div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} /></div>
 
     return (
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                     <h1 className="text-xl lg:text-2xl font-bold" style={{ color: textPrimary }}>Definições da Escola</h1>
@@ -197,17 +196,18 @@ export default function DefinicoesEscolaPage() {
                     className="w-full lg:w-auto h-11 px-5 font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] transition"
                     style={{
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
-                        borderRadius: form.estilo_card === 'quadrado' ? '0.5rem' : form.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem',
-                        color: 'white' // 👈 ADICIONA ISSO AQUI
+                        borderRadius: form.estilo_card === 'quadrado'? '0.5rem' : form.estilo_card === 'minimalista'? '0.25rem' : '0.75rem',
+                        color: 'white'
                     }}
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'white' }} /> : <Save className="w-5 h-5" style={{ color: 'white' }} />}
-                    <span style={{ color: 'white' }}>{loading ? 'Salvando...' : 'Salvar Definições'}</span> {/* 👈 e aqui */}
+                    {loading? <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'white' }} /> : <Save className="w-5 h-5" style={{ color: 'white' }} />}
+                    <span style={{ color: 'white' }}>{loading? 'Salvando...' : 'Salvar Definições'}</span>
                 </button>
             </div>
 
-            <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl p-2`}>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {/* Tabs - ESTILO IGUAL DIREÇÃO */}
+            <div className="w-full">
+                <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
@@ -215,20 +215,24 @@ export default function DefinicoesEscolaPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0`}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border shadow-sm"
                                 style={{
-                                    backgroundColor: isActive ? `${corPrimaria}33` : 'transparent',
-                                    color: isActive ? 'white' : textSecondary // 👈 CORRIGIDO: ativo agora é branco
+                                    backgroundColor: isActive? `${corPrimaria}20` : 'rgba(0,0,0,0.03)', // 👈 bg sutil
+                                    color: isActive? corPrimaria : textSecondary, // 👈 texto primary quando ativo
+                                    borderColor: isActive? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)' // 👈 borda sutil
                                 }}
                             >
-                                <Icon className="w-4 h-4" style={{ color: isActive ? 'white' : textSecondary }} />{tab.label}
+                                <Icon className="w-4 h-4" style={{ color: isActive? corPrimaria : textSecondary }} />
+                                {tab.label}
                             </button>
                         )
                     })}
                 </div>
+                {/* Linha de baixo 15% */}
+                <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
-            <div className={`${bgCard} backdrop-blur-xl ${borderCard} rounded-2xl p-4 lg:p-6`}>
+            <div className={`rounded-2xl p-4 lg:p-6`} style={{ background: bgCard, border: `1px solid ${borderCard}` }}>
                 {activeTab === 'identificacao' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Building2 className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
@@ -289,17 +293,17 @@ export default function DefinicoesEscolaPage() {
                 {activeTab === 'avancado' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-4"><Info className="w-5 h-5" style={{ color: corPrimaria }} /><h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Avançado</h2></div>
-                        <div className={`p-4 ${bgCard} ${borderCard} rounded-xl`}>
+                        <div className={`p-4 rounded-xl`} style={{ background: bgCard, border: `1px solid ${borderCard}` }}>
                             <p style={{ color: textSecondary }}>Área para configurações futuras: API Keys, Webhooks, Integrações.</p>
                         </div>
-                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo', !v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
+                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo',!v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
                     </div>
                 )}
             </div>
 
             <style>{`
-           .scrollbar-hide::-webkit-scrollbar { display: none; }
-           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
@@ -312,8 +316,8 @@ const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5" style={{ color: textColor }}>{icon}</div>}
-            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon ? 'pl-12' : 'px-4'} py-3 ${bg} ${border} rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
-                style={{ color: textColor, boxShadow: `0 0 0 2px ${cor}20` }} />
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}`, boxShadow: `0 0 0 2px ${cor}20` }} />
         </div>
     </div>
 )
@@ -323,22 +327,22 @@ const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textCo
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const selected = options.find(o => o.value === value)
-    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
+    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current &&!ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
 
     return (
         <div ref={ref} className="relative">
             <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
-            <button type="button" onClick={() => setOpen(!open)} className={`w-full px-4 py-3 ${bg} ${border} rounded-xl flex items-center justify-between text-left transition`} style={{ color: textColor }}>
+            <button type="button" onClick={() => setOpen(!open)} className={`w-full px-4 py-3 rounded-xl flex items-center justify-between text-left transition`} style={{ color: textColor, background: bg, border: `1px solid ${border}` }}>
                 <span>{selected?.label || 'Selecione'}</span>
-                <ChevronDown className={`w-5 h-5 transition ${open ? 'rotate-180' : ''}`} style={{ color: textColor }} />
+                <ChevronDown className={`w-5 h-5 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
             {open && (
-                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro ? '#FFFFFF' : '#1A1A1A', borderColor: isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
+                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
                     <div className="max-h-60 overflow-y-auto">
                         {options.map(opt => (
                             <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
                                 className={`w-full text-left px-4 py-3 transition hover:bg-black/5`}
-                                style={{ color: value === opt.value ? cor : textColor, backgroundColor: value === opt.value ? `${cor}20` : 'transparent' }}>
+                                style={{ color: value === opt.value? cor : textColor, backgroundColor: value === opt.value? `${cor}20` : 'transparent' }}>
                                 {opt.label}
                             </button>
                         ))}
@@ -354,21 +358,21 @@ const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'bg-whi
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="flex items-center gap-3">
-            <input type="color" value={value} onChange={e => onChange(e.target.value)} className={`w-14 h-12 ${bg} ${border} rounded-xl cursor-pointer p-1`} />
-            <input type="text" value={value} onChange={e => onChange(e.target.value)} className={`flex-1 px-4 py-3 ${bg} ${border} rounded-xl focus:outline-none focus:ring-2 transition uppercase`} style={{ color: textColor }} />
+            <input type="color" value={value} onChange={e => onChange(e.target.value)} className={`w-14 h-12 rounded-xl cursor-pointer p-1`} style={{ background: bg, border: `1px solid ${border}` }} />
+            <input type="text" value={value} onChange={e => onChange(e.target.value)} className={`flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 transition uppercase`} style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
 )
 
 interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string; textColor?: string; textSecondary?: string; bg?: string; border?: string }
 const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF', bg = 'bg-white/5', border = 'border-white/10' }: ToggleProps) => (
-    <div className={`flex items-center justify-between p-4 ${bg} ${border} rounded-xl`}>
+    <div className={`flex items-center justify-between p-4 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
         <div>
             <p className="font-medium" style={{ color: textColor }}>{label}</p>
             {description && <p className="text-sm" style={{ color: textSecondary }}>{description}</p>}
         </div>
-        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition`} style={{ backgroundColor: checked ? cor : 'rgba(128,128,128,0.3)' }}>
-            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></div>
+        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition`} style={{ backgroundColor: checked? cor : 'rgba(128,128,128,0.3)' }}>
+            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked? 'translate-x-6' : 'translate-x-1'}`}></div>
         </button>
     </div>
 )
@@ -377,11 +381,11 @@ interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string
 const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white', bg = 'bg-white/5', border = 'border-white/10' }: UploadBoxProps) => (
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
-        <div className={`flex flex-col items-center gap-3 p-4 ${bg} ${border} rounded-xl`}>
-            {currentUrl ? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg ${bg} border-dashed ${border} flex items-center justify-center flex-shrink-0`}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
+        <div className={`flex flex-col items-center gap-3 p-4 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
+            {currentUrl? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg border-dashed flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
             <div className="flex-1 w-full text-center">
                 <label className="w-full px-4 py-2.5 rounded-lg font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition hover:opacity-90" style={{ backgroundColor: `${cor}20`, color: cor }}>
-                    <Upload className="w-4 h-4" /> {fileName ? 'Trocar' : 'Selecionar'}
+                    <Upload className="w-4 h-4" /> {fileName? 'Trocar' : 'Selecionar'}
                     <input type="file" accept="image/*" onChange={onFileSelect} className="hidden" />
                 </label>
                 <p className="text-xs mt-2 truncate" style={{ color: textColor }}>{fileName || 'Nenhum ficheiro'}</p>
