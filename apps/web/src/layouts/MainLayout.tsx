@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react' // 👈 adiciona useMemo
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import {
@@ -79,7 +79,7 @@ export default function MainLayout() {
 
         window.addEventListener('storage', handleTemaUpdated)
         window.addEventListener('user-updated', updateUser)
-        window.addEventListener('escola-tema-updated', handleTemaUpdated) // 👈 APLICA SEM F5
+        window.addEventListener('escola-tema-updated', handleTemaUpdated)
 
         return () => {
             window.removeEventListener('storage', handleTemaUpdated)
@@ -106,20 +106,20 @@ export default function MainLayout() {
         navigate('/')
     }
 
-    // 👇 NOVO: TROCAR TEMA DIRETO NO HEADER
+    // 👇 TROCAR TEMA DIRETO NO HEADER
     const toggleTema = async () => {
-        const novoTema = isClaro ? 'escuro' : 'claro'
-        const novoTemaData = { ...tema, tema: novoTema }
+        const novoTema = isClaro? 'escuro' : 'claro'
+        const novoTemaData = {...tema, tema: novoTema }
 
-        applyTheme(novoTemaData) // aplica na hora
-        window.dispatchEvent(new Event('escola-tema-updated')) // avisa outras abas
+        applyTheme(novoTemaData)
+        window.dispatchEvent(new Event('escola-tema-updated'))
 
         try {
-            await api.put('/escolas/me/tema', { tema: novoTema }) // salva no banco
+            await api.put('/escolas/me/tema', { tema: novoTema })
             toast.success(`Tema alterado para ${novoTema}`)
         } catch (e) {
             toast.error('Erro ao salvar tema')
-            applyTheme(tema) // volta se deu erro
+            applyTheme(tema)
         }
     }
 
@@ -129,7 +129,7 @@ export default function MainLayout() {
             setSearching(true)
             try {
                 const results: SearchResult[] = [
-                    ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                   ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -149,13 +149,11 @@ export default function MainLayout() {
     const corPrimaria = tema?.cor_primaria || '#3B82F6'
     const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
 
-
-    const textPrimary = useMemo(() => isClaro ? '#1E293B' : 'white', [isClaro])
-    const textSecondary = useMemo(() => isClaro ? '#475569' : '#9CA3AF', [isClaro])
-    const bgCard = useMemo(() => isClaro ? 'bg-black/5' : 'bg-white/5', [isClaro])
-    const borderCard = useMemo(() => isClaro ? 'border-black/10' : 'border-white/10', [isClaro])
-    const hoverBg = useMemo(() => isClaro ? 'hover:bg-black/5' : 'hover:bg-white/10', [isClaro])
-
+    const textPrimary = useMemo(() => isClaro? '#1E293B' : 'white', [isClaro])
+    const textSecondary = useMemo(() => isClaro? '#475569' : '#9CA3AF', [isClaro])
+    const bgCard = useMemo(() => isClaro? 'bg-black/5' : 'bg-white/5', [isClaro])
+    const borderCard = useMemo(() => isClaro? 'border-black/10' : 'border-white/10', [isClaro])
+    const hoverBg = useMemo(() => isClaro? 'hover:bg-black/5' : 'hover:bg-white/10', [isClaro])
 
     const getCardStyle = () => {
         const estilo = tema?.estilo_card || 'arredondado'
@@ -183,7 +181,7 @@ export default function MainLayout() {
             className="min-h-screen w-full relative flex overflow-x-hidden"
             style={{
                 background: isClaro
-                    ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
+                   ? `linear-gradient(to bottom right, ${corPrimaria}08, ${corSecundaria}05, var(--cor-fundo))`
                     : `linear-gradient(to bottom right, ${corPrimaria}15, ${corSecundaria}10, #0F172A)`
             }}
         >
@@ -192,7 +190,7 @@ export default function MainLayout() {
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+            <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[280px] lg:w-[260px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
                 <div className={`${cardClass} p-4 h-full flex-col shadow-2xl shadow-black/20`}>
                     <div className="flex items-center justify-between mb-8 px-1">
                         <div className="flex items-center gap-3">
@@ -206,28 +204,29 @@ export default function MainLayout() {
                     </div>
                     <nav className="space-y-1 flex-1 overflow-y-auto">
                         {menuItems.map(item => {
-                            const isActive = item.path === '/dashboard' ? location.pathname === '/dashboard' : location.pathname.startsWith(item.path)
+                            const isActive = item.path === '/dashboard'? location.pathname === '/dashboard' : location.pathname.startsWith(item.path)
                             return (
                                 <button
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive ? 'font-semibold border-opacity-30' : `${hoverBg} border-transparent`}`}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition border ${isActive? 'font-semibold border-opacity-30' : `${hoverBg} border-transparent`}`}
                                     style={{
-                                        backgroundColor: isActive ? `${corPrimaria}20` : 'transparent',
-                                        color: isActive ? corPrimaria : textSecondary,
-                                        borderColor: isActive ? `${corPrimaria}4D` : 'transparent'
+                                        backgroundColor: isActive? `${corPrimaria}20` : 'transparent',
+                                        // 👇 CORRIGIDO: Item ativo agora usa branco pra contraste
+                                        color: isActive? 'white' : textSecondary,
+                                        borderColor: isActive? `${corPrimaria}4D` : 'transparent'
                                     }}
                                 >
-                                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                                    <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: isActive? 'white' : textSecondary }} />
                                     <span className="whitespace-nowrap">{item.label}</span>
                                 </button>
                             )
                         })}
                     </nav>
-                    <div className={`border-t pt-4 mt-4`} style={{ borderColor: isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
+                    <div className={`border-t pt-4 mt-4`} style={{ borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
                         <div className="flex items-center gap-3 px-1">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(to bottom right, ${corPrimaria}, ${corSecundaria})` }}>
-                                <User className="w-5 h-5 text-white" />
+                                <User className="w-5 h-5 text-white" /> {/* 👈 Já estava white, mantido */}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold truncate" style={{ color: textPrimary }}>{user.nome}</p>
@@ -243,7 +242,7 @@ export default function MainLayout() {
                     <div className={`${cardClass} px-3 lg:px-6 py-3 flex items-center justify-between gap-2 shadow-lg shadow-black/10`}>
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-6 h-6" style={{ color: textPrimary }} /></button>
 
-                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen ? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
+                        <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
                             <Search className="absolute left-4 top-3.5 w-5 h-5" style={{ color: textSecondary }} />
                             <input
                                 ref={searchInputRef}
@@ -251,22 +250,21 @@ export default function MainLayout() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar no menu..."
                                 className={`w-full pl-12 pr-4 py-3 ${bgCard} ${borderCard} rounded-xl focus:outline-none text-sm`}
-                                style={{ borderColor: isSearchOpen ? corPrimaria : '', color: textPrimary }}
+                                style={{ borderColor: isSearchOpen? corPrimaria : '', color: textPrimary }}
                             />
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            <button onClick={() => window.innerWidth < 768 ? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
+                            <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <Search className="w-5 h-5" style={{ color: textPrimary }} />
                             </button>
 
-                            {/* 👇 NOVO BOTAO TEMA */}
                             <button
                                 onClick={toggleTema}
                                 className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}
-                                title={isClaro ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
+                                title={isClaro? 'Mudar para tema escuro' : 'Mudar para tema claro'}
                             >
-                                {isClaro ? <Moon className="w-5 h-5" style={{ color: textPrimary }} /> : <Sun className="w-5 h-5" style={{ color: textPrimary }} />}
+                                {isClaro? <Moon className="w-5 h-5" style={{ color: textPrimary }} /> : <Sun className="w-5 h-5" style={{ color: textPrimary }} />}
                             </button>
 
                             <button className={`p-2.5 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}><Bell className="w-5 h-5" style={{ color: textPrimary }} /></button>
@@ -287,7 +285,7 @@ export default function MainLayout() {
             </div>
 
             {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro ? 'var(--cor-fundo)' : '#0F172A' }}>
+                <div className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-semibold" style={{ color: textPrimary }}>Pesquisar</h2>
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
@@ -302,7 +300,7 @@ export default function MainLayout() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar no menu..."
                             className={`w-full pl-12 pr-4 py-3.5 ${bgCard} ${borderCard} rounded-xl focus:outline-none`}
-                            style={{ borderColor: searchQuery ? corPrimaria : '', color: textPrimary }}
+                            style={{ borderColor: searchQuery? corPrimaria : '', color: textPrimary }}
                         />
                     </div>
                     <div className={`flex-1 overflow-y-auto ${cardClass} p-2`}>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
     }
 })
 
-// 👇 Aplica o tema salvo no localStorage assim que carrega
+// 👇 Aplica o tema salvo no localStorage
 const applySavedTheme = () => {
     const t = localStorage.getItem('escola_tema')
     if (!t) return
@@ -45,7 +45,19 @@ const applySavedTheme = () => {
         console.error("Erro ao aplicar tema salvo", e)
     }
 }
-applySavedTheme() // 👈 roda antes de renderizar pra não piscar
+
+// 👇 Componente pra escutar mudança de tema sem F5
+const ThemeListener = () => {
+    useEffect(() => {
+        applySavedTheme() // aplica na primeira carga
+
+        const handleTemaUpdated = () => applySavedTheme()
+        window.addEventListener('escola-tema-updated', handleTemaUpdated)
+
+        return () => window.removeEventListener('escola-tema-updated', handleTemaUpdated)
+    }, [])
+    return null
+}
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuth = authService.isAuthenticated()
@@ -70,6 +82,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
             <Toaster position="top-center" richColors />
+            <ThemeListener /> {/* 👈 Adiciona aqui pra escutar o tema */}
             <HashRouter>
                 <Routes>
                     <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />

@@ -44,14 +44,14 @@ export default function EscolaListPage() {
                 </h1>
                 <Button
                     onClick={() => { }} // 👈 VAZIO POR ENQUANTO
-                    className="font-semibold hover:opacity-90 transition"
+                    className="h-11 px-5 font-semibold hover:opacity-90 transition"
                     style={{
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
                         color: 'white',
-                        borderRadius: estiloCard === 'quadrado' ? '0.5rem' : estiloCard === 'minimalista' ? '0.25rem' : '0.75rem'
+                        borderRadius: estiloCard === 'quadrado'? '0.5rem' : estiloCard === 'minimalista'? '0.25rem' : '0.75rem'
                     }}
                 >
-                    <Plus className="mr-2 h-4 w-4" /> Nova Escola
+                    <Plus className="mr-2 h-4 w-4 text-white" /> Nova Escola
                 </Button>
             </div>
 

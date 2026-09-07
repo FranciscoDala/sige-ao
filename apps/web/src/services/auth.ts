@@ -3,7 +3,7 @@ export interface UserData {
     email: string;
     nome: string;
     escola_id?: string | null
-    escola_nome?: string // 👈 NOVO: pra mostrar no header
+    escola_nome?: string // 👈 pra mostrar no header
     nivel: string
 }
 
@@ -14,8 +14,8 @@ export const authService = {
         const userToSave: UserData = {
            ...data.user,
             nivel: nivel,
-            escola_id: data.user?.escola_id ?? data.user?.escola?.id ?? undefined, // 👈 PEGA DOS 2 LUGARES
-            escola_nome: data.user?.escola?.nome ?? undefined // 👈 SALVA O NOME PRA HEADER
+            escola_id: data.user?.escola_id ?? data.user?.escola?.id ?? data.escola_id ?? undefined,
+            escola_nome: data.user?.escola?.nome ?? data.escola_nome ?? undefined // 👈 PEGA DE MAIS LUGARES
         }
 
         localStorage.setItem('access_token', data.access_token)
@@ -23,8 +23,9 @@ export const authService = {
         localStorage.setItem('user', JSON.stringify(userToSave))
 
         // 👇 SE VIER TEMA DO LOGIN, SALVA TAMBEM
-        if (data.user?.escola) {
-            localStorage.setItem('escola_tema', JSON.stringify(data.user.escola))
+        const escolaData = data.user?.escola || data.escola // 👈 aceita dos 2 jeitos
+        if (escolaData) {
+            localStorage.setItem('escola_tema', JSON.stringify(escolaData))
             window.dispatchEvent(new Event('escola-tema-updated')) // 👈 APLICA NA HORA NO LOGIN
         }
     },

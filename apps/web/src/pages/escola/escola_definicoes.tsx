@@ -32,7 +32,6 @@ const FONTE_OPTIONS: Option[] = [
     { value: 'Open Sans', label: 'Open Sans' },
 ]
 
-// 👇 NOVA LISTA DE ESTILOS DE CARD
 const ESTILO_CARD_OPTIONS: Option[] = [
     { value: 'arredondado', label: 'Arredondado' },
     { value: 'quadrado', label: 'Quadrado' },
@@ -58,23 +57,23 @@ export default function DefinicoesEscolaPage() {
         email: '', telefone: '', endereco: '', provincia: '', municipio: '',
         logo_url: '', banner_url: '', favicon_url: '',
         cor_primaria: '#0056b3', cor_secundaria: '#FFC107', cor_fundo: '#FFFFFF',
-        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado', // 👈 default
+        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado',
         permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
 
     const getAuthHeader = (isJson = true) => ({
         'Authorization': `Bearer ${authService.getToken()}`,
-        ...(isJson ? { 'Content-Type': 'application/json' } : {})
+       ...(isJson? { 'Content-Type': 'application/json' } : {})
     })
 
     const corPrimaria = form.cor_primaria
     const corSecundaria = form.cor_secundaria
     const isClaro = form.tema === 'claro'
-    const textPrimary = isClaro ? '#1E293B' : 'white'
-    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro ? 'bg-black/5' : 'bg-white/5'
-    const borderCard = isClaro ? 'border-black/10' : 'border-white/10'
-    const hoverBg = isClaro ? 'hover:bg-black/5' : 'hover:bg-white/10'
+    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro? 'bg-black/5' : 'bg-white/5'
+    const borderCard = isClaro? 'border-black/10' : 'border-white/10'
+    const hoverBg = isClaro? 'hover:bg-black/5' : 'hover:bg-white/10'
 
     useEffect(() => {
         const fetchEscola = async () => {
@@ -82,14 +81,14 @@ export default function DefinicoesEscolaPage() {
                 const res = await fetch(`${API_URL}/escolas/me`, { headers: getAuthHeader() })
                 if (!res.ok) throw new Error('Erro ao carregar dados')
                 const data = await res.json()
-                const escolaData: EscolaForm = { ...form, ...data }
+                const escolaData: EscolaForm = {...form,...data }
                 setForm(escolaData)
                 setLogoPreview(escolaData.logo_url)
                 setBannerPreview(escolaData.banner_url)
                 setFaviconPreview(escolaData.favicon_url)
                 const userAtual = authService.getUser()
                 if (userAtual && escolaData.nome) {
-                    localStorage.setItem('user', JSON.stringify({ ...userAtual, escola_nome: escolaData.nome }))
+                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
                     window.dispatchEvent(new Event('user-updated'))
                 }
             } catch (error: any) {
@@ -103,13 +102,13 @@ export default function DefinicoesEscolaPage() {
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
-        setForm(prev => ({ ...prev, [key]: value }))
+        setForm(prev => ({...prev, [key]: value }))
     }
 
     const handleFileChange = (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            const maxSize = type === 'favicon' ? 1 * 1024 * 1024 : 5 * 1024 * 1024
+            const maxSize = type === 'favicon'? 1 * 1024 * 1024 : 5 * 1024 * 1024
             if (file.size > maxSize) {
                 toast.error(`Arquivo muito grande. Máximo ${maxSize / 1024 / 1024}MB`)
                 return
@@ -131,10 +130,10 @@ export default function DefinicoesEscolaPage() {
                 nome: clean(form.nome), sigla: clean(form.sigla), nif: clean(form.nif), email: clean(form.email),
                 telefone: clean(form.telefone), endereco: clean(form.endereco), provincia: clean(form.provincia), municipio: clean(form.municipio),
                 cor_primaria: form.cor_primaria, cor_secundaria: form.cor_secundaria, cor_fundo: form.cor_fundo, tema: form.tema,
-                fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card, // 👈 JÁ ESTÁ MANDANDO
+                fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card,
                 permitir_auto_cadastro: form.permitir_auto_cadastro, usar_modulo_propina: form.usar_modulo_propina, usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
-            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== null && v !== ''))
+            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v!== undefined && v!== null && v!== ''))
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -158,7 +157,7 @@ export default function DefinicoesEscolaPage() {
             if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner', 'file')
             if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon', 'file')
 
-            const escolaData: EscolaForm = { ...form, ...updatedData }
+            const escolaData: EscolaForm = {...form,...updatedData }
             setForm(escolaData)
             setLogoPreview(escolaData.logo_url)
             setBannerPreview(escolaData.banner_url)
@@ -198,10 +197,10 @@ export default function DefinicoesEscolaPage() {
                     className="w-full lg:w-auto h-11 px-5 text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] transition"
                     style={{
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
-                        borderRadius: form.estilo_card === 'quadrado' ? '0.5rem' : form.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem'
+                        borderRadius: form.estilo_card === 'quadrado'? '0.5rem' : form.estilo_card === 'minimalista'? '0.25rem' : '0.75rem'
                     }}
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {loading ? 'Salvando...' : 'Salvar Definições'}
+                    {loading? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Save className="w-5 h-5 text-white" />} {loading? 'Salvando...' : 'Salvar Definições'}
                 </button>
             </div>
 
@@ -216,11 +215,11 @@ export default function DefinicoesEscolaPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition flex-shrink-0`}
                                 style={{
-                                    backgroundColor: isActive ? `${corPrimaria}33` : 'transparent',
-                                    color: isActive ? corPrimaria : textSecondary
+                                    backgroundColor: isActive? `${corPrimaria}33` : 'transparent',
+                                    color: isActive? 'white' : textSecondary // 👈 CORRIGIDO: ativo agora é branco
                                 }}
                             >
-                                <Icon className="w-4 h-4" />{tab.label}
+                                <Icon className="w-4 h-4" style={{ color: isActive? 'white' : textSecondary }} />{tab.label}
                             </button>
                         )
                     })}
@@ -271,7 +270,6 @@ export default function DefinicoesEscolaPage() {
                             <CustomSelect label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                             <CustomSelect label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                             <CustomSelect label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
-                            {/* 👇 SELECT DE ESTILO DE CARD ADICIONADO */}
                             <CustomSelect label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                         </div>
                     </div>
@@ -292,14 +290,14 @@ export default function DefinicoesEscolaPage() {
                         <div className={`p-4 ${bgCard} ${borderCard} rounded-xl`}>
                             <p style={{ color: textSecondary }}>Área para configurações futuras: API Keys, Webhooks, Integrações.</p>
                         </div>
-                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo', !v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
+                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo',!v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
                     </div>
                 )}
             </div>
 
             <style>{`
-            .scrollbar-hide::-webkit-scrollbar { display: none; }
-            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+           .scrollbar-hide::-webkit-scrollbar { display: none; }
+           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
     )
@@ -312,7 +310,7 @@ const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
             {icon && <div className="absolute left-4 top-3.5" style={{ color: textColor }}>{icon}</div>}
-            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon ? 'pl-12' : 'px-4'} py-3 ${bg} ${border} rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)} className={`w-full ${icon? 'pl-12' : 'px-4'} py-3 ${bg} ${border} rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed`}
                 style={{ color: textColor, boxShadow: `0 0 0 2px ${cor}20` }} />
         </div>
     </div>
@@ -323,22 +321,22 @@ const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textCo
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const selected = options.find(o => o.value === value)
-    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
+    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current &&!ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
 
     return (
         <div ref={ref} className="relative">
             <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
             <button type="button" onClick={() => setOpen(!open)} className={`w-full px-4 py-3 ${bg} ${border} rounded-xl flex items-center justify-between text-left transition`} style={{ color: textColor }}>
                 <span>{selected?.label || 'Selecione'}</span>
-                <ChevronDown className={`w-5 h-5 transition ${open ? 'rotate-180' : ''}`} style={{ color: textColor }} />
+                <ChevronDown className={`w-5 h-5 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
             {open && (
-                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro ? '#FFFFFF' : '#1A1A1A', borderColor: isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
+                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }}>
                     <div className="max-h-60 overflow-y-auto">
                         {options.map(opt => (
                             <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
                                 className={`w-full text-left px-4 py-3 transition hover:bg-black/5`}
-                                style={{ color: value === opt.value ? cor : textColor, backgroundColor: value === opt.value ? `${cor}20` : 'transparent' }}>
+                                style={{ color: value === opt.value? cor : textColor, backgroundColor: value === opt.value? `${cor}20` : 'transparent' }}>
                                 {opt.label}
                             </button>
                         ))}
@@ -367,8 +365,8 @@ const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textCo
             <p className="font-medium" style={{ color: textColor }}>{label}</p>
             {description && <p className="text-sm" style={{ color: textSecondary }}>{description}</p>}
         </div>
-        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition`} style={{ backgroundColor: checked ? cor : 'rgba(128,128,128,0.3)' }}>
-            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}></div>
+        <button onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition`} style={{ backgroundColor: checked? cor : 'rgba(128,128,128,0.3)' }}>
+            <div className={`w-5 h-5 bg-white rounded-full transition-transform ${checked? 'translate-x-6' : 'translate-x-1'}`}></div>
         </button>
     </div>
 )
@@ -378,10 +376,10 @@ const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6',
     <div>
         <label className="text-sm font-medium mb-2 block" style={{ color: textColor }}>{label}</label>
         <div className={`flex flex-col items-center gap-3 p-4 ${bg} ${border} rounded-xl`}>
-            {currentUrl ? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg ${bg} border-dashed ${border} flex items-center justify-center flex-shrink-0`}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
+            {currentUrl? <img src={currentUrl} alt={label} className="w-20 h-20 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-20 h-20 rounded-lg ${bg} border-dashed ${border} flex items-center justify-center flex-shrink-0`}><ImageIcon className="w-8 h-8 text-gray-500" /></div>}
             <div className="flex-1 w-full text-center">
                 <label className="w-full px-4 py-2.5 rounded-lg font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition hover:opacity-90" style={{ backgroundColor: `${cor}20`, color: cor }}>
-                    <Upload className="w-4 h-4" /> {fileName ? 'Trocar' : 'Selecionar'}
+                    <Upload className="w-4 h-4" /> {fileName? 'Trocar' : 'Selecionar'}
                     <input type="file" accept="image/*" onChange={onFileSelect} className="hidden" />
                 </label>
                 <p className="text-xs mt-2 truncate" style={{ color: textColor }}>{fileName || 'Nenhum ficheiro'}</p>
