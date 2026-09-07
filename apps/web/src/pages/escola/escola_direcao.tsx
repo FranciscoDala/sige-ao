@@ -13,7 +13,6 @@ api.interceptors.request.use((config) => {
 type NivelEnsino = 'PRIMARIO' | 'I_CICLO' | 'II_CICLO' | 'COMPLEXO' | 'MEDIO_TECNICO' | 'SUPERIOR'
 type Tab = { id: string; label: string; icon: any }
 
-// Regras por nível
 const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
     PRIMARIO: [
         { id: 'turmas', label: 'Turmas', icon: Users },
@@ -76,7 +75,6 @@ export default function EscolaDirecaoPage() {
                 const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO
                 setTabs(tabsDoNivel)
 
-                // 👇 Pega aba salva ou usa a primeira do nível
                 const savedTab = localStorage.getItem(STORAGE_KEY)
                 const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
                 setActiveTab(isValidTab ? savedTab! : tabsDoNivel[0].id)
@@ -90,7 +88,6 @@ export default function EscolaDirecaoPage() {
         fetchNivel()
     }, [])
 
-    // 👇 Salva aba sempre que mudar
     useEffect(() => {
         if (!loading) {
             localStorage.setItem(STORAGE_KEY, activeTab)
@@ -104,10 +101,6 @@ export default function EscolaDirecaoPage() {
     const textSecondary = 'var(--text-secondary)'
     const bgCard = 'var(--bg-card, rgba(255,255,255,0.05))'
 
-    const handleTabChange = (tabId: string) => {
-        setActiveTab(tabId)
-    }
-
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -120,7 +113,8 @@ export default function EscolaDirecaoPage() {
                     </p>
                 </div>
             </div>
-            {/* Tabs com background */}
+
+            {/* Tabs */}
             <div className="w-full">
                 <div
                     className="flex gap-2 p-1 rounded-xl overflow-x-auto scrollbar-hide"
@@ -135,11 +129,11 @@ export default function EscolaDirecaoPage() {
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => handleTabChange(tab.id)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition whitespace-nowrap flex-shrink-0 ${!isActive ? 'shadow-sm' : ''}`}
                                 style={{
-                                    backgroundColor: isActive ? corPrimaria : 'transparent', // 👈 transparente se inativo
-                                    color: isActive ? 'white' : textSecondary
+                                    backgroundColor: isActive? corPrimaria : 'transparent', // 👈 transparente
+                                    color: isActive? 'white' : textSecondary
                                 }}
                             >
                                 <Icon className="w-4 h-4" />
@@ -148,8 +142,8 @@ export default function EscolaDirecaoPage() {
                         )
                     })}
                 </div>
-                {/* Linha de baixo com opacidade menor */}
-                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: `${corPrimaria}4D` }} /> {/* 👈 30% opacity */}
+                {/* Linha de baixo voltou com opacidade 15% */}
+                <div className="h-0.5 w-full mt-1 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} /> {/* 👈 15% opacity */}
             </div>
 
             {/* Conteúdo da Tab */}
@@ -163,7 +157,6 @@ export default function EscolaDirecaoPage() {
             </div>
 
             <style>{`
-                /* Esconde scrollbar no mobile */
                .scrollbar-hide::-webkit-scrollbar { display: none; }
                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
