@@ -250,7 +250,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                     </div>
 
                     {/* FOOTER LADO A LADO NO DESKTOP */}
-                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-3 shrink-0 bg-[#0F172A]/90">
+                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-3 shrink-0 bg-[#0F172A]/90">
                         <button type="button" onClick={onClose} className="w-full sm:w-auto sm:flex-1 px-6 h-10 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition text-sm order-2 sm:order-1">
                             Cancelar
                         </button>
