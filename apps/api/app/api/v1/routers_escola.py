@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
-
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, or_
 from typing import List, Optional
 from uuid import UUID
 import logging
@@ -11,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.db.database import get_db
 from app.models.models_escola import Escola, NivelEnsino
-from app.schemas.schemas_escola import EscolaResponse, EscolaCreate, EscolaUpdate
+from app.schemas.schemas_escola import EscolaCreate, EscolaResponse, EscolaUpdate
 from app.core.security import get_current_user
 from app.cloudinaryUploads import upload_to_cloudinary
 
@@ -21,68 +20,100 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/escolas", tags=["Escolas"])
 
-def check_ministerio(current_user: dict):
-    if current_user["nivel"]!= "MINISTERIO":
-        raise HTTPException(status_code=403, detail="Apenas MINISTERIO pode fazer isso")
 
-def check_diretor_ou_ministerio(current_user: dict = Depends(get_current_user)):
-    if current_user["nivel"] not in ["MINISTERIO", "DIRETOR", "DIRECAO"]:
-        raise HTTPException(status_code=403, detail="Sem permissao")
+def require_ministerio(current_user: dict):
+    if current_user.get("nivel") != "MINISTERIO":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas MINISTERIO pode fazer isso"
+        )
     return current_user
+
+
+def require_diretor_ou_ministerio(current_user: dict = Depends(get_current_user)):
+    if current_user.get("nivel") not in {"MINISTERIO", "DIRETOR", "DIRECAO"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sem permissão"
+        )
+    return current_user
+
 
 def get_escola_do_usuario(current_user: dict) -> UUID:
     if not current_user:
-        raise HTTPException(status_code=401, detail="Token invalido ou expirado. Faca login novamente")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido ou expirado. Faça login novamente"
+        )
 
     escola_id = current_user.get("escola_id")
     if not escola_id:
-        raise HTTPException(status_code=403, detail="Usuario nao vinculado a nenhuma escola")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuário não vinculado a nenhuma escola"
+        )
+
     try:
         return UUID(str(escola_id))
     except Exception:
-        raise HTTPException(status_code=422, detail="escola_id invalido no token")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="escola_id inválido no token"
+        )
+
 
 @router.get("", response_model=List[EscolaResponse])
 @router.get("/", response_model=List[EscolaResponse])
 async def listar_escolas(
     ativo: Optional[bool] = None,
-    nivel_ensino: Optional[NivelEnsino] = Query(None, description="Filtrar por nível de ensino"),
-    search: Optional[str] = Query(None, description="Busca por nome, sigla, provincia"),
-    db: AsyncSession = Depends(get_db)
+    nivel_ensino: Optional[NivelEnsino] = Query(
+        default=None,
+        description="Filtrar por nível de ensino"
+    ),
+    search: Optional[str] = Query(
+        default=None,
+        description="Busca por nome, sigla, província ou município"
+    ),
+    db: AsyncSession = Depends(get_db),
 ):
     query = select(Escola).order_by(Escola.nome)
+
     if ativo is not None:
         query = query.where(Escola.ativo == ativo)
-    if nivel_ensino:
+
+    if nivel_ensino is not None:
         query = query.where(Escola.nivel_ensino == nivel_ensino)
 
     if search:
-        search_term = f"%{search}%"
+        term = f"%{search}%"
         query = query.where(
             or_(
-                Escola.nome.ilike(search_term),
-                Escola.sigla.ilike(search_term),
-                Escola.provincia.ilike(search_term),
-                Escola.municipio.ilike(search_term)
+                Escola.nome.ilike(term),
+                Escola.sigla.ilike(term),
+                Escola.provincia.ilike(term),
+                Escola.municipio.ilike(term),
             )
         )
 
     result = await db.execute(query)
     return result.scalars().all()
 
-# 👇 ROTAS FIXAS TEM QUE VIR ANTES DAS ROTAS COM {id}
+
+# ROTAS FIXAS DEVEM VIR ANTES DAS ROTAS COM {id}
 @router.get("/me")
 async def obter_minha_escola(
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
 
     if not escola:
-        # 👇 MUDEI DE 404 PARA 401. Isso força o front a deslogar
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     data = {
         "id": str(escola.id),
@@ -111,32 +142,40 @@ async def obter_minha_escola(
         "usar_modulo_biblioteca": escola.usar_modulo_biblioteca,
         "config_json": escola.config_json,
         "ativo": escola.ativo,
-        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
+        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None,
     }
     return JSONResponse(content=data)
+
 
 @router.put("/me/definicoes")
 async def atualizar_definicoes_escola(
     dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(check_diretor_ou_ministerio)
+    current_user: dict = Depends(require_diretor_ou_ministerio),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente") # 👈 MUDEI TAMBEM
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     update_data = dados.model_dump(exclude_unset=True)
 
-    if 'nivel_ensino' in update_data and isinstance(update_data['nivel_ensino'], str):
+    if "nivel_ensino" in update_data and isinstance(update_data["nivel_ensino"], str):
         try:
-            update_data['nivel_ensino'] = NivelEnsino(update_data['nivel_ensino'])
+            update_data["nivel_ensino"] = NivelEnsino(update_data["nivel_ensino"])
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Nivel de ensino invalido: {update_data['nivel_ensino']}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nível de ensino inválido: {update_data['nivel_ensino']}"
+            )
 
-    CAMPOS_BLOQUEADOS = ['id', 'id_curto', 'nivel_ensino', 'ativo', 'criado_em']
-    for campo in CAMPOS_BLOQUEADOS:
+    campos_bloqueados = ["id", "id_curto", "ativo", "criado_em"]
+    for campo in campos_bloqueados:
         update_data.pop(campo, None)
 
     for key, value in update_data.items():
@@ -174,38 +213,49 @@ async def atualizar_definicoes_escola(
         "usar_modulo_biblioteca": escola.usar_modulo_biblioteca,
         "config_json": escola.config_json,
         "ativo": escola.ativo,
-        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None
+        "criado_em": escola.criado_em.isoformat() if escola.criado_em else None,
     }
     return JSONResponse(content=data)
+
 
 @router.put("/me/tema")
 async def atualizar_tema_escola(
     payload: dict,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(check_diretor_ou_ministerio)
+    current_user: dict = Depends(require_diretor_ou_ministerio),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente") # 👈 MUDEI
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     escola.tema = payload.get("tema", "claro")
     await db.commit()
     await db.refresh(escola)
+
     return {"tema": escola.tema}
+
 
 @router.post("/me/logo", response_model=EscolaResponse)
 async def upload_minha_logo(
     logo: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente") # 👈 MUDEI
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
     escola.logo_url = upload_data["optimized_url"]
@@ -213,17 +263,22 @@ async def upload_minha_logo(
     await db.refresh(escola)
     return escola
 
+
 @router.post("/me/banner", response_model=EscolaResponse)
 async def upload_meu_banner(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente") # 👈 MUDEI
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     upload_data = await upload_to_cloudinary(file, folder=f"escolas/{escola_id}/banner")
     escola.banner_url = upload_data["optimized_url"]
@@ -231,17 +286,22 @@ async def upload_meu_banner(
     await db.refresh(escola)
     return escola
 
+
 @router.post("/me/favicon", response_model=EscolaResponse)
 async def upload_meu_favicon(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     escola_id = get_escola_do_usuario(current_user)
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=401, detail="Escola vinculada nao existe mais. Faca login novamente") # 👈 MUDEI
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Escola vinculada não existe mais. Faça login novamente"
+        )
 
     upload_data = await upload_to_cloudinary(file, folder=f"escolas/{escola_id}/favicon")
     escola.favicon_url = upload_data["optimized_url"]
@@ -249,51 +309,77 @@ async def upload_meu_favicon(
     await db.refresh(escola)
     return escola
 
+
 @router.get("/search/global")
 async def search_global(
     q: str = Query(..., min_length=2, description="Termo de pesquisa"),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     search_term = f"%{q}%"
-    query_escolas = select(Escola).where(
-        or_(
-            Escola.nome.ilike(search_term),
-            Escola.sigla.ilike(search_term),
-            Escola.provincia.ilike(search_term)
+
+    query_escolas = (
+        select(Escola)
+        .where(
+            or_(
+                Escola.nome.ilike(search_term),
+                Escola.sigla.ilike(search_term),
+                Escola.provincia.ilike(search_term),
+            )
         )
-    ).limit(5)
+        .limit(5)
+    )
+
     result_escolas = await db.execute(query_escolas)
     escolas = result_escolas.scalars().all()
 
     return {
         "escolas": [
-            {"id": str(e.id), "nome": e.nome, "provincia": e.provincia, "logo_url": e.logo_url, "nivel_ensino": e.nivel_ensino.value}
+            {
+                "id": str(e.id),
+                "nome": e.nome,
+                "provincia": e.provincia,
+                "logo_url": e.logo_url,
+                "nivel_ensino": e.nivel_ensino.value if e.nivel_ensino else None,
+            }
             for e in escolas
         ],
-        "usuarios": []
+        "usuarios": [],
     }
 
-# ☝️ FIM DAS ROTAS FIXAS
+
+# FIM DAS ROTAS FIXAS
+
 
 @router.get("/{escola_id}", response_model=EscolaResponse)
-async def obter_escola(escola_id: UUID, db: AsyncSession = Depends(get_db)):
+async def obter_escola(
+    escola_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
-    if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
+
+    if not escola:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escola não encontrada")
+
     return escola
 
-@router.post("", response_model=EscolaResponse, status_code=201)
-@router.post("/", response_model=EscolaResponse, status_code=201)
+
+@router.post("", response_model=EscolaResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=EscolaResponse, status_code=status.HTTP_201_CREATED)
 async def criar_escola(
     dados: EscolaCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    check_ministerio(current_user)
+    require_ministerio(current_user)
+
     result = await db.execute(select(Escola).where(Escola.id_curto == dados.id_curto))
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Já existe uma escola com este id_curto")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Já existe uma escola com este id_curto"
+        )
 
     id_curto = dados.id_curto or f"ESC{str(uuid.uuid4().int)[:3]}"
 
@@ -323,27 +409,32 @@ async def criar_escola(
         id_curto=id_curto,
         logo_url=dados.logo_url,
         banner_url=dados.banner_url,
-        favicon_url=dados.favicon_url
+        favicon_url=dados.favicon_url,
     )
+
     db.add(nova_escola)
     await db.commit()
     await db.refresh(nova_escola)
     return nova_escola
+
 
 @router.put("/{escola_id}", response_model=EscolaResponse)
 async def atualizar_escola(
     escola_id: UUID,
     dados: EscolaUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    check_ministerio(current_user)
+    require_ministerio(current_user)
+
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=404, detail="Escola não encontrada")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escola não encontrada")
 
     update_data = dados.model_dump(exclude_unset=True)
+
     for key, value in update_data.items():
         setattr(escola, key, value)
 
@@ -351,18 +442,21 @@ async def atualizar_escola(
     await db.refresh(escola)
     return escola
 
+
 @router.post("/{escola_id}/logo", response_model=EscolaResponse)
 async def upload_logo_escola(
     escola_id: UUID,
     logo: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    check_ministerio(current_user)
+    require_ministerio(current_user)
+
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
+
     if not escola:
-        raise HTTPException(status_code=404, detail="Escola não encontrada")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escola não encontrada")
 
     upload_data = await upload_to_cloudinary(logo, folder=f"escolas/{escola_id}/logos")
     escola.logo_url = upload_data["optimized_url"]
@@ -370,20 +464,28 @@ async def upload_logo_escola(
     await db.refresh(escola)
     return escola
 
-@router.delete("/{escola_id}", status_code=204)
-async def deletar_escola(escola_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    check_ministerio(current_user)
+
+@router.delete("/{escola_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def deletar_escola(
+    escola_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    require_ministerio(current_user)
+
     result = await db.execute(select(Escola).where(Escola.id == escola_id))
     escola = result.scalar_one_or_none()
-    if not escola: raise HTTPException(status_code=404, detail="Escola não encontrada")
+
+    if not escola:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escola não encontrada")
 
     if escola.logo_url and "cloudinary.com" in escola.logo_url:
         try:
             public_id = escola.logo_url.split("/upload/")[-1].rsplit(".", 1)[0]
             cloudinary.uploader.destroy(public_id, resource_type="image")
-            logger.info(f"Logo apagada do cloudinary: {public_id}")
+            logger.info(f"Logo apagada do Cloudinary: {public_id}")
         except Exception as e:
-            logger.warning(f"Erro ao apagar logo do cloudinary: {e}")
+            logger.warning(f"Erro ao apagar logo do Cloudinary: {e}")
 
     await db.delete(escola)
     await db.commit()

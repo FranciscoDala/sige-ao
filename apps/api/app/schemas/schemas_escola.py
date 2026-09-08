@@ -1,24 +1,29 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Literal, Union, Any
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from typing import Any, Literal, Optional, Union
 from datetime import datetime
 from uuid import UUID
+
 from app.models.models_escola import NivelAcesso, NivelEnsino
+
 
 # ================== ESCOLA ==================
 class EscolaBase(BaseModel):
-    """Base para Response. Tudo opcional pra não quebrar se vier null do DB"""
     nome: str = Field(..., min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
-    id_curto: Optional[str] = Field(None, min_length=3, max_length=10, description="Código único da escola ex: ESC001")
+    id_curto: Optional[str] = Field(
+        None,
+        min_length=3,
+        max_length=10,
+        description="Código único da escola ex: ESC001"
+    )
     nif: Optional[str] = Field(None, max_length=50)
-    nivel_ensino: Optional[NivelEnsino] = Field(None)
+    nivel_ensino: Optional[NivelEnsino] = None
     endereco: Optional[str] = Field(None, max_length=500)
     telefone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = None
     provincia: Optional[str] = Field(None, max_length=50)
     municipio: Optional[str] = Field(None, max_length=50)
 
-    # BRANDING
     cor_primaria: Optional[str] = "#3B82F6"
     cor_secundaria: Optional[str] = "#8B5CF6"
     cor_fundo: Optional[str] = "#FFFFFF"
@@ -30,16 +35,14 @@ class EscolaBase(BaseModel):
     banner_url: Optional[str] = None
     favicon_url: Optional[str] = None
 
-    # CONFIG
     permitir_auto_cadastro: Optional[bool] = False
     usar_modulo_propina: Optional[bool] = True
     usar_modulo_biblioteca: Optional[bool] = False
-    config_json: Optional[dict[str, Any]] = {} # 👈 tipado melhor
+    config_json: Optional[dict[str, Any]] = None
     ativo: Optional[bool] = True
 
 
-class EscolaCreate(BaseModel): # 👈 NÃO HERDA
-    """Create: só o que é obrigatório pra criar"""
+class EscolaCreate(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
     id_curto: str = Field(..., min_length=3, max_length=10)
     nivel_ensino: NivelEnsino = Field(default=NivelEnsino.PRIMARIO)
@@ -51,6 +54,7 @@ class EscolaCreate(BaseModel): # 👈 NÃO HERDA
     email: Optional[EmailStr] = None
     provincia: Optional[str] = Field(None, max_length=50)
     municipio: Optional[str] = Field(None, max_length=50)
+
     cor_primaria: Optional[str] = "#3B82F6"
     cor_secundaria: Optional[str] = "#8B5CF6"
     cor_fundo: Optional[str] = "#FFFFFF"
@@ -61,15 +65,15 @@ class EscolaCreate(BaseModel): # 👈 NÃO HERDA
     logo_url: Optional[str] = None
     banner_url: Optional[str] = None
     favicon_url: Optional[str] = None
+
     permitir_auto_cadastro: Optional[bool] = False
     usar_modulo_propina: Optional[bool] = True
     usar_modulo_biblioteca: Optional[bool] = False
-    config_json: Optional[dict[str, Any]] = {}
+    config_json: Optional[dict[str, Any]] = None
     ativo: Optional[bool] = True
 
 
-class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
-    """Update: tudo opcional"""
+class EscolaUpdate(BaseModel):
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
     sigla: Optional[str] = Field(None, max_length=10)
     id_curto: Optional[str] = Field(None, min_length=3, max_length=10)
@@ -80,6 +84,7 @@ class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
     email: Optional[EmailStr] = None
     provincia: Optional[str] = None
     municipio: Optional[str] = None
+
     cor_primaria: Optional[str] = None
     cor_secundaria: Optional[str] = None
     cor_fundo: Optional[str] = None
@@ -90,6 +95,7 @@ class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
     logo_url: Optional[str] = None
     banner_url: Optional[str] = None
     favicon_url: Optional[str] = None
+
     permitir_auto_cadastro: Optional[bool] = None
     usar_modulo_propina: Optional[bool] = None
     usar_modulo_biblioteca: Optional[bool] = None
@@ -97,7 +103,7 @@ class EscolaUpdate(BaseModel): # 👈 NÃO HERDA
     ativo: Optional[bool] = None
 
 
-class EscolaResponse(BaseModel): # 👈 NÃO HERDA MAIS DO BASE
+class EscolaResponse(BaseModel):
     id: UUID
     nome: Optional[str] = None
     sigla: Optional[str] = None
@@ -125,9 +131,8 @@ class EscolaResponse(BaseModel): # 👈 NÃO HERDA MAIS DO BASE
     config_json: Optional[dict[str, Any]] = None
     ativo: Optional[bool] = None
     criado_em: Optional[datetime] = None
+
     model_config = ConfigDict(from_attributes=True)
-
-
 
 
 # ================== USUARIO ==================
@@ -138,13 +143,17 @@ class UsuarioBase(BaseModel):
     foto_url: Optional[str] = None
     ativo: bool = True
 
+
 class UsuarioCreate(UsuarioBase):
     senha: str = Field(..., min_length=6)
+
 
 class UsuarioResponse(UsuarioBase):
     id: UUID
     criado_em: datetime
+
     model_config = ConfigDict(from_attributes=True)
+
 
 # ================== CRIAR USUARIO COM VINCULO ==================
 class UsuarioVinculoCreate(BaseModel):
@@ -157,6 +166,7 @@ class UsuarioVinculoCreate(BaseModel):
     aluno_id: Optional[UUID] = None
     professor_id: Optional[UUID] = None
 
+
 class UsuarioUpdate(BaseModel):
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
     email: Optional[EmailStr] = None
@@ -166,6 +176,7 @@ class UsuarioUpdate(BaseModel):
     nivel: Optional[NivelAcesso] = None
     escola_id: Optional[Union[UUID, str]] = None
 
+
 class UsuarioVinculoResponse(BaseModel):
     id: UUID
     nome: str
@@ -173,12 +184,14 @@ class UsuarioVinculoResponse(BaseModel):
     telefone: Optional[str] = None
     ativo: bool
     criado_em: datetime
-    nivel: NivelAcesso
+    nivel: str
     escola_id: Optional[Union[UUID, str]] = None
-    perfil: Literal['super_admin', 'admin', 'diretor', 'suporte', 'aluno', 'encarregado']
+    perfil: Literal["super_admin", "admin", "diretor", "suporte", "aluno", "encarregado"]
     departamento: Optional[str] = None
     escola: Optional[EscolaResponse] = None
+
     model_config = ConfigDict(from_attributes=True)
+
 
 # ================== AUTH / LOGIN ==================
 class LoginRequest(BaseModel):
@@ -186,12 +199,14 @@ class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
 
+
 class UserInToken(BaseModel):
     id: UUID
     email: EmailStr
     nome: str
     nivel: str
     escola_id: Optional[Union[UUID, str]] = None
+
 
 class TokenResponse(BaseModel):
     access_token: str
