@@ -80,7 +80,7 @@ export default function AdminLayout() {
             try {
                 const res = await api.get(`/escolas/search/global?q=${searchQuery}`)
                 const results: SearchResult[] = [
-                   ...res.data.escolas?.map((e: any) => ({
+                  ...res.data.escolas?.map((e: any) => ({
                         id: e.id,
                         nome: e.nome,
                         sub: e.provincia,
@@ -88,7 +88,7 @@ export default function AdminLayout() {
                         type: 'Escola' as const,
                         Icon: Building2
                     })) || [],
-                   ...res.data.usuarios?.map((u: any) => ({
+                  ...res.data.usuarios?.map((u: any) => ({
                         id: u.id,
                         nome: u.nome,
                         sub: u.email,
@@ -96,7 +96,7 @@ export default function AdminLayout() {
                         type: 'Usuário' as const,
                         Icon: User
                     })) || [],
-                   ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
+                  ...menuItems.filter(m => m.label.toLowerCase().includes(searchQuery.toLowerCase())).map(m => ({
                         id: m.path,
                         nome: m.label,
                         path: m.path,
@@ -117,54 +117,49 @@ export default function AdminLayout() {
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] relative flex overflow-x-hidden">
-            <div className="fixed top-0 left-1/4 w-80 h-80 bg-[#3B82F6]/20 rounded-full blur-[120px] -z-10"></div>
-            <div className="fixed bottom-0 right-1/4 w-80 h-80 bg-[#8B5CF6]/20 rounded-full blur-[120px] -z-10"></div>
+            <div className="fixed top-0 left-1/4 w-96 h-96 bg-[#3B82F6]/20 rounded-full blur-[120px] -z-10"></div>
+            <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-[#8B5CF6]/20 rounded-full blur-[120px] -z-10"></div>
 
             {isMobileMenuOpen && <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-            {/* SIDEBAR MAIS FINA: max-w-[280px] -> [260px] e lg:w-[260px] -> [240px] */}
+            {/* SIDEBAR COMPACTA: max-w-[280px] -> [260px] lg:w-[260px] -> [240px] | p-4 -> p-3 | mb-8 -> mb-6 */}
             <aside className={`fixed top-0 left-0 h-screen w-[80%] max-w-[260px] lg:w-[240px] p-3 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                {/* CARD MAIS COMPACTO: p-4 -> p-3 */}
                 <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl p-3 h-full flex-col shadow-2xl shadow-black/20">
-                    {/* MB MENOR: mb-8 -> mb-6 */}
                     <div className="flex items-center justify-between mb-6 px-1">
                         <div className="flex items-center gap-2">
-                            {/* ICONE MENOR: w-8 h-8 -> w-7 h-7 */}
+                            {/* LOGO MENOR: w-8 h-8 -> w-7 h-7 | text-xl -> text-lg */}
                             <ShieldCheck className="w-7 h-7 text-[#3B82F6] flex-shrink-0" />
-                            {/* FONTE MENOR: text-xl -> text-lg */}
                             <h1 className="text-lg font-bold text-white whitespace-nowrap">SIGE</h1>
                             <span className="text-[10px] bg-[#3B82F6]/20 text-[#3B82F6] px-2 py-0.5 rounded-md font-semibold flex-shrink-0">Admin</span>
                         </div>
+                        {/* X MENOR: w-5 -> w-4 */}
                         <button className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition" onClick={() => setIsMobileMenuOpen(false)}><X className="w-4 h-4 text-gray-400" /></button>
                     </div>
-                    {/* ESPAÇAMENTO MENOR: space-y-1 já estava bom */}
                     <nav className="space-y-1 flex-1">
                         {menuItems.filter(item =>!item.hidden).map(item => {
                             const isActive = item.path === '/admin'
-                               ? location.pathname === '/admin'
+                              ? location.pathname === '/admin'
                                 : location.pathname.startsWith(item.path)
 
                             return (
                                 <button
                                     key={item.path}
                                     onClick={() => handleNavigate(item.path)}
-                                    // BOTAO MENOR: px-4 py-3 -> px-3 py-2.5
+                                    // BOTAO MENU MENOR: px-4 py-3 -> px-3 py-2.5 | icon w-5 -> w-4
                                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition ${isActive
-                                       ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
+                                      ? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold border-[#3B82F6]/30'
                                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
-                                    {/* ICONE MENOR: w-5 h-5 -> w-4 h-4 */}
                                     <item.icon className="w-4 h-4 flex-shrink-0" />
                                     <span className="whitespace-nowrap">{item.label}</span>
                                 </button>
                             )
                         })}
                     </nav>
-                    {/* PT MENOR: pt-4 -> pt-3 */}
+                    {/* USER FOOTER MENOR: pt-4 -> pt-3 | avatar w-10 -> w-9 | icon w-5 -> w-4 */}
                     <div className="border-t border-white/10 pt-3 mt-4">
                         <div className="flex items-center gap-3 px-1">
-                            {/* AVATAR MENOR: w-10 h-10 -> w-9 h-9 */}
                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0"><User className="w-4 h-4 text-white" /></div>
                             <div className="min-w-0 flex-1">
                                 <p className="text-sm font-semibold text-white truncate">{user.nome}</p>
@@ -175,16 +170,16 @@ export default function AdminLayout() {
                 </div>
             </aside>
 
-            {/* MARGEM MENOR: lg:ml-[260px] -> [240px] */}
+            {/* CONTEUDO COMPACTO: lg:ml-[260px] -> [240px] */}
             <div className="flex-1 w-full lg:ml-[240px]">
-                {/* HEADER MAIS COMPACTO: p-6 -> p-4 */}
+                {/* HEADER COMPACTO: p-6 -> p-4 | py-3 -> py-2.5 | px-6 -> px-5 */}
                 <header className="fixed top-0 right-0 left-0 lg:left-[240px] z-30 p-2 lg:p-4">
-                    {/* PY MENOR: py-3 -> py-2.5 e PX: px-6 -> px-5 */}
                     <div className="bg-white/5 backdrop-blur-xl border-white/10 rounded-2xl px-3 lg:px-5 py-2.5 flex items-center justify-between gap-2 shadow-lg shadow-black/10">
+                        {/* MENU ICON MENOR: w-6 -> w-5 */}
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-5 h-5 text-white" /></button>
 
                         <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
-                            {/* ICONE E INPUT MENORES */}
+                            {/* SEARCH ICON E INPUT MENOR: left-4 top-3.5 w-5 -> left-3.5 top-3 w-4 | py-3 -> py-2.5 pl-12 -> pl-10 */}
                             <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                             <input
                                 ref={searchInputRef}
@@ -194,11 +189,12 @@ export default function AdminLayout() {
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/5 border-white/10 rounded-xl focus:outline-none focus:border-[#3B82F6] text-sm text-white placeholder-gray-400"
                             />
                             {searchQuery && (
+                                // DROPDOWN TOP MENOR: top-14 -> top-12
                                 <div className="absolute top-12 w-full bg-[#1E293B]/95 backdrop-blur-xl border-white/10 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-50">
                                     {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]" /></div>}
                                     {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="p-4 text-gray-400 text-sm">Nenhum resultado</p>}
                                     {searchResults.map(item => (
-                                        // ITEM MENOR: p-3 -> p-2.5
+                                        // RESULT ITEM MENOR: p-3 -> p-2.5 | icon w-5 -> w-4 | text font-medium -> text-sm
                                         <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-2.5 hover:bg-white/10 rounded-xl text-left transition">
                                             <item.Icon className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
                                             <div className="min-w-0">
@@ -212,7 +208,7 @@ export default function AdminLayout() {
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            {/* BOTOES MENORES: p-2.5 -> p-2 e icones w-5 -> w-4 */}
+                            {/* BOTOES HEADER MENORES: p-2.5 -> p-2 | icon w-5 -> w-4 | user btn py-3 -> py-2 */}
                             <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className="p-2 bg-white/5 border-white/10 rounded-xl hover:bg-white/10 transition flex-shrink-0">
                                 <Search className="w-4 h-4 text-white" />
                             </button>
@@ -227,7 +223,7 @@ export default function AdminLayout() {
                     </div>
                 </header>
 
-                {/* MAIN MAIS COMPACTO: pt-32 -> pt-24 e p-6 -> p-4 */}
+                {/* MAIN COMPACTO: pt-32 -> pt-24 | p-6 -> p-4 */}
                 <main className="pt-24 lg:pt-28 p-2 lg:p-4 w-full">
                     <Outlet />
                 </main>
@@ -236,14 +232,16 @@ export default function AdminLayout() {
             {isSearchModalOpen && (
                 <div className="fixed inset-0 z-[60] bg-[#0F172A] flex-col p-4 md:hidden animate-in fade-in">
                     <div className="flex items-center justify-between mb-4">
-                        {/* FONTE MENOR: text-lg -> text-base */}
+                        {/* TITULO MENOR: text-lg -> text-base */}
                         <h2 className="text-base font-semibold text-white">Pesquisar</h2>
+                        {/* X MENOR: w-6 -> w-5 */}
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
                             <X className="w-5 h-5 text-gray-300" />
                         </button>
                     </div>
 
                     <div className="relative mb-4">
+                        {/* SEARCH INPUT MENOR */}
                         <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                         <input
                             ref={searchInputRef}
@@ -259,6 +257,7 @@ export default function AdminLayout() {
                         {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-[#3B82F6]" /></div>}
                         {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center text-gray-400 pt-10 text-sm">Nenhum resultado encontrado</p>}
                         {searchResults.map(item => (
+                            // RESULT MOBILE MENOR
                             <button key={item.id} onClick={() => handleNavigate(item.path)} className="w-full flex items-center gap-3 p-2.5 hover:bg-white/10 rounded-xl text-left transition">
                                 <item.Icon className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
                                 <div className="min-w-0">
