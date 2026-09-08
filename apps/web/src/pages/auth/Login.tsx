@@ -167,10 +167,10 @@ export default function Login() {
     };
 
     const inputClass =
-        "w-full h-11 pl-10 pr-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 text-sm";
+        "w-full h-11 pl-10 pr-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 text-base md:text-sm";
 
     const dropdownButtonClass =
-        "w-full h-11 px-3 pl-10 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left text-sm";
+        "w-full h-11 px-3 pl-10 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-50 flex items-center justify-between text-left text-base md:text-sm";
 
     const selectedEscola = escolas.find((e) => e.id === escolaId);
 
@@ -199,10 +199,11 @@ export default function Login() {
 
                 <div className="text-center mb-4">
                     <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${isSuperAdmin
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 ${
+                            isSuperAdmin
                                 ? "bg-gradient-to-br from-yellow-400 to-yellow-600"
                                 : "bg-gradient-to-br from-[#CF0921] to-[#FFD700]"
-                            }`}
+                        }`}
                     >
                         {isSuperAdmin ? (
                             <ShieldCheck className="w-6 h-6 text-black" />
@@ -224,10 +225,11 @@ export default function Login() {
                         <button
                             type="button"
                             onClick={() => setIsSuperAdmin(false)}
-                            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${!isSuperAdmin
+                            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                                !isSuperAdmin
                                     ? "bg-[#CF0921] text-white"
                                     : "text-white/70 hover:bg-white/5"
-                                }`}
+                            }`}
                         >
                             Escola
                         </button>
@@ -238,10 +240,11 @@ export default function Login() {
                                 setIsSuperAdmin(true);
                                 setEscolaId("");
                             }}
-                            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${isSuperAdmin
+                            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                                isSuperAdmin
                                     ? "bg-yellow-400 text-black"
                                     : "text-white/70 hover:bg-white/5"
-                                }`}
+                            }`}
                         >
                             Global
                         </button>
@@ -283,8 +286,9 @@ export default function Login() {
                                                     setEscolaId(e.id);
                                                     setDropdownOpen(false);
                                                 }}
-                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 ${escolaId === e.id ? "bg-white/10 text-yellow-300" : "text-white"
-                                                    }`}
+                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-white/5 ${
+                                                    escolaId === e.id ? "bg-white/10 text-yellow-300" : "text-white"
+                                                }`}
                                             >
                                                 {e.nome}
                                             </button>
@@ -360,6 +364,15 @@ export default function Login() {
                         )}
                     </button>
                 </form>
+
+                <style>{`
+                    input,
+                    button,
+                    select,
+                    textarea {
+                        font-size: 16px;
+                    }
+                `}</style>
             </div>
         </div>
     );
