@@ -37,8 +37,8 @@ export default function ConfirmLogoutModal({ open, onClose, onConfirm }: Confirm
                     </p>
                 </div>
 
-                {/* FOOTER PADRONIZADO: p-6 -> p-3, h-11 -> h-10, flex-col sm:flex-row, order, border */}
-                <div className="p-3 border-t border-white/10 flex-col sm:flex-row gap-3 shrink-0 bg-[#0F172A]/90">
+                {/* FOOTER IGUAL AO CONFIRMDELETE */}
+                <div className="p-3 border-t border-white/10 flex flex-col sm:flex-row gap-3 shrink-0 bg-[#0F172A]/90">
                     <button
                         onClick={onClose}
                         className="w-full sm:w-auto sm:flex-1 px-4 h-10 font-semibold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition text-sm order-2 sm:order-1"
