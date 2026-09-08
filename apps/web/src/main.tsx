@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { authService } from './services/auth'
@@ -23,18 +23,25 @@ const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             refetchOnWindowFocus: false,
-            retry: 1
-        }
-    }
+            retry: 1,
+        },
+    },
 })
 
-// 👇 Aplica o tema salvo no localStorage
+const getUserNivel = () => (authService.getNivel() ?? '').toUpperCase()
+
+const isMinisterio = () => getUserNivel() === 'MINISTERIO'
+const isAuthenticated = () => authService.isAuthenticated()
+
+// ======================= THEME =======================
 const applySavedTheme = () => {
     const t = localStorage.getItem('escola_tema')
     if (!t) return
+
     try {
         const tema = JSON.parse(t)
         const root = document.documentElement
+
         root.style.setProperty('--cor-primaria', tema.cor_primaria || '#3B82F6')
         root.style.setProperty('--cor-secundaria', tema.cor_secundaria || '#8B5CF6')
         root.style.setProperty('--cor-fundo', tema.cor_fundo || '#FFFFFF')
@@ -42,12 +49,12 @@ const applySavedTheme = () => {
         root.setAttribute('data-card-style', tema.estilo_card || 'arredondado')
         root.setAttribute('data-fonte-titulo', tema.fonte_titulo || 'Poppins')
         root.setAttribute('data-fonte-corpo', tema.fonte_corpo || 'Inter')
-    } catch (e) {
-        console.error("Erro ao aplicar tema salvo", e)
+    } catch (error) {
+        console.error('Erro ao aplicar tema salvo', error)
     }
 }
 
-// 👇 Componente pra escutar mudança de tema sem F5
+// ======================= LISTENER =======================
 const ThemeListener = () => {
     useEffect(() => {
         applySavedTheme()
@@ -55,28 +62,53 @@ const ThemeListener = () => {
         const handleTemaUpdated = () => applySavedTheme()
         window.addEventListener('escola-tema-updated', handleTemaUpdated)
 
-        return () => window.removeEventListener('escola-tema-updated', handleTemaUpdated)
+        return () => {
+            window.removeEventListener('escola-tema-updated', handleTemaUpdated)
+        }
     }, [])
+
     return null
 }
 
+// ======================= ROUTE GUARDS =======================
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-    const isAuth = authService.isAuthenticated()
-    return isAuth ? children : <Navigate to="/" replace />
+    if (!isAuthenticated()) {
+        return <Navigate to="/" replace />
+    }
+
+    return <>{children}</>
 }
 
-const SchoolRouteGuard = ({ children }: { children: React.ReactNode }) => {
-    const nivel = authService.getNivel()?.toUpperCase()
-    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!isAuthenticated()) {
+        return <Navigate to="/" replace />
+    }
+
+    if (!isMinisterio()) {
+        return <Navigate to="/dashboard" replace />
+    }
+
+    return <>{children}</>
+}
+
+const SchoolRoute = ({ children }: { children: React.ReactNode }) => {
+    if (!isAuthenticated()) {
+        return <Navigate to="/" replace />
+    }
+
+    if (isMinisterio()) {
+        return <Navigate to="/admin" replace />
+    }
+
     return <>{children}</>
 }
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-    const isAuth = authService.isAuthenticated()
-    const nivel = authService.getNivel()?.toUpperCase()
-    if (!isAuth) return children
-    if (nivel === 'MINISTERIO') return <Navigate to="/admin" replace />
-    return <Navigate to="/dashboard" replace />
+    if (!isAuthenticated()) {
+        return <>{children}</>
+    }
+
+    return isMinisterio() ? <Navigate to="/admin" replace /> : <Navigate to="/dashboard" replace />
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -86,9 +118,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ThemeListener />
             <HashRouter>
                 <Routes>
-                    <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+                    <Route
+                        path="/"
+                        element={
+                            <PublicRoute>
+                                <Login />
+                            </PublicRoute>
+                        }
+                    />
 
-                    <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+                    <Route
+                        path="/admin"
+                        element={
+                            <AdminRoute>
+                                <AdminLayout />
+                            </AdminRoute>
+                        }
+                    >
                         <Route index element={<SchoolsPage />} />
                         <Route path="escolas/:id" element={<div>Detalhes da Escola</div>} />
                         <Route path="users" element={<UsersPage />} />
@@ -96,10 +142,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                         <Route path="settings" element={<div>Configurações Admin</div>} />
                     </Route>
 
-                    <Route path="/dashboard" element={<PrivateRoute><SchoolRouteGuard><MainLayout /></SchoolRouteGuard></PrivateRoute>}>
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <SchoolRoute>
+                                <MainLayout />
+                            </SchoolRoute>
+                        }
+                    >
                         <Route index element={<EscolaListPage />} />
                         <Route path="definicoes" element={<DefinicoesEscolaPage />} />
-                        <Route path="direcao" element={<DirecaoPage />} /> {/* 👈 ROTA NOVA */}
+                        <Route path="direcao" element={<DirecaoPage />} />
                     </Route>
 
                     <Route path="*" element={<Navigate to="/" replace />} />
