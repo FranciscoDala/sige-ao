@@ -1,106 +1,149 @@
-import { MouseEvent } from 'react'
-import { X, User, Mail, ShieldCheck, Building, BadgeCheck, Calendar } from 'lucide-react'
-import { UsuarioMinisterio } from '../../types/usuario'
+import { MouseEvent } from "react";
+import {
+    X,
+    User,
+    Mail,
+    ShieldCheck,
+    Building,
+    BadgeCheck,
+    Calendar,
+} from "lucide-react";
+import { UsuarioMinisterio } from "../../types/usuario";
 
 interface UsuarioViewModalProps {
-    open: boolean
-    onClose: () => void
-    usuario: UsuarioMinisterio | null
+    open: boolean;
+    onClose: () => void;
+    usuario: UsuarioMinisterio | null;
 }
 
-const perfilLabels: Record<UsuarioMinisterio['perfil'], string> = {
-    super_admin: 'Super Administrador',
-    admin: 'Administrador',
-    suporte: 'Suporte',
-}
+const perfilLabels: Record<string, string> = {
+    MINISTERIO: "Super Administrador",
+    DIRETOR: "Diretor",
+    super_admin: "Super Administrador",
+    admin: "Administrador",
+    suporte: "Suporte",
+};
 
-export default function UsuarioViewModal({ open, onClose, usuario }: UsuarioViewModalProps) {
-    if (!open ||!usuario) return null
+export default function UsuarioViewModal({
+    open,
+    onClose,
+    usuario,
+}: UsuarioViewModalProps) {
+    if (!open || !usuario) return null;
+
+    const perfilAtual = (usuario as any).perfil ?? usuario.nivel ?? "DIRETOR";
 
     const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
-        if (e.target === e.currentTarget) onClose()
-    }
+        if (e.target === e.currentTarget) onClose();
+    };
 
     return (
-        <div onClick={handleOverlayClick} className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
+        <div
+            onClick={handleOverlayClick}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+        >
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-lg bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
+                className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/90 shadow-2xl shadow-black/30 backdrop-blur-2xl"
             >
-                {/* HEADER */}
-                <div className="p-5 pb-4 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-white/10 p-5 pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#3B82F6]/20 border-[#3B82F6]/30 rounded-xl flex items-center justify-center">
-                            <User className="w-5 h-5 text-[#3B82F6]" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/20">
+                            <User className="h-5 w-5 text-[#3B82F6]" />
                         </div>
+
                         <div>
                             <h2 className="text-lg font-bold text-white">Detalhes do Usuário</h2>
-                            <p className="text-sm text-gray-400">Usuário Ministério</p>
+                            <p className="text-sm text-gray-400">Usuário do sistema</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition">
-                        <X className="w-5 h-5 text-gray-400" />
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg p-2 transition hover:bg-white/10"
+                    >
+                        <X className="h-5 w-5 text-gray-400" />
                     </button>
                 </div>
 
-                {/* CONTENT */}
-                <div className="p-5 space-y-4">
+                <div className="space-y-4 p-5">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center flex-shrink-0">
-                            <User className="w-8 h-8 text-white" />
+                        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6]">
+                            <User className="h-8 w-8 text-white" />
                         </div>
+
                         <div>
                             <h3 className="text-xl font-bold text-white">{usuario.nome}</h3>
-                            <span className={`text-xs px-2 py-0.5 rounded-md border font-semibold ${
-                                usuario.perfil === 'super_admin'? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                                usuario.perfil === 'admin'? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                'bg-green-500/20 text-green-400 border-green-500/30'
-                            }`}>
-                                {perfilLabels[usuario.perfil]}
+
+                            <span
+                                className={`inline-block rounded-md border px-2 py-0.5 text-xs font-semibold ${perfilAtual === "MINISTERIO" || perfilAtual === "super_admin"
+                                        ? "border-red-500/30 bg-red-500/20 text-red-400"
+                                        : perfilAtual === "DIRETOR" || perfilAtual === "admin"
+                                            ? "border-blue-500/30 bg-blue-500/20 text-blue-400"
+                                            : "border-green-500/30 bg-green-500/20 text-green-400"
+                                    }`}
+                            >
+                                {perfilLabels[perfilAtual] ?? "Usuário"}
                             </span>
                         </div>
                     </div>
 
                     <div className="space-y-3 pt-2">
                         <div className="flex items-center gap-3 text-sm">
-                            <Mail className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                            <Mail className="h-4 w-4 flex-shrink-0 text-[#3B82F6]" />
                             <span className="text-gray-300">{usuario.email}</span>
                         </div>
+
                         {usuario.departamento && (
                             <div className="flex items-center gap-3 text-sm">
-                                <Building className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                                <Building className="h-4 w-4 flex-shrink-0 text-[#3B82F6]" />
                                 <span className="text-gray-300">{usuario.departamento}</span>
                             </div>
                         )}
+
                         {usuario.telefone && (
                             <div className="flex items-center gap-3 text-sm">
-                                <ShieldCheck className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                                <ShieldCheck className="h-4 w-4 flex-shrink-0 text-[#3B82F6]" />
                                 <span className="text-gray-300">{usuario.telefone}</span>
                             </div>
                         )}
+
                         <div className="flex items-center gap-3 text-sm">
-                            <BadgeCheck className={`w-4 h-4 flex-shrink-0 ${usuario.ativo? 'text-green-400' : 'text-red-400'}`} />
-                            <span className={`font-semibold ${usuario.ativo? 'text-green-400' : 'text-red-400'}`}>
-                                {usuario.ativo? 'Ativo' : 'Inativo'}
+                            <BadgeCheck
+                                className={`h-4 w-4 flex-shrink-0 ${usuario.ativo ? "text-green-400" : "text-red-400"
+                                    }`}
+                            />
+                            <span
+                                className={`font-semibold ${usuario.ativo ? "text-green-400" : "text-red-400"
+                                    }`}
+                            >
+                                {usuario.ativo ? "Ativo" : "Inativo"}
                             </span>
                         </div>
+
                         <div className="flex items-center gap-3 text-sm">
-                            <Calendar className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
-                            <span className="text-gray-400">Criado em: {new Date(usuario.created_at).toLocaleDateString('pt-AO')}</span>
+                            <Calendar className="h-4 w-4 flex-shrink-0 text-[#3B82F6]" />
+                            <span className="text-gray-400">
+                                Criado em:{" "}
+                                {usuario.created_at
+                                    ? new Date(usuario.created_at).toLocaleDateString("pt-AO")
+                                    : "Não informado"}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {/* FOOTER */}
-                <div className="p-4 border-t border-white/10">
+                <div className="border-t border-white/10 p-4">
                     <button
+                        type="button"
                         onClick={onClose}
-                        className="w-full h-11 font-semibold rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition"
+                        className="h-11 w-full rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white transition hover:bg-white/10"
                     >
                         Fechar
                     </button>
                 </div>
             </div>
         </div>
-    )
+    );
 }
