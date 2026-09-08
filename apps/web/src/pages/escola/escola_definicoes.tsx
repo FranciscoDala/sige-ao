@@ -10,40 +10,20 @@ type Tab = 'identificacao' | 'contato' | 'visual' | 'modulos' | 'avancado'
 type Option = { value: string; label: string }
 
 type EscolaForm = {
-    nome: string
-    sigla: string
-    id_curto: string
-    nif: string
-    nivel_ensino: string
-    email: string
-    telefone: string
-    endereco: string
-    provincia: string
-    municipio: string
-    logo_url: string
-    banner_url: string
-    favicon_url: string
-    cor_primaria: string
-    cor_secundaria: string
-    cor_fundo: string
-    tema: string
-    fonte_titulo: string
-    fonte_corpo: string
-    estilo_card: string
-    permitir_auto_cadastro: boolean
-    usar_modulo_propina: boolean
-    usar_modulo_biblioteca: boolean
-    ativo: boolean
+    nome: string; sigla: string; id_curto: string; nif: string; nivel_ensino: string;
+    email: string; telefone: string; endereco: string; provincia: string; municipio: string;
+    logo_url: string; banner_url: string; favicon_url: string;
+    cor_primaria: string; cor_secundaria: string; cor_fundo: string;
+    tema: string; fonte_titulo: string; fonte_corpo: string; estilo_card: string;
+    permitir_auto_cadastro: boolean; usar_modulo_propina: boolean; usar_modulo_biblioteca: boolean; ativo: boolean;
 }
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
-const API_URL = `${API_BASE}/api/v1`
+const API_URL = import.meta.env.VITE_API_URL
 
 const TEMA_OPTIONS: Option[] = [
     { value: 'claro', label: 'Claro' },
     { value: 'escuro', label: 'Escuro' },
 ]
-
 const FONTE_OPTIONS: Option[] = [
     { value: 'Poppins', label: 'Poppins' },
     { value: 'Montserrat', label: 'Montserrat' },
@@ -65,90 +45,49 @@ export default function DefinicoesEscolaPage() {
     const [activeTab, setActiveTab] = useState<Tab>('identificacao')
     const [loading, setLoading] = useState(false)
     const [loadingData, setLoadingData] = useState(true)
-
     const [logoFile, setLogoFile] = useState<File | null>(null)
     const [bannerFile, setBannerFile] = useState<File | null>(null)
     const [faviconFile, setFaviconFile] = useState<File | null>(null)
-
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
     const [bannerPreview, setBannerPreview] = useState<string | null>(null)
     const [faviconPreview, setFaviconPreview] = useState<string | null>(null)
 
     const [form, setForm] = useState<EscolaForm>({
-        nome: '',
-        sigla: '',
-        id_curto: '',
-        nif: '',
-        nivel_ensino: 'PRIMARIO',
-        email: '',
-        telefone: '',
-        endereco: '',
-        provincia: '',
-        municipio: '',
-        logo_url: '',
-        banner_url: '',
-        favicon_url: '',
-        cor_primaria: '#0056b3',
-        cor_secundaria: '#FFC107',
-        cor_fundo: '#FFFFFF',
-        tema: 'claro',
-        fonte_titulo: 'Poppins',
-        fonte_corpo: 'Inter',
-        estilo_card: 'arredondado',
-        permitir_auto_cadastro: false,
-        usar_modulo_propina: true,
-        usar_modulo_biblioteca: false,
-        ativo: true,
+        nome: '', sigla: '', id_curto: '', nif: '', nivel_ensino: 'PRIMARIO',
+        email: '', telefone: '', endereco: '', provincia: '', municipio: '',
+        logo_url: '', banner_url: '', favicon_url: '',
+        cor_primaria: '#0056b3', cor_secundaria: '#FFC107', cor_fundo: '#FFFFFF',
+        tema: 'claro', fonte_titulo: 'Poppins', fonte_corpo: 'Inter', estilo_card: 'arredondado',
+        permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
 
-    const getAuthHeaders = (isJson = true) => {
-        const token = authService.getToken()
-        const headers: Record<string, string> = {}
-
-        if (token) {
-            headers.Authorization = `Bearer ${token}`
-        }
-
-        if (isJson) {
-            headers['Content-Type'] = 'application/json'
-        }
-
-        return headers
-    }
+    const getAuthHeader = (isJson = true) => ({
+        'Authorization': `Bearer ${authService.getToken()}`,
+       ...(isJson? { 'Content-Type': 'application/json' } : {})
+    })
 
     const corPrimaria = form.cor_primaria
     const corSecundaria = form.cor_secundaria
     const isClaro = form.tema === 'claro'
-    const textPrimary = isClaro ? '#1E293B' : 'white'
-    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
-    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
 
     useEffect(() => {
         const fetchEscola = async () => {
             try {
-                const res = await fetch(`${API_URL}/escolas/me`, {
-                    headers: getAuthHeaders(),
-                })
-
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}))
-                    throw new Error(err.detail || 'Erro ao carregar dados da escola')
-                }
-
+                const res = await fetch(`${API_URL}/escolas/me`, { headers: getAuthHeader() })
+                if (!res.ok) throw new Error('Erro ao carregar dados')
                 const data = await res.json()
-
-                setForm((prev) => ({ ...prev, ...data }))
-                setLogoPreview(data.logo_url || '')
-                setBannerPreview(data.banner_url || '')
-                setFaviconPreview(data.favicon_url || '')
-
+                const escolaData: EscolaForm = {...form,...data }
+                setForm(escolaData)
+                setLogoPreview(escolaData.logo_url)
+                setBannerPreview(escolaData.banner_url)
+                setFaviconPreview(escolaData.favicon_url)
                 const userAtual = authService.getUser()
-                if (userAtual && data.nome) {
-                    localStorage.setItem(
-                        'user',
-                        JSON.stringify({ ...userAtual, escola_nome: data.nome })
-                    )
+                if (userAtual && escolaData.nome) {
+                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
                     window.dispatchEvent(new Event('user-updated'))
                 }
             } catch (error: any) {
@@ -157,153 +96,75 @@ export default function DefinicoesEscolaPage() {
                 setLoadingData(false)
             }
         }
-
         fetchEscola()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
-        setForm((prev) => ({ ...prev, [key]: value }))
+        setForm(prev => ({...prev, [key]: value }))
     }
 
-    const handleFileChange =
-        (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-
-            const maxSize = type === 'favicon' ? 1 * 1024 * 1024 : 5 * 1024 * 1024
+    const handleFileChange = (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const maxSize = type === 'favicon'? 1 * 1024 * 1024 : 5 * 1024 * 1024
             if (file.size > maxSize) {
                 toast.error(`Arquivo muito grande. Máximo ${maxSize / 1024 / 1024}MB`)
                 return
             }
-
             const url = URL.createObjectURL(file)
-
-            if (type === 'logo') {
-                setLogoFile(file)
-                setLogoPreview(url)
-            }
-            if (type === 'banner') {
-                setBannerFile(file)
-                setBannerPreview(url)
-            }
-            if (type === 'favicon') {
-                setFaviconFile(file)
-                setFaviconPreview(url)
-            }
+            if (type === 'logo') { setLogoFile(file); setLogoPreview(url) }
+            if (type === 'banner') { setBannerFile(file); setBannerPreview(url) }
+            if (type === 'favicon') { setFaviconFile(file); setFaviconPreview(url) }
         }
-
-    const uploadFile = async (
-        file: File,
-        endpoint: 'logo' | 'banner' | 'favicon',
-        fieldName: string
-    ) => {
-        const token = authService.getToken()
-        if (!token) throw new Error('Token não encontrado. Faça login novamente.')
-
-        const formData = new FormData()
-        formData.append(fieldName, file)
-
-        const res = await fetch(`${API_URL}/escolas/me/${endpoint}`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-        })
-
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}))
-            throw new Error(err.detail || `Erro ao salvar ${endpoint}`)
-        }
-
-        return await res.json()
     }
 
     const handleSave = async () => {
         setLoading(true)
-
         try {
             const token = authService.getToken()
-            if (!token) {
-                throw new Error('Token não encontrado. Faça login novamente.')
-            }
-
-            const clean = (s: string | undefined | null) =>
-                s?.replace(/´/g, "'").trim() || undefined
-
+            if (!token) throw new Error("Token não encontrado. Faça login novamente.")
+            const clean = (s: string) => s?.replace(/´/g, "'").trim() || undefined
             const rawPayload = {
-                nome: clean(form.nome),
-                sigla: clean(form.sigla),
-                nif: clean(form.nif),
-                email: clean(form.email),
-                telefone: clean(form.telefone),
-                endereco: clean(form.endereco),
-                provincia: clean(form.provincia),
-                municipio: clean(form.municipio),
-                cor_primaria: form.cor_primaria,
-                cor_secundaria: form.cor_secundaria,
-                cor_fundo: form.cor_fundo,
-                tema: form.tema,
-                fonte_titulo: form.fonte_titulo,
-                fonte_corpo: form.fonte_corpo,
-                estilo_card: form.estilo_card,
-                permitir_auto_cadastro: form.permitir_auto_cadastro,
-                usar_modulo_propina: form.usar_modulo_propina,
-                usar_modulo_biblioteca: form.usar_modulo_biblioteca,
+                nome: clean(form.nome), sigla: clean(form.sigla), nif: clean(form.nif), email: clean(form.email),
+                telefone: clean(form.telefone), endereco: clean(form.endereco), provincia: clean(form.provincia), municipio: clean(form.municipio),
+                cor_primaria: form.cor_primaria, cor_secundaria: form.cor_secundaria, cor_fundo: form.cor_fundo, tema: form.tema,
+                fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card,
+                permitir_auto_cadastro: form.permitir_auto_cadastro, usar_modulo_propina: form.usar_modulo_propina, usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
-
-            const payload = Object.fromEntries(
-                Object.entries(rawPayload).filter(
-                    ([, value]) => value !== undefined && value !== null && value !== ''
-                )
-            )
-
+            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v!== undefined && v!== null && v!== ''))
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(payload),
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             })
-
             if (!res.ok) {
-                const err = await res.json().catch(() => ({}))
-                if (Array.isArray(err.detail)) {
-                    throw new Error(
-                        err.detail
-                            .map(
-                                (e: any) => `${e.loc?.[e.loc.length - 1] ?? 'campo'}: ${e.msg}`
-                            )
-                            .join(', ')
-                    )
-                }
+                const err = await res.json()
+                if (Array.isArray(err.detail)) throw new Error(err.detail.map((e: any) => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', '))
                 throw new Error(err.detail || 'Erro ao salvar dados')
             }
-
             let updatedData = await res.json()
 
-            if (logoFile) {
-                updatedData = await uploadFile(logoFile, 'logo', 'logo')
+            const uploadFile = async (file: File, endpoint: string, fieldName: string) => {
+                const formData = new FormData()
+                formData.append(fieldName, file)
+                const fileRes = await fetch(`${API_URL}${endpoint}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData })
+                if (!fileRes.ok) throw new Error((await fileRes.json()).detail || `Erro ao salvar ${endpoint}`)
+                return await fileRes.json()
             }
+            if (logoFile) updatedData = await uploadFile(logoFile, '/escolas/me/logo', 'logo')
+            if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner', 'file')
+            if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon', 'file')
 
-            if (bannerFile) {
-                updatedData = await uploadFile(bannerFile, 'banner', 'file')
-            }
-
-            if (faviconFile) {
-                updatedData = await uploadFile(faviconFile, 'favicon', 'file')
-            }
-
-            setForm((prev) => ({ ...prev, ...updatedData }))
-            setLogoPreview(updatedData.logo_url || '')
-            setBannerPreview(updatedData.banner_url || '')
-            setFaviconPreview(updatedData.favicon_url || '')
-            setLogoFile(null)
-            setBannerFile(null)
-            setFaviconFile(null)
+            const escolaData: EscolaForm = {...form,...updatedData }
+            setForm(escolaData)
+            setLogoPreview(escolaData.logo_url)
+            setBannerPreview(escolaData.banner_url)
+            setFaviconPreview(escolaData.favicon_url)
+            setLogoFile(null); setBannerFile(null); setFaviconFile(null)
 
             localStorage.setItem('escola_tema', JSON.stringify(updatedData))
             window.dispatchEvent(new Event('escola-tema-updated'))
-
             toast.success('Definições salvas com sucesso!')
         } catch (error: any) {
             toast.error(error.message || 'Erro ao salvar definições')
@@ -312,7 +173,7 @@ export default function DefinicoesEscolaPage() {
         }
     }
 
-    const tabs: { id: Tab; label: string; icon: any }[] = [
+    const tabs: { id: Tab, label: string, icon: any }[] = [
         { id: 'identificacao', label: 'Identificação', icon: Building2 },
         { id: 'contato', label: 'Contato', icon: MapPin },
         { id: 'visual', label: 'Visual', icon: Palette },
@@ -320,567 +181,187 @@ export default function DefinicoesEscolaPage() {
         { id: 'avancado', label: 'Avançado', icon: Info },
     ]
 
-    if (loadingData) {
-        return (
-            <div className="flex justify-center p-6">
-                <Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} />
-            </div>
-        )
-    }
+    if (loadingData) return <div className="flex justify-center p-6"><Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} /></div>
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-4"> {/* ESPAÇO MENOR: space-y-6 -> 4 */}
+            {/* Header + Botão na mesma linha MAIS COMPACTO */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <Settings className="h-6 w-6" style={{ color: corPrimaria || '#6366F1' }} />
+                    {/* ICONE MENOR: w-7 -> w-6 */}
+                    <Settings className="w-6 h-6" style={{ color: corPrimaria || '#6366F1' }} />
                     <div>
-                        <h1 className="text-xl font-bold" style={{ color: textPrimary }}>
-                            Definições da Escola
-                        </h1>
-                        <p className="text-xs" style={{ color: textSecondary }}>
-                            Personalize as informações e aparência do painel
-                        </p>
+                        {/* TITULO MENOR: text-2xl -> text-xl */}
+                        <h1 className="text-xl font-bold" style={{ color: textPrimary }}>Definições da Escola</h1>
+                        <p className="text-xs" style={{ color: textSecondary }}>Personalize as informações e aparência do painel</p>
                     </div>
                 </div>
 
+                {/* BOTAO MENOR: h-11 -> h-10 px-5 -> px-4 */}
                 <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition hover:scale-[1.02] disabled:opacity-50 lg:w-auto"
+                    className="w-full lg:w-auto h-10 px-4 font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] transition text-sm"
                     style={{
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
-                        borderRadius:
-                            form.estilo_card === 'quadrado'
-                                ? '0.5rem'
-                                : form.estilo_card === 'minimalista'
-                                    ? '0.25rem'
-                                    : '0.75rem',
-                        color: 'white',
+                        borderRadius: form.estilo_card === 'quadrado'? '0.5rem' : form.estilo_card === 'minimalista'? '0.25rem' : '0.75rem',
+                        color: 'white'
                     }}
                 >
-                    {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'white' }} />
-                    ) : (
-                        <Save className="h-4 w-4" style={{ color: 'white' }} />
-                    )}
-                    <span style={{ color: 'white' }}>
-                        {loading ? 'Salvando...' : 'Salvar Definições'}
-                    </span>
+                    {loading? <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'white' }} /> : <Save className="w-4 h-4" style={{ color: 'white' }} />}
+                    <span style={{ color: 'white' }}>{loading? 'Salvando...' : 'Salvar Definições'}</span>
                 </button>
             </div>
 
+            {/* Tabs MAIS COMPACTAS */}
             <div className="w-full">
-                <div className="flex gap-2 overflow-x-auto p-0 scrollbar-hide">
-                    {tabs.map((tab) => {
+                <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
+                    {tabs.map(tab => {
                         const Icon = tab.icon
                         const isActive = activeTab === tab.id
-
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="flex flex-shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition whitespace-nowrap"
+                                // PAD MENOR: px-4 py-2.5 -> px-3 py-2
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border"
                                 style={{
-                                    backgroundColor: isActive ? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
-                                    color: isActive ? corPrimaria : textSecondary,
-                                    borderColor: isActive ? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)',
+                                    backgroundColor: isActive? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
+                                    color: isActive? corPrimaria : textSecondary,
+                                    borderColor: isActive? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
                                 }}
                             >
-                                <Icon
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: isActive ? corPrimaria : textSecondary }}
-                                />
+                                {/* ICONE MENOR: w-4 -> w-3.5 */}
+                                <Icon className="w-3.5 h-3.5" style={{ color: isActive? corPrimaria : textSecondary }} />
                                 {tab.label}
                             </button>
                         )
                     })}
                 </div>
-                <div
-                    className="mt-2 h-0.5 w-full rounded-full"
-                    style={{ backgroundColor: `${corPrimaria}26` }}
-                />
+                <div className="h-0.5 w-full mt-2 rounded-full" style={{ backgroundColor: `${corPrimaria}26` }} />
             </div>
 
-            <div className="-mt-2 rounded-2xl bg-transparent p-0 shadow-none">
+            <div className="rounded-2xl p-0 bg-transparent shadow-none -mt-2">
                 {activeTab === 'identificacao' && (
-                    <div className="space-y-3">
-                        <div className="mb-3 flex items-center gap-2">
-                            <Building2 className="h-4 w-4" style={{ color: corPrimaria }} />
-                            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
-                                Identificação
-                            </h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <Input
-                                label="Nome Completo"
-                                value={form.nome}
-                                onChange={(v) => handleChange('nome', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="Sigla"
-                                value={form.sigla}
-                                onChange={(v) => handleChange('sigla', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="ID Curto"
-                                value={form.id_curto}
-                                onChange={() => { }}
-                                disabled
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="NIF"
-                                value={form.nif}
-                                onChange={(v) => handleChange('nif', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="Nível de Ensino"
-                                value={form.nivel_ensino}
-                                onChange={() => { }}
-                                disabled
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
+                    <div className="space-y-3"> {/* ESPAÇO MENOR: space-y-4 -> 3 */}
+                        <div className="flex items-center gap-2 mb-3"><Building2 className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
+                        {/* GAP MENOR: gap-4 -> gap-3 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <Input label="Nome Completo" value={form.nome} onChange={v => handleChange('nome', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="Sigla" value={form.sigla} onChange={v => handleChange('sigla', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="ID Curto" value={form.id_curto} onChange={() => { }} disabled cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="NIF" value={form.nif} onChange={v => handleChange('nif', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="Nível de Ensino" value={form.nivel_ensino} onChange={() => { }} disabled cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'contato' && (
                     <div className="space-y-3">
-                        <div className="mb-3 flex items-center gap-2">
-                            <MapPin className="h-4 w-4" style={{ color: corPrimaria }} />
-                            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
-                                Contato
-                            </h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <Input
-                                label="Email"
-                                type="email"
-                                icon={<Mail className="h-3.5 w-3.5" />}
-                                value={form.email}
-                                onChange={(v) => handleChange('email', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="Telefone"
-                                icon={<Phone className="h-3.5 w-3.5" />}
-                                value={form.telefone}
-                                onChange={(v) => handleChange('telefone', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <div className="md:col-span-2">
-                                <Input
-                                    label="Endereço"
-                                    value={form.endereco}
-                                    onChange={(v) => handleChange('endereco', v)}
-                                    cor={corPrimaria}
-                                    textColor={textPrimary}
-                                    bg={bgCard}
-                                    border={borderCard}
-                                />
-                            </div>
-                            <Input
-                                label="Província"
-                                value={form.provincia}
-                                onChange={(v) => handleChange('provincia', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <Input
-                                label="Município"
-                                value={form.municipio}
-                                onChange={(v) => handleChange('municipio', v)}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
+                        <div className="flex items-center gap-2 mb-3"><MapPin className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Contato</h2></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <Input label="Email" type="email" icon={<Mail className="w-3.5 h-3.5" />} value={form.email} onChange={v => handleChange('email', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="Telefone" icon={<Phone className="w-3.5 h-3.5" />} value={form.telefone} onChange={v => handleChange('telefone', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <div className="md:col-span-2"><Input label="Endereço" value={form.endereco} onChange={v => handleChange('endereco', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} /></div>
+                            <Input label="Província" value={form.provincia} onChange={v => handleChange('provincia', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <Input label="Município" value={form.municipio} onChange={v => handleChange('municipio', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'visual' && (
                     <div className="space-y-4">
-                        <div className="mb-3 flex items-center gap-2">
-                            <Palette className="h-4 w-4" style={{ color: corPrimaria }} />
-                            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
-                                Aparência
-                            </h2>
+                        <div className="flex items-center gap-2 mb-3"><Palette className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Aparência</h2></div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            <UploadBox label="Logo da Escola" currentUrl={logoPreview || undefined} fileName={logoFile?.name} onFileSelect={handleFileChange('logo')} cor={corPrimaria} onRemove={() => { setLogoFile(null); setLogoPreview(form.logo_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <UploadBox label="Banner do Painel" currentUrl={bannerPreview || undefined} fileName={bannerFile?.name} onFileSelect={handleFileChange('banner')} cor={corPrimaria} onRemove={() => { setBannerFile(null); setBannerPreview(form.banner_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <UploadBox label="Favicon" currentUrl={faviconPreview || undefined} fileName={faviconFile?.name} onFileSelect={handleFileChange('favicon')} cor={corPrimaria} onRemove={() => { setFaviconFile(null); setFaviconPreview(form.favicon_url) }} textColor={textPrimary} bg={bgCard} border={borderCard} />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                            <UploadBox
-                                label="Logo da Escola"
-                                currentUrl={logoPreview || undefined}
-                                fileName={logoFile?.name}
-                                onFileSelect={handleFileChange('logo')}
-                                cor={corPrimaria}
-                                onRemove={() => {
-                                    setLogoFile(null)
-                                    setLogoPreview(form.logo_url)
-                                }}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <UploadBox
-                                label="Banner do Painel"
-                                currentUrl={bannerPreview || undefined}
-                                fileName={bannerFile?.name}
-                                onFileSelect={handleFileChange('banner')}
-                                cor={corPrimaria}
-                                onRemove={() => {
-                                    setBannerFile(null)
-                                    setBannerPreview(form.banner_url)
-                                }}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <UploadBox
-                                label="Favicon"
-                                currentUrl={faviconPreview || undefined}
-                                fileName={faviconFile?.name}
-                                onFileSelect={handleFileChange('favicon')}
-                                cor={corPrimaria}
-                                onRemove={() => {
-                                    setFaviconFile(null)
-                                    setFaviconPreview(form.favicon_url)
-                                }}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <ColorPicker label="Cor Primária" value={form.cor_primaria} onChange={v => handleChange('cor_primaria', v)} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <ColorPicker label="Cor Secundária" value={form.cor_secundaria} onChange={v => handleChange('cor_secundaria', v)} textColor={textPrimary} bg={bgCard} border={borderCard} />
+                            <ColorPicker label="Cor de Fundo" value={form.cor_fundo} onChange={v => handleChange('cor_fundo', v)} textColor={textPrimary} bg={bgCard} border={borderCard} />
                         </div>
-
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                            <ColorPicker
-                                label="Cor Primária"
-                                value={form.cor_primaria}
-                                onChange={(v) => handleChange('cor_primaria', v)}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <ColorPicker
-                                label="Cor Secundária"
-                                value={form.cor_secundaria}
-                                onChange={(v) => handleChange('cor_secundaria', v)}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <ColorPicker
-                                label="Cor de Fundo"
-                                value={form.cor_fundo}
-                                onChange={(v) => handleChange('cor_fundo', v)}
-                                textColor={textPrimary}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                            <CustomSelect
-                                label="Tema"
-                                value={form.tema}
-                                onChange={(v) => handleChange('tema', v)}
-                                options={TEMA_OPTIONS}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                isClaro={isClaro}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <CustomSelect
-                                label="Fonte Título"
-                                value={form.fonte_titulo}
-                                onChange={(v) => handleChange('fonte_titulo', v)}
-                                options={FONTE_OPTIONS}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                isClaro={isClaro}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <CustomSelect
-                                label="Fonte Corpo"
-                                value={form.fonte_corpo}
-                                onChange={(v) => handleChange('fonte_corpo', v)}
-                                options={FONTE_OPTIONS}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                isClaro={isClaro}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
-                            <CustomSelect
-                                label="Estilo dos Cards"
-                                value={form.estilo_card}
-                                onChange={(v) => handleChange('estilo_card', v)}
-                                options={ESTILO_CARD_OPTIONS}
-                                cor={corPrimaria}
-                                textColor={textPrimary}
-                                isClaro={isClaro}
-                                bg={bgCard}
-                                border={borderCard}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <CustomSelect label="Tema" value={form.tema} onChange={v => handleChange('tema', v)} options={TEMA_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
+                            <CustomSelect label="Fonte Título" value={form.fonte_titulo} onChange={v => handleChange('fonte_titulo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
+                            <CustomSelect label="Fonte Corpo" value={form.fonte_corpo} onChange={v => handleChange('fonte_corpo', v)} options={FONTE_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
+                            <CustomSelect label="Estilo dos Cards" value={form.estilo_card} onChange={v => handleChange('estilo_card', v)} options={ESTILO_CARD_OPTIONS} cor={corPrimaria} textColor={textPrimary} isClaro={isClaro} bg={bgCard} border={borderCard} />
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'modulos' && (
                     <div className="space-y-3">
-                        <div className="mb-3 flex items-center gap-2">
-                            <Settings className="h-4 w-4" style={{ color: corPrimaria }} />
-                            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
-                                Módulos Ativos
-                            </h2>
-                        </div>
-
-                        <Toggle
-                            label="Módulo de Propinas"
-                            description="Ativa o controle financeiro e emissão de faturas"
-                            checked={form.usar_modulo_propina}
-                            onChange={(v) => handleChange('usar_modulo_propina', v)}
-                            cor={corPrimaria}
-                            textColor={textPrimary}
-                            textSecondary={textSecondary}
-                            bg={bgCard}
-                            border={borderCard}
-                        />
-
-                        <Toggle
-                            label="Módulo Biblioteca"
-                            description="Controle de livros e empréstimos"
-                            checked={form.usar_modulo_biblioteca}
-                            onChange={(v) => handleChange('usar_modulo_biblioteca', v)}
-                            cor={corPrimaria}
-                            textColor={textPrimary}
-                            textSecondary={textSecondary}
-                            bg={bgCard}
-                            border={borderCard}
-                        />
-
-                        <Toggle
-                            label="Auto Cadastro"
-                            description="Permitir que novos usuários se cadastrem"
-                            checked={form.permitir_auto_cadastro}
-                            onChange={(v) => handleChange('permitir_auto_cadastro', v)}
-                            cor={corPrimaria}
-                            textColor={textPrimary}
-                            textSecondary={textSecondary}
-                            bg={bgCard}
-                            border={borderCard}
-                        />
+                        <div className="flex items-center gap-2 mb-3"><Settings className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Módulos Ativos</h2></div>
+                        <Toggle label="Módulo de Propinas" description="Ativa o controle financeiro e emissão de faturas" checked={form.usar_modulo_propina} onChange={v => handleChange('usar_modulo_propina', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
+                        <Toggle label="Módulo Biblioteca" description="Controle de livros e empréstimos" checked={form.usar_modulo_biblioteca} onChange={v => handleChange('usar_modulo_biblioteca', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
+                        <Toggle label="Auto Cadastro" description="Permitir que novos usuários se cadastrem" checked={form.permitir_auto_cadastro} onChange={v => handleChange('permitir_auto_cadastro', v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
                     </div>
                 )}
 
                 {activeTab === 'avancado' && (
                     <div className="space-y-3">
-                        <div className="mb-3 flex items-center gap-2">
-                            <Info className="h-4 w-4" style={{ color: corPrimaria }} />
-                            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
-                                Avançado
-                            </h2>
+                        <div className="flex items-center gap-2 mb-3"><Info className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Avançado</h2></div>
+                        <div className={`p-3 rounded-xl`} style={{ background: bgCard, border: `1px solid ${borderCard}` }}>
+                            <p className="text-sm" style={{ color: textSecondary }}>Área para configurações futuras: API Keys, Webhooks, Integrações.</p>
                         </div>
-
-                        <div
-                            className="rounded-xl p-3"
-                            style={{ background: bgCard, border: `1px solid ${borderCard}` }}
-                        >
-                            <p className="text-sm" style={{ color: textSecondary }}>
-                                Área para configurações futuras: API Keys, Webhooks e integrações.
-                            </p>
-                        </div>
-
-                        <div
-                            className="rounded-xl p-3"
-                            style={{ background: bgCard, border: `1px solid ${borderCard}` }}
-                        >
-                            <p className="text-sm" style={{ color: textSecondary }}>
-                                Estado da escola: {form.ativo ? 'Ativa' : 'Inativa'}
-                            </p>
-                        </div>
+                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo',!v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
                     </div>
                 )}
             </div>
 
             <style>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
         </div>
     )
 }
 
-// ===== COMPONENTES PADRONIZADOS =====
-interface InputProps {
-    label: string
-    value: string
-    onChange?: (value: string) => void
-    type?: string
-    icon?: ReactNode
-    disabled?: boolean
-    cor?: string
-    textColor?: string
-    bg?: string
-    border?: string
-}
-
-const Input = ({
-    label,
-    value,
-    onChange,
-    type = 'text',
-    icon,
-    disabled,
-    cor = '#3B82F6',
-    textColor = 'white',
-    bg = 'rgba(0,0,0,0.03)',
-    border = 'rgba(0,0,0,0.1)',
-}: InputProps) => (
+// ===== COMPONENTES PADRONIZADOS COMPACTOS =====
+interface InputProps { label: string; value: string; onChange?: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; cor?: string; textColor?: string; bg?: string; border?: string }
+const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#3B82F6', textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: InputProps) => (
     <div>
-        <label className="mb-1.5 block text-sm font-medium" style={{ color: textColor }}>
-            {label}
-        </label>
-
+        {/* LABEL MENOR: mb-2 -> mb-1.5 text-sm */}
+        <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
-            {icon && (
-                <div className="absolute left-3 top-2.5" style={{ color: textColor }}>
-                    {icon}
-                </div>
-            )}
-
-            <input
-                type={type}
-                value={value}
-                disabled={disabled}
-                onChange={(e) => onChange?.(e.target.value)}
-                className={`w-full ${icon ? 'pl-10' : 'px-3'} py-2.5 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
-                style={{
-                    color: textColor,
-                    background: bg,
-                    border: `1px solid ${border}`,
-                }}
-            />
+            {/* ICONE MENOR: left-4 top-3.5 -> left-3 top-2.5 */}
+            {icon && <div className="absolute left-3 top-2.5" style={{ color: textColor }}>{icon}</div>}
+            {/* INPUT MENOR: pl-12 -> pl-10 px-4 -> px-3 py-3 -> py-2.5 */}
+            <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)}
+                className={`w-full ${icon? 'pl-10' : 'px-3'} py-2.5 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
 )
 
-interface SelectProps {
-    label: string
-    value: string
-    onChange: (value: string) => void
-    options: Option[]
-    cor?: string
-    textColor?: string
-    isClaro?: boolean
-    bg?: string
-    border?: string
-}
-
-const CustomSelect = ({
-    label,
-    value,
-    onChange,
-    options,
-    cor = '#3B82F6',
-    textColor = 'white',
-    isClaro = false,
-    bg = 'rgba(0,0,0,0.03)',
-    border = 'rgba(0,0,0,0.1)',
-}: SelectProps) => {
+interface SelectProps { label: string; value: string; onChange: (value: string) => void; options: Option[]; cor?: string; textColor?: string; isClaro?: boolean; bg?: string; border?: string }
+const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textColor = 'white', isClaro = false, bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: SelectProps) => {
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
-
-    const selected = options.find((o) => o.value === value)
-
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) {
-                setOpen(false)
-            }
-        }
-
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [])
+    const selected = options.find(o => o.value === value)
+    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current &&!ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
 
     return (
         <div ref={ref} className="relative">
-            <label className="mb-1.5 block text-sm font-medium" style={{ color: textColor }}>
-                {label}
-            </label>
-
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition"
-                style={{
-                    color: textColor,
-                    background: bg,
-                    border: `1px solid ${border}`,
-                }}
-            >
+            <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
+            {/* SELECT MENOR: px-4 py-3 -> px-3 py-2.5 */}
+            <button type="button" onClick={() => setOpen(!open)}
+                className={`w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-left transition text-sm`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }}>
                 <span>{selected?.label || 'Selecione'}</span>
-                <ChevronDown
-                    className={`h-4 w-4 transition ${open ? 'rotate-180' : ''}`}
-                    style={{ color: textColor }}
-                />
+                <ChevronDown className={`w-4 h-4 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
-
             {open && (
-                <div
-                    className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border shadow-2xl"
-                    style={{
-                        backgroundColor: isClaro ? '#FFFFFF' : '#1A1A1A',
-                        borderColor: border,
-                    }}
-                >
+                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: border }}>
                     <div className="max-h-60 overflow-y-auto">
-                        {options.map((opt) => (
-                            <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => {
-                                    onChange(opt.value)
-                                    setOpen(false)
-                                }}
-                                className="w-full px-3 py-2.5 text-left text-sm transition"
-                                style={{
-                                    color: value === opt.value ? cor : textColor,
-                                    backgroundColor: value === opt.value ? `${cor}20` : 'transparent',
-                                }}
-                            >
+                        {options.map(opt => (
+                            <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
+                                className={`w-full text-left px-3 py-2.5 transition text-sm`}
+                                style={{ color: value === opt.value? cor : textColor, backgroundColor: value === opt.value? `${cor}20` : 'transparent' }}>
                                 {opt.label}
                             </button>
                         ))}
@@ -891,171 +372,56 @@ const CustomSelect = ({
     )
 }
 
-interface ColorPickerProps {
-    label: string
-    value: string
-    onChange: (value: string) => void
-    textColor?: string
-    bg?: string
-    border?: string
-}
-
-const ColorPicker = ({
-    label,
-    value,
-    onChange,
-    textColor = 'white',
-    bg = 'rgba(0,0,0,0.03)',
-    border = 'rgba(0,0,0,0.1)',
-}: ColorPickerProps) => (
+interface ColorPickerProps { label: string; value: string; onChange: (value: string) => void; textColor?: string; bg?: string; border?: string }
+const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: ColorPickerProps) => (
     <div>
-        <label className="mb-1.5 block text-sm font-medium" style={{ color: textColor }}>
-            {label}
-        </label>
-
+        <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
         <div className="flex items-center gap-2">
-            <input
-                type="color"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="h-10 w-12 cursor-pointer rounded-xl p-1"
-                style={{ background: bg, border: `1px solid ${border}` }}
-            />
-            <input
-                type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="flex-1 rounded-xl px-3 py-2.5 text-sm uppercase transition focus:outline-none focus:ring-2"
-                style={{ color: textColor, background: bg, border: `1px solid ${border}` }}
-            />
+            {/* COLOR MENOR: w-14 h-12 -> w-12 h-10 */}
+            <input type="color" value={value} onChange={e => onChange(e.target.value)}
+                className={`w-12 h-10 rounded-xl cursor-pointer p-1`}
+                style={{ background: bg, border: `1px solid ${border}` }} />
+            {/* INPUT MENOR: px-4 py-3 -> px-3 py-2.5 */}
+            <input type="text" value={value} onChange={e => onChange(e.target.value)}
+                className={`flex-1 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 transition uppercase text-sm`}
+                style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
 )
 
-interface ToggleProps {
-    label: string
-    description?: string
-    checked: boolean
-    onChange: (value: boolean) => void
-    cor?: string
-    textColor?: string
-    textSecondary?: string
-    bg?: string
-    border?: string
-}
-
-const Toggle = ({
-    label,
-    description,
-    checked,
-    onChange,
-    cor = '#3B82F6',
-    textColor = 'white',
-    textSecondary = '#9CA3AF',
-    bg = 'rgba(0,0,0,0.03)',
-    border = 'rgba(0,0,0,0.1)',
-}: ToggleProps) => (
-    <div
-        className="flex items-center justify-between rounded-xl p-3"
-        style={{ background: bg, border: `1px solid ${border}` }}
-    >
+interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string; textColor?: string; textSecondary?: string; bg?: string; border?: string }
+const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: ToggleProps) => (
+    // TOGGLE MENOR: p-4 -> p-3
+    <div className={`flex items-center justify-between p-3 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
         <div>
-            <p className="text-sm font-medium" style={{ color: textColor }}>
-                {label}
-            </p>
-            {description && (
-                <p className="text-xs" style={{ color: textSecondary }}>
-                    {description}
-                </p>
-            )}
+            <p className="font-medium text-sm" style={{ color: textColor }}>{label}</p>
+            {description && <p className="text-xs" style={{ color: textSecondary }}>{description}</p>}
         </div>
-
-        <button
-            type="button"
-            onClick={() => onChange(!checked)}
-            className="h-5 w-10 rounded-full transition"
-            style={{ backgroundColor: checked ? cor : 'rgba(128,128,128,0.3)' }}
-        >
-            <div
-                className={`h-4 w-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-            />
+        {/* SWITCH MENOR: w-12 h-6 -> w-10 h-5 */}
+        <button onClick={() => onChange(!checked)} className={`w-10 h-5 rounded-full transition`} style={{ backgroundColor: checked? cor : 'rgba(128,128,128,0.3)' }}>
+            {/* BOLINHA MENOR: w-5 h-5 -> w-4 h-4 translate-x-6 -> 5 */}
+            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked? 'translate-x-5' : 'translate-x-0.5'}`}></div>
         </button>
     </div>
 )
 
-interface UploadBoxProps {
-    label: string
-    currentUrl?: string
-    fileName?: string
-    onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void
-    cor?: string
-    onRemove: () => void
-    textColor?: string
-    bg?: string
-    border?: string
-}
-
-const UploadBox = ({
-    label,
-    currentUrl,
-    fileName,
-    onFileSelect,
-    cor = '#3B82F6',
-    onRemove,
-    textColor = 'white',
-    bg = 'rgba(0,0,0,0.03)',
-    border = 'rgba(0,0,0,0.1)',
-}: UploadBoxProps) => (
+interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string; onFileSelect: (e: ChangeEvent<HTMLInputElement>) => void; cor?: string; onRemove: () => void; textColor?: string; bg?: string; border?: string }
+const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: UploadBoxProps) => (
     <div>
-        <label className="mb-1.5 block text-sm font-medium" style={{ color: textColor }}>
-            {label}
-        </label>
-
-        <div
-            className="flex flex-col items-center gap-3 rounded-xl p-3"
-            style={{ background: bg, border: `1px solid ${border}` }}
-        >
-            {currentUrl ? (
-                <img
-                    src={currentUrl}
-                    alt={label}
-                    className="h-16 w-16 flex-shrink-0 rounded-lg bg-white/5 object-contain p-2"
-                />
-            ) : (
-                <div
-                    className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg"
-                    style={{
-                        background: bg,
-                        border: `1px dashed ${border}`,
-                    }}
-                >
-                    <ImageIcon className="h-6 w-6 text-gray-500" />
-                </div>
-            )}
-
-            <div className="w-full flex-1 text-center">
-                <label
-                    className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition hover:opacity-90"
-                    style={{ backgroundColor: `${cor}20`, color: cor }}
-                >
-                    <Upload className="h-3.5 w-3.5" />
-                    {fileName ? 'Trocar' : 'Selecionar'}
+        <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
+        {/* UPLOAD MENOR: p-4 -> p-3 gap-3 */}
+        <div className={`flex flex-col items-center gap-3 p-3 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
+            {/* IMG MENOR: w-20 h-20 -> w-16 h-16 */}
+            {currentUrl? <img src={currentUrl} alt={label} className="w-16 h-16 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-6 h-6 text-gray-500" /></div>}
+            <div className="flex-1 w-full text-center">
+                {/* BOTAO MENOR: px-4 py-2.5 -> px-3 py-2 */}
+                <label className="w-full px-3 py-2 rounded-lg font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition hover:opacity-90 text-sm" style={{ backgroundColor: `${cor}20`, color: cor }}>
+                    <Upload className="w-3.5 h-3.5" /> {fileName? 'Trocar' : 'Selecionar'}
                     <input type="file" accept="image/*" onChange={onFileSelect} className="hidden" />
                 </label>
-
-                <p className="mt-2 truncate text-[11px]" style={{ color: textColor }}>
-                    {fileName || 'Nenhum ficheiro'}
-                </p>
+                <p className="text-[11px] mt-2 truncate" style={{ color: textColor }}>{fileName || 'Nenhum ficheiro'}</p>
             </div>
-
-            <button
-                type="button"
-                onClick={onRemove}
-                className="rounded-lg p-1.5 hover:bg-black/10"
-            >
-                <X className="h-3.5 w-3.5" style={{ color: textColor }} />
-            </button>
+            <button onClick={onRemove} className="p-1.5 hover:bg-black/10 rounded-lg"><X className="w-3.5 h-3.5" style={{ color: textColor }} /></button>
         </div>
     </div>
 )
