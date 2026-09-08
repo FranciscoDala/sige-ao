@@ -14,7 +14,24 @@ export default function StatCard({
     color,
 }: StatCardProps) {
     return (
-        <div className="w-full shrink-0 snap-center rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl transition-all duration-300 hover:border-white/20">
+        <div
+            className="
+                w-[88vw]
+                max-w-[320px]
+                shrink-0
+                snap-center
+                rounded-2xl
+                border border-white/10
+                bg-white/5
+                p-3
+                backdrop-blur-xl
+                transition-all
+                duration-300
+                hover:border-white/20
+                mx-auto
+                md:w-full md:max-w-none md:mx-0
+            "
+        >
             <div className="flex items-center justify-between">
                 <div>
                     <p className="mb-0.5 text-xs font-medium text-gray-400">{title}</p>
