@@ -18,7 +18,7 @@ type EscolaForm = {
     permitir_auto_cadastro: boolean; usar_modulo_propina: boolean; usar_modulo_biblioteca: boolean; ativo: boolean;
 }
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '')
 
 const TEMA_OPTIONS: Option[] = [
     { value: 'claro', label: 'Claro' },
@@ -41,6 +41,21 @@ const ESTILO_CARD_OPTIONS: Option[] = [
     { value: 'glass', label: 'Glass Morphism' },
 ]
 
+const getAuthHeader = (isJson = true) => {
+    const token = authService.getToken()
+    const headers: Record<string, string> = {}
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`
+    }
+
+    if (isJson) {
+        headers['Content-Type'] = 'application/json'
+    }
+
+    return headers
+}
+
 export default function DefinicoesEscolaPage() {
     const [activeTab, setActiveTab] = useState<Tab>('identificacao')
     const [loading, setLoading] = useState(false)
@@ -61,33 +76,33 @@ export default function DefinicoesEscolaPage() {
         permitir_auto_cadastro: false, usar_modulo_propina: true, usar_modulo_biblioteca: false, ativo: true,
     })
 
-    const getAuthHeader = (isJson = true) => ({
-        'Authorization': `Bearer ${authService.getToken()}`,
-       ...(isJson? { 'Content-Type': 'application/json' } : {})
-    })
-
     const corPrimaria = form.cor_primaria
     const corSecundaria = form.cor_secundaria
     const isClaro = form.tema === 'claro'
-    const textPrimary = isClaro? '#1E293B' : 'white'
-    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
-    const borderCard = isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+    const textPrimary = isClaro ? '#1E293B' : 'white'
+    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
 
     useEffect(() => {
         const fetchEscola = async () => {
             try {
                 const res = await fetch(`${API_URL}/escolas/me`, { headers: getAuthHeader() })
-                if (!res.ok) throw new Error('Erro ao carregar dados')
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}))
+                    throw new Error(errorData.detail || 'Erro ao carregar dados')
+                }
+
                 const data = await res.json()
-                const escolaData: EscolaForm = {...form,...data }
+                const escolaData: EscolaForm = { ...form, ...data }
                 setForm(escolaData)
                 setLogoPreview(escolaData.logo_url)
                 setBannerPreview(escolaData.banner_url)
                 setFaviconPreview(escolaData.favicon_url)
+
                 const userAtual = authService.getUser()
                 if (userAtual && escolaData.nome) {
-                    localStorage.setItem('user', JSON.stringify({...userAtual, escola_nome: escolaData.nome }))
+                    localStorage.setItem('user', JSON.stringify({ ...userAtual, escola_nome: escolaData.nome }))
                     window.dispatchEvent(new Event('user-updated'))
                 }
             } catch (error: any) {
@@ -101,13 +116,13 @@ export default function DefinicoesEscolaPage() {
     }, [])
 
     const handleChange = <K extends keyof EscolaForm>(key: K, value: EscolaForm[K]) => {
-        setForm(prev => ({...prev, [key]: value }))
+        setForm(prev => ({ ...prev, [key]: value }))
     }
 
     const handleFileChange = (type: 'logo' | 'banner' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            const maxSize = type === 'favicon'? 1 * 1024 * 1024 : 5 * 1024 * 1024
+            const maxSize = type === 'favicon' ? 1 * 1024 * 1024 : 5 * 1024 * 1024
             if (file.size > maxSize) {
                 toast.error(`Arquivo muito grande. Máximo ${maxSize / 1024 / 1024}MB`)
                 return
@@ -124,7 +139,9 @@ export default function DefinicoesEscolaPage() {
         try {
             const token = authService.getToken()
             if (!token) throw new Error("Token não encontrado. Faça login novamente.")
+
             const clean = (s: string) => s?.replace(/´/g, "'").trim() || undefined
+
             const rawPayload = {
                 nome: clean(form.nome), sigla: clean(form.sigla), nif: clean(form.nif), email: clean(form.email),
                 telefone: clean(form.telefone), endereco: clean(form.endereco), provincia: clean(form.provincia), municipio: clean(form.municipio),
@@ -132,31 +149,52 @@ export default function DefinicoesEscolaPage() {
                 fonte_titulo: form.fonte_titulo, fonte_corpo: form.fonte_corpo, estilo_card: form.estilo_card,
                 permitir_auto_cadastro: form.permitir_auto_cadastro, usar_modulo_propina: form.usar_modulo_propina, usar_modulo_biblioteca: form.usar_modulo_biblioteca,
             }
-            const payload = Object.fromEntries(Object.entries(rawPayload).filter(([_, v]) => v!== undefined && v!== null && v!== ''))
+
+            const payload = Object.fromEntries(
+                Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+            )
+
             const res = await fetch(`${API_URL}/escolas/me/definicoes`, {
                 method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: getAuthHeader(),
                 body: JSON.stringify(payload)
             })
+
             if (!res.ok) {
                 const err = await res.json()
-                if (Array.isArray(err.detail)) throw new Error(err.detail.map((e: any) => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', '))
+                if (Array.isArray(err.detail)) {
+                    throw new Error(err.detail.map((e: any) => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', '))
+                }
                 throw new Error(err.detail || 'Erro ao salvar dados')
             }
+
             let updatedData = await res.json()
 
             const uploadFile = async (file: File, endpoint: string, fieldName: string) => {
                 const formData = new FormData()
                 formData.append(fieldName, file)
-                const fileRes = await fetch(`${API_URL}${endpoint}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData })
-                if (!fileRes.ok) throw new Error((await fileRes.json()).detail || `Erro ao salvar ${endpoint}`)
+
+                const fileRes = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: formData
+                })
+
+                if (!fileRes.ok) {
+                    const err = await fileRes.json().catch(() => ({}))
+                    throw new Error(err.detail || `Erro ao salvar ${endpoint}`)
+                }
+
                 return await fileRes.json()
             }
+
             if (logoFile) updatedData = await uploadFile(logoFile, '/escolas/me/logo', 'logo')
             if (bannerFile) updatedData = await uploadFile(bannerFile, '/escolas/me/banner', 'file')
             if (faviconFile) updatedData = await uploadFile(faviconFile, '/escolas/me/favicon', 'file')
 
-            const escolaData: EscolaForm = {...form,...updatedData }
+            const escolaData: EscolaForm = { ...form, ...updatedData }
             setForm(escolaData)
             setLogoPreview(escolaData.logo_url)
             setBannerPreview(escolaData.banner_url)
@@ -184,36 +222,31 @@ export default function DefinicoesEscolaPage() {
     if (loadingData) return <div className="flex justify-center p-6"><Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} /></div>
 
     return (
-        <div className="space-y-4"> {/* ESPAÇO MENOR: space-y-6 -> 4 */}
-            {/* Header + Botão na mesma linha MAIS COMPACTO */}
+        <div className="space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    {/* ICONE MENOR: w-7 -> w-6 */}
                     <Settings className="w-6 h-6" style={{ color: corPrimaria || '#6366F1' }} />
                     <div>
-                        {/* TITULO MENOR: text-2xl -> text-xl */}
                         <h1 className="text-xl font-bold" style={{ color: textPrimary }}>Definições da Escola</h1>
                         <p className="text-xs" style={{ color: textSecondary }}>Personalize as informações e aparência do painel</p>
                     </div>
                 </div>
 
-                {/* BOTAO MENOR: h-11 -> h-10 px-5 -> px-4 */}
                 <button
                     onClick={handleSave}
                     disabled={loading}
                     className="w-full lg:w-auto h-10 px-4 font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:scale-[1.02] transition text-sm"
                     style={{
                         background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
-                        borderRadius: form.estilo_card === 'quadrado'? '0.5rem' : form.estilo_card === 'minimalista'? '0.25rem' : '0.75rem',
+                        borderRadius: form.estilo_card === 'quadrado' ? '0.5rem' : form.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem',
                         color: 'white'
                     }}
                 >
-                    {loading? <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'white' }} /> : <Save className="w-4 h-4" style={{ color: 'white' }} />}
-                    <span style={{ color: 'white' }}>{loading? 'Salvando...' : 'Salvar Definições'}</span>
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'white' }} /> : <Save className="w-4 h-4" style={{ color: 'white' }} />}
+                    <span style={{ color: 'white' }}>{loading ? 'Salvando...' : 'Salvar Definições'}</span>
                 </button>
             </div>
 
-            {/* Tabs MAIS COMPACTAS */}
             <div className="w-full">
                 <div className="flex gap-2 p-0 overflow-x-auto scrollbar-hide">
                     {tabs.map(tab => {
@@ -223,16 +256,14 @@ export default function DefinicoesEscolaPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                // PAD MENOR: px-4 py-2.5 -> px-3 py-2
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border"
                                 style={{
-                                    backgroundColor: isActive? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
-                                    color: isActive? corPrimaria : textSecondary,
-                                    borderColor: isActive? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
+                                    backgroundColor: isActive ? `${corPrimaria}20` : 'rgba(0,0,0,0.03)',
+                                    color: isActive ? corPrimaria : textSecondary,
+                                    borderColor: isActive ? `${corPrimaria}4D` : 'rgba(0,0,0,0.08)'
                                 }}
                             >
-                                {/* ICONE MENOR: w-4 -> w-3.5 */}
-                                <Icon className="w-3.5 h-3.5" style={{ color: isActive? corPrimaria : textSecondary }} />
+                                <Icon className="w-3.5 h-3.5" style={{ color: isActive ? corPrimaria : textSecondary }} />
                                 {tab.label}
                             </button>
                         )
@@ -243,9 +274,8 @@ export default function DefinicoesEscolaPage() {
 
             <div className="rounded-2xl p-0 bg-transparent shadow-none -mt-2">
                 {activeTab === 'identificacao' && (
-                    <div className="space-y-3"> {/* ESPAÇO MENOR: space-y-4 -> 3 */}
+                    <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-3"><Building2 className="w-4 h-4" style={{ color: corPrimaria }} /><h2 className="text-base font-semibold" style={{ color: textPrimary }}>Identificação</h2></div>
-                        {/* GAP MENOR: gap-4 -> gap-3 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <Input label="Nome Completo" value={form.nome} onChange={v => handleChange('nome', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
                             <Input label="Sigla" value={form.sigla} onChange={v => handleChange('sigla', v)} cor={corPrimaria} textColor={textPrimary} bg={bgCard} border={borderCard} />
@@ -308,7 +338,7 @@ export default function DefinicoesEscolaPage() {
                         <div className={`p-3 rounded-xl`} style={{ background: bgCard, border: `1px solid ${borderCard}` }}>
                             <p className="text-sm" style={{ color: textSecondary }}>Área para configurações futuras: API Keys, Webhooks, Integrações.</p>
                         </div>
-                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo',!v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
+                        <Toggle label="Manutenção" description="Colocar o painel em modo de manutenção" checked={!form.ativo} onChange={v => handleChange('ativo', !v)} cor={corPrimaria} textColor={textPrimary} textSecondary={textSecondary} bg={bgCard} border={borderCard} />
                     </div>
                 )}
             </div>
@@ -325,14 +355,11 @@ export default function DefinicoesEscolaPage() {
 interface InputProps { label: string; value: string; onChange?: (value: string) => void; type?: string; icon?: ReactNode; disabled?: boolean; cor?: string; textColor?: string; bg?: string; border?: string }
 const Input = ({ label, value, onChange, type = 'text', icon, disabled, cor = '#3B82F6', textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: InputProps) => (
     <div>
-        {/* LABEL MENOR: mb-2 -> mb-1.5 text-sm */}
         <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
         <div className="relative">
-            {/* ICONE MENOR: left-4 top-3.5 -> left-3 top-2.5 */}
             {icon && <div className="absolute left-3 top-2.5" style={{ color: textColor }}>{icon}</div>}
-            {/* INPUT MENOR: pl-12 -> pl-10 px-4 -> px-3 py-3 -> py-2.5 */}
             <input type={type} value={value} disabled={disabled} onChange={(e) => onChange?.(e.target.value)}
-                className={`w-full ${icon? 'pl-10' : 'px-3'} py-2.5 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
+                className={`w-full ${icon ? 'pl-10' : 'px-3'} py-2.5 rounded-xl focus:outline-none focus:ring-2 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
                 style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
         </div>
     </div>
@@ -343,25 +370,24 @@ const CustomSelect = ({ label, value, onChange, options, cor = '#3B82F6', textCo
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
     const selected = options.find(o => o.value === value)
-    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current &&!ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
+    useEffect(() => { const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', handler); return () => document.removeEventListener('mousedown', handler) }, [])
 
     return (
         <div ref={ref} className="relative">
             <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
-            {/* SELECT MENOR: px-4 py-3 -> px-3 py-2.5 */}
             <button type="button" onClick={() => setOpen(!open)}
                 className={`w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-left transition text-sm`}
                 style={{ color: textColor, background: bg, border: `1px solid ${border}` }}>
                 <span>{selected?.label || 'Selecione'}</span>
-                <ChevronDown className={`w-4 h-4 transition ${open? 'rotate-180' : ''}`} style={{ color: textColor }} />
+                <ChevronDown className={`w-4 h-4 transition ${open ? 'rotate-180' : ''}`} style={{ color: textColor }} />
             </button>
             {open && (
-                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro? '#FFFFFF' : '#1A1A1A', borderColor: border }}>
+                <div className="absolute z-20 w-full mt-2 rounded-xl shadow-2xl overflow-hidden border" style={{ backgroundColor: isClaro ? '#FFFFFF' : '#1A1A1A', borderColor: border }}>
                     <div className="max-h-60 overflow-y-auto">
                         {options.map(opt => (
                             <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false) }}
                                 className={`w-full text-left px-3 py-2.5 transition text-sm`}
-                                style={{ color: value === opt.value? cor : textColor, backgroundColor: value === opt.value? `${cor}20` : 'transparent' }}>
+                                style={{ color: value === opt.value ? cor : textColor, backgroundColor: value === opt.value ? `${cor}20` : 'transparent' }}>
                                 {opt.label}
                             </button>
                         ))}
@@ -377,11 +403,9 @@ const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'rgba(0
     <div>
         <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
         <div className="flex items-center gap-2">
-            {/* COLOR MENOR: w-14 h-12 -> w-12 h-10 */}
             <input type="color" value={value} onChange={e => onChange(e.target.value)}
                 className={`w-12 h-10 rounded-xl cursor-pointer p-1`}
                 style={{ background: bg, border: `1px solid ${border}` }} />
-            {/* INPUT MENOR: px-4 py-3 -> px-3 py-2.5 */}
             <input type="text" value={value} onChange={e => onChange(e.target.value)}
                 className={`flex-1 px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 transition uppercase text-sm`}
                 style={{ color: textColor, background: bg, border: `1px solid ${border}` }} />
@@ -391,16 +415,13 @@ const ColorPicker = ({ label, value, onChange, textColor = 'white', bg = 'rgba(0
 
 interface ToggleProps { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void; cor?: string; textColor?: string; textSecondary?: string; bg?: string; border?: string }
 const Toggle = ({ label, description, checked, onChange, cor = '#3B82F6', textColor = 'white', textSecondary = '#9CA3AF', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: ToggleProps) => (
-    // TOGGLE MENOR: p-4 -> p-3
     <div className={`flex items-center justify-between p-3 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
         <div>
             <p className="font-medium text-sm" style={{ color: textColor }}>{label}</p>
             {description && <p className="text-xs" style={{ color: textSecondary }}>{description}</p>}
         </div>
-        {/* SWITCH MENOR: w-12 h-6 -> w-10 h-5 */}
-        <button onClick={() => onChange(!checked)} className={`w-10 h-5 rounded-full transition`} style={{ backgroundColor: checked? cor : 'rgba(128,128,128,0.3)' }}>
-            {/* BOLINHA MENOR: w-5 h-5 -> w-4 h-4 translate-x-6 -> 5 */}
-            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+        <button onClick={() => onChange(!checked)} className={`w-10 h-5 rounded-full transition`} style={{ backgroundColor: checked ? cor : 'rgba(128,128,128,0.3)' }}>
+            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
         </button>
     </div>
 )
@@ -409,14 +430,11 @@ interface UploadBoxProps { label: string; currentUrl?: string; fileName?: string
 const UploadBox = ({ label, currentUrl, fileName, onFileSelect, cor = '#3B82F6', onRemove, textColor = 'white', bg = 'rgba(0,0,0,0.03)', border = 'rgba(0,0,0,0.1)' }: UploadBoxProps) => (
     <div>
         <label className="text-sm font-medium mb-1.5 block" style={{ color: textColor }}>{label}</label>
-        {/* UPLOAD MENOR: p-4 -> p-3 gap-3 */}
         <div className={`flex flex-col items-center gap-3 p-3 rounded-xl`} style={{ background: bg, border: `1px solid ${border}` }}>
-            {/* IMG MENOR: w-20 h-20 -> w-16 h-16 */}
-            {currentUrl? <img src={currentUrl} alt={label} className="w-16 h-16 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-6 h-6 text-gray-500" /></div>}
+            {currentUrl ? <img src={currentUrl} alt={label} className="w-16 h-16 object-contain rounded-lg bg-white/5 p-2 flex-shrink-0" /> : <div className={`w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0`} style={{ background: bg, border: `1px dashed ${border}` }}><ImageIcon className="w-6 h-6 text-gray-500" /></div>}
             <div className="flex-1 w-full text-center">
-                {/* BOTAO MENOR: px-4 py-2.5 -> px-3 py-2 */}
                 <label className="w-full px-3 py-2 rounded-lg font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition hover:opacity-90 text-sm" style={{ backgroundColor: `${cor}20`, color: cor }}>
-                    <Upload className="w-3.5 h-3.5" /> {fileName? 'Trocar' : 'Selecionar'}
+                    <Upload className="w-3.5 h-3.5" /> {fileName ? 'Trocar' : 'Selecionar'}
                     <input type="file" accept="image/*" onChange={onFileSelect} className="hidden" />
                 </label>
                 <p className="text-[11px] mt-2 truncate" style={{ color: textColor }}>{fileName || 'Nenhum ficheiro'}</p>
