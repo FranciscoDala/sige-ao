@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Users, UserCheck, UserX, ShieldCheck, Plus,
-    ChevronDown, Loader2, Building
+    ChevronDown, Loader2, Building, UserCog
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { UsuarioMinisterio } from '../types/usuario'
@@ -169,9 +169,13 @@ export default function UsersPage() {
 
     return (
         <div className="space-y-4">
-            <div>
-                <h2 className="text-2xl font-bold text-white">Usuários</h2>
-                <p className="text-sm text-gray-400">Gerencie quem pode acessar o painel</p>
+            {/* HEADER IGUAL DEFINICOES */}
+            <div className="flex items-center gap-3">
+                <UserCog className="w-6 h-6 text-[#3B82F6]" />
+                <div>
+                    <h1 className="text-xl font-bold text-white">Usuários</h1>
+                    <p className="text-xs text-gray-400">Gerencie quem pode acessar o painel</p>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -181,7 +185,7 @@ export default function UsersPage() {
                         <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
+                        <div className="absolute z-10 w-full mt-2 bg-[#1E293B]/90 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
                             <div className="max-h-60 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{opcoesFiltro.map(op => (
                                 <button key={op.value} type="button" onClick={() => { setFiltroStatus(op.value); setDropdownOpen(false) }} className={`w-full text-left px-3 py-2.5 hover:bg-white/10 transition flex items-center gap-3 text-sm ${filtroStatus === op.value? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'text-gray-300 hover:text-white'}`}>
                                     <op.icon className="w-4 h-4 flex-shrink-0" /><span>{op.label}</span>

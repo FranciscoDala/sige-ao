@@ -21,54 +21,55 @@ interface EscolaCardProps {
 
 export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }: EscolaCardProps) {
     return (
-        <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-5 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
-            <div className="flex items-start gap-4 mb-5">
-                <div className="w-16 h-16 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B82F6]/20 mt-1 overflow-hidden">
-                    {escola.logo_url?
-                        <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-2xl" />
-                        : <School className="w-8 h-8 text-white" />
-                    }
+        <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
+            <div className="flex items-start gap-3 mb-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B82F6]/20 mt-0.5 overflow-hidden">
+                    {escola.logo_url? (
+                        <img src={escola.logo_url} alt={escola.nome} className="w-full h-full object-cover rounded-xl" />
+                    ) : (
+                        <School className="w-5 h-5 text-white" />
+                    )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="min-w-0">
-                            <h3 className="font-bold text-white text-lg leading-tight break-words">{escola.nome}</h3>
-                            <p className="text-sm text-[#3B82F6] font-semibold">{escola.sigla || `ID: ${escola.id}`}</p>
+                            <h3 className="font-bold text-white text-base leading-tight break-words">{escola.nome}</h3>
+                            <p className="text-xs text-[#3B82F6] font-semibold">{escola.sigla || `ID: ${escola.id}`}</p>
                         </div>
-                        <span className={`text-xs px-3 py-1 rounded-full font-semibold border flex-shrink-0 ${escola.ativo? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border flex-shrink-0 ${escola.ativo? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
                             {escola.ativo? 'Ativa' : 'Inativa'}
                         </span>
                     </div>
 
                     {escola.nivel_ensino && (
                         <div className="flex items-center gap-1.5 mb-2">
-                            <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/30 font-semibold">
-                                <GraduationCap className="w-3.5 h-3.5" />
+                            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-lg bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/30 font-semibold">
+                                <GraduationCap className="w-3 h-3" />
                                 {NIVEL_LABELS[escola.nivel_ensino] || escola.nivel_ensino}
                             </span>
                         </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-sm text-gray-300 mb-2">
-                        <User className="w-4 h-4 text-[#8B5CF6] flex-shrink-0" />
-                        <span>Diretor: {diretor?.nome || 'Não definido'}</span>
+                    <div className="flex items-center gap-2 text-xs text-gray-300 mb-2">
+                        <User className="w-3.5 h-3.5 text-[#8B5CF6] flex-shrink-0" />
+                        <span className="truncate">Diretor: {diretor?.nome || 'Não definido'}</span>
                     </div>
 
-                    <div className="space-y-1.5 mt-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-300">
-                            <MapPinIcon className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                    <div className="space-y-1 mt-2">
+                        <div className="flex items-center gap-2 text-xs text-gray-300">
+                            <MapPinIcon className="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0" />
                             <span className="break-words">{escola.provincia || 'N/A'} - {escola.municipio || 'N/A'}</span>
                         </div>
                         {escola.telefone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-300">
-                                <Phone className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                            <div className="flex items-center gap-2 text-xs text-gray-300">
+                                <Phone className="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0" />
                                 <span>{escola.telefone}</span>
                             </div>
                         )}
                         {escola.nif && (
-                            <div className="flex items-center gap-2 text-sm text-gray-300">
-                                <Hash className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                            <div className="flex items-center gap-2 text-xs text-gray-300">
+                                <Hash className="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0" />
                                 <span>NIF: {escola.nif}</span>
                             </div>
                         )}
@@ -77,14 +78,14 @@ export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10">
-                <button onClick={onView} className="hidden w-full items-center justify-center gap-2 p-2.5 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-sm text-gray-300 font-semibold transition">
-                    <Eye className="w-4 h-4" /> Ver
+                <button onClick={onView} className="hidden w-full items-center justify-center gap-1.5 p-2 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-xs text-gray-300 font-semibold transition">
+                    <Eye className="w-3.5 h-3.5" /> Ver
                 </button>
-                <button onClick={onEdit} className="w-full flex items-center justify-center gap-2 p-2.5 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border border-[#8B5CF6]/20 rounded-lg text-sm text-[#8B5CF6] font-semibold transition">
-                    <Edit className="w-4 h-4" /> Editar
+                <button onClick={onEdit} className="w-full flex items-center justify-center gap-1.5 p-2 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border-[#8B5CF6]/20 rounded-lg text-xs text-[#8B5CF6] font-semibold transition">
+                    <Edit className="w-3.5 h-3.5" /> Editar
                 </button>
-                <button onClick={onDelete} className="w-full flex items-center justify-center gap-2 p-2.5 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-sm text-red-400 font-semibold transition">
-                    <Trash2 className="w-4 h-4" /> Apagar
+                <button onClick={onDelete} className="w-full flex items-center justify-center gap-1.5 p-2 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-xs text-red-400 font-semibold transition">
+                    <Trash2 className="w-3.5 h-3.5" /> Apagar
                 </button>
             </div>
         </div>

@@ -86,7 +86,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
         if (!isEdit && (!form.senha || form.senha.length < 6)) { toast.error("A senha deve ter no mínimo 6 caracteres"); return }
         if (mostrarSelectEscola &&!form.escola_id) { toast.error("Selecione a escola do Diretor"); return }
 
-        const payload: any = {...form }
+        const payload: any ={...form }
         if (isEdit &&!payload.senha) delete payload.senha
         if (form.nivel === "MINISTERIO") delete payload.escola_id
 
@@ -101,9 +101,7 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
         }
     }
 
-    // REMOVIDO: handleOverlayClick - pra travar a modal
-
-    const inputClass = "w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition"
+    const inputClass = "w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition text-sm"
     const labelClass = "text-xs sm:text-right sm:justify-self-end text-gray-300 flex items-center gap-2"
 
     const CustomSelect = ({
@@ -114,12 +112,12 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                 type="button"
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full h-11 px-4 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full h-10 px-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
             >
                 <span className="truncate">
                     {isObject? options.find((o: any) => o.value === value)?.label || placeholder : value || placeholder}
                 </span>
-                <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
@@ -134,10 +132,10 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                     key={optionValue}
                                     type="button"
                                     onClick={() => { onSelect(optionValue); setIsOpen(false) }}
-                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition flex items-center gap-3 ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
+                                    className={`w-full text-left px-3 py-2.5 hover:bg-white/10 transition flex items-center gap-3 text-sm ${value === optionValue? 'bg-[#3B82F6]/20 text-[#3B82F6] font-semibold' : 'text-gray-300 hover:text-white'}`}
                                 >
                                     <span>{optionLabel}</span>
-                                    {value === optionValue && <div className="ml-auto w-2 h-2 rounded-full bg-[#3B82F6]"></div>}
+                                    {value === optionValue && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#3B82F6]"></div>}
                                 </button>
                             )
                         })}
@@ -148,36 +146,35 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
     )
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4"> {/* REMOVIDO onClick */}
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl"
+                className="w-full max-w-[680px] bg-[#0F172A]/90 backdrop-blur-2xl border border-white/10 rounded-2xl flex flex-col max-h-[90vh] overflow-hidden shadow-2xl"
             >
-                <div className="p-5 pb-3 border-b border-white/10 shrink-0">
+                <div className="p-4 pb-3 border-b border-white/10 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-lg font-bold text-white">{isEdit? "Editar Usuário" : "Cadastrar Usuário"}</h2>
-                            <p className="text-sm mt-1 text-gray-400">{isEdit? "Atualizar os dados do usuário" : "Adicionar usuário para gerenciar"}</p>
+                            <p className="text-xs mt-1 text-gray-400">{isEdit? "Atualizar os dados do usuário" : "Adicionar usuário para gerenciar"}</p>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5 text-gray-400" /></button>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="grid gap-5 py-4 px-5 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="grid gap-4 py-4 px-4 overflow-y-auto flex-1 min-h-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                 <label className={labelClass}><User className="w-4 h-4" />Nome Completo *</label>
                                 <input value={form.nome} onChange={e => handleChange('nome', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="Ex: Maria da Silva" required />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                 <label className={labelClass}><Mail className="w-4 h-4" />Email *</label>
                                 <input type="email" value={form.email} onChange={e => handleChange('email', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="nome@minedu.gov.ao" required />
                             </div>
 
-                            {/* NIVEL DE ACESSO */}
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                 <label className={labelClass}><Shield className="w-4 h-4" />Nível de Acesso *</label>
                                 <CustomSelect
                                     refDiv={dropdownNivelRef}
@@ -191,9 +188,8 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 />
                             </div>
 
-                            {/* ESCOLA - SÓ APARECE SE FOR DIRETOR */}
                             {mostrarSelectEscola && (
-                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4 animate-in fade-in-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3 animate-in fade-in-0">
                                     <label className={labelClass}><Building2 className="w-4 h-4" />Escola *</label>
                                     <CustomSelect
                                         refDiv={dropdownEscolaRef}
@@ -208,15 +204,14 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                 </div>
                             )}
 
-                            {/* SENHA COM EYE */}
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                 <label className={labelClass}><Lock className="w-4 h-4" />Senha {isEdit? '' : '*'}</label>
                                 <div className="relative sm:col-span-3">
                                     <input
                                         type={showPassword? "text" : "password"}
                                         value={form.senha}
                                         onChange={e => handleChange('senha', e.target.value)}
-                                        className={`${inputClass} pr-12`}
+                                        className={`${inputClass} pr-10`}
                                         placeholder={isEdit? "Deixe em branco para não alterar" : "Mínimo 6 caracteres"}
                                     />
                                     <button
@@ -224,29 +219,28 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition"
                                     >
-                                        {showPassword? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                        {showPassword? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                 <label className={labelClass}><Phone className="w-4 h-4" />Telefone</label>
                                 <input type="tel" value={form.telefone} onChange={e => handleChange('telefone', e.target.value)} className={`${inputClass} sm:col-span-3`} placeholder="+244 9xx xxx" />
                             </div>
 
-                            {/* TOGGLE DE ATIVO SOMENTE NO EDIT */}
                             {isEdit && (
-                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 sm:items-center gap-1 sm:gap-3">
                                     <label className={labelClass}>Status</label>
                                     <button
                                         type="button"
                                         onClick={() => handleChange('ativo',!form.ativo)}
-                                        className={`sm:col-span-3 w-full h-11 px-4 rounded-xl flex items-center justify-between transition border ${form.ativo? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}
+                                        className={`sm:col-span-3 w-full h-10 px-3 rounded-xl flex items-center justify-between transition border text-sm ${form.ativo? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}
                                     >
                                         <span className={`font-semibold ${form.ativo? 'text-green-400' : 'text-red-400'}`}>
                                             {form.ativo? 'Ativo' : 'Inativo'}
                                         </span>
-                                        {form.ativo? <ToggleRight className="w-6 h-6 text-green-400" /> : <ToggleLeft className="w-6 h-6 text-red-400" />}
+                                        {form.ativo? <ToggleRight className="w-5 h-5 text-green-400" /> : <ToggleLeft className="w-5 h-5 text-red-400" />}
                                     </button>
                                 </div>
                             )}
@@ -255,12 +249,12 @@ export default function UsuarioModal({ open, onClose, onSave, saving, usuario, e
 
                     </div>
 
-                    {/* FOOTER FIXO IGUAL ESCOLA MODAL */}
-                    <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
-                        <button type="button" onClick={onClose} className="w-full sm:flex-1 px-6 h-11 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition order-2 sm:order-1">
+                    {/* FOOTER LADO A LADO NO DESKTOP */}
+                    <div className="p-4 border-t border-white/10 flex-col sm:flex-row gap-2 shrink-0 bg-[#0F172A]/90">
+                        <button type="button" onClick={onClose} className="w-full sm:w-auto sm:flex-1 px-6 h-10 font-semibold rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 text-red-400 transition text-sm order-2 sm:order-1">
                             Cancelar
                         </button>
-                        <button type="submit" disabled={saving} className="w-full sm:flex-1 h-11 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition order-1 sm:order-2">
+                        <button type="submit" disabled={saving} className="w-full sm:w-auto sm:flex-1 h-10 font-bold rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:shadow-lg hover:shadow-[#3B82F6]/30 text-white flex items-center justify-center gap-2 disabled:opacity-50 transition text-sm order-1 sm:order-2">
                             {saving? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                             {saving? "Salvando..." : isEdit? "Salvar" : "Cadastrar"}
                         </button>

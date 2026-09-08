@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import {
     Building2, Users, MapPin, TrendingUp, Trash2, Plus,
-    ChevronDown, Loader2, School, Search, Bell, User, LogOut
+    ChevronDown, Loader2, School, LayoutDashboard
 } from 'lucide-react'
 import { toast } from 'sonner'
 import StatCard from './components/card_stat'
@@ -154,14 +154,18 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-4">
-            <div>
-                <h2 className="text-2xl font-bold text-white">Painel</h2>
-                <p className="text-sm text-gray-400">Gerencie todas as escolas cadastradas</p>
+            {/* HEADER IGUAL DEFINICOES */}
+            <div className="flex items-center gap-3">
+                <LayoutDashboard className="w-6 h-6 text-[#3B82F6]" />
+                <div>
+                    <h1 className="text-xl font-bold text-white">Painel</h1>
+                    <p className="text-xs text-gray-400">Gerencie todas as escolas cadastradas</p>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full">
                 <div ref={dropdownRef} className="relative w-full sm:w-1/2">
-                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-10 px-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 text-sm">
+                    <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] flex items-center justify-between text-left backdrop-blur-xl hover:bg-white/10 transition-all duration-200 text-sm">
                         <div className="flex items-center gap-2 truncate">{opcaoSelecionada && <opcaoSelecionada.icon className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />}<span className="truncate">{opcaoSelecionada?.label}</span></div>
                         <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${dropdownOpen? 'rotate-180' : ''}`} />
                     </button>
@@ -189,7 +193,6 @@ export default function Dashboard() {
                 {stats.map((stat, i) => <div key={i} className="w-full flex-shrink-0"><StatCard {...stat} /></div>)}
             </div>
 
-            {/* gap-6 -> gap-4 */}
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
             </div>
