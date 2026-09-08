@@ -61,7 +61,6 @@ const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
     ],
 }
 
-// Formata: PRIMARIO -> Primario, MEDIO_TECNICO -> Medio Tecnico
 const formatNivel = (nivel: string) => {
     return nivel
         .toLowerCase()
@@ -106,7 +105,7 @@ export default function EscolaDirecaoPage() {
 
             const savedTab = localStorage.getItem(STORAGE_KEY_TAB)
             const isValidTab = tabsDoNivel.some(t => t.id === savedTab)
-            setActiveTab(isValidTab ? savedTab! : tabsDoNivel[0].id)
+            setActiveTab(isValidTab? savedTab! : tabsDoNivel[0].id)
 
         } catch (e: any) {
             console.error("Erro ao buscar dados iniciais", e)
@@ -143,27 +142,32 @@ export default function EscolaDirecaoPage() {
     }, [activeTab, loading])
 
     const corPrimaria = corPrimariaHex
-    const textPrimary = isClaro ? '#1E293B' : 'white'
-    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
-    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
     const bgActive = `${corPrimaria}20`
     const borderActive = `${corPrimaria}4D`
     const lineColor = `${corPrimaria}26`
 
-    if (loading) return <div className="flex justify-center p-10"><Loader2 className="w-8 h-8 animate-spin" style={{ color: corPrimaria }} /></div>
-    if(erro) return <div className="p-6 rounded-xl bg-red-50 text-red-700">{erro}</div>
+    // LOADER MENOR
+    if (loading) return <div className="flex justify-center p-6"><Loader2 className="w-6 h-6 animate-spin" style={{ color: corPrimaria }} /></div>
+    if(erro) return <div className="p-4 rounded-xl bg-red-50 text-red-700 text-sm">{erro}</div>
 
     return (
         <>
-            <div className="space-y-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* ESPAÇO MENOR: space-y-6 -> 4 */}
+            <div className="space-y-4">
+                {/* HEADER MAIS COMPACTO: gap-4 -> gap-3 */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <Building className="w-7 h-7" style={{ color: corPrimaria }} />
+                        {/* ICONE MENOR: w-7 -> w-6 */}
+                        <Building className="w-6 h-6" style={{ color: corPrimaria }} />
                         <div>
-                            <h1 className="text-2xl font-bold" style={{ color: textPrimary }}>Direção Escolar</h1>
-                            {/* ENSINO + ANO NA MESMA LINHA */}
-                            <p className="text-sm" style={{ color: textSecondary }}>
+                            {/* TITULO MENOR: text-2xl -> text-xl */}
+                            <h1 className="text-xl font-bold" style={{ color: textPrimary }}>Direção Escolar</h1>
+                            {/* TEXTO MENOR: text-sm -> text-xs */}
+                            <p className="text-xs" style={{ color: textSecondary }}>
                                 Ensino: {formatNivel(nivel)}
                                 {anoLetivoAtivo && (
                                     <span> | {anoLetivoAtivo.nome} - {anoLetivoAtivo.status}</span>
@@ -172,20 +176,21 @@ export default function EscolaDirecaoPage() {
                         </div>
                     </div>
 
-                    {/* BTN 100% NO MOBILE */}
+                    {/* BOTAO MENOR: h-11 -> h-10 px-5 -> px-4 */}
                     <button
                         onClick={() => setModalAnoOpen(true)}
-                        className="w-full lg:w-auto h-11 px-5 font-semibold rounded-xl flex items-center justify-center gap-2 text-white hover:scale-[1.02] transition"
+                        className="w-full lg:w-auto h-10 px-4 font-semibold rounded-xl flex items-center justify-center gap-2 text-white hover:scale-[1.02] transition text-sm"
                         style={{ backgroundColor: corPrimaria }}
                     >
-                        <Plus className="w-4 h-4"/> Novo Ano
+                        <Plus className="w-3.5 h-3.5"/> Novo Ano
                     </button>
                 </div>
 
+                {/* ALERTA MENOR: p-3 -> p-2.5 */}
                 {anoLetivoAtivo?.status === 'FECHADO' && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl border" style={{ backgroundColor: `${corPrimaria}10`, borderColor: `${corPrimaria}30` }}>
-                        <Lock className="w-4 h-4" style={{ color: corPrimaria }} />
-                        <p className="text-sm" style={{ color: textPrimary }}>Ano letivo <b>{anoLetivoAtivo.nome}</b> está fechado. Modo apenas para consulta.</p>
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl border" style={{ backgroundColor: `${corPrimaria}10`, borderColor: `${corPrimaria}30` }}>
+                        <Lock className="w-3.5 h-3.5" style={{ color: corPrimaria }} />
+                        <p className="text-xs" style={{ color: textPrimary }}>Ano letivo <b>{anoLetivoAtivo.nome}</b> está fechado. Modo apenas para consulta.</p>
                     </div>
                 )}
 
@@ -199,15 +204,17 @@ export default function EscolaDirecaoPage() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    disabled={isFechado && !['turmas'].includes(tab.id)}
-                                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isFechado &&!['turmas'].includes(tab.id)}
+                                    // TAB MENOR: px-4 py-2.5 -> px-3 py-2
+                                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition whitespace-nowrap flex-shrink-0 border disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{
-                                        backgroundColor: isActive ? bgActive : bgCard,
-                                        color: isActive ? corPrimaria : textSecondary,
-                                        borderColor: isActive ? borderActive : borderCard
+                                        backgroundColor: isActive? bgActive : bgCard,
+                                        color: isActive? corPrimaria : textSecondary,
+                                        borderColor: isActive? borderActive : borderCard
                                     }}
                                 >
-                                    <Icon className="w-4 h-4" style={{ color: isActive ? corPrimaria : textSecondary }} />
+                                    {/* ICONE MENOR: w-4 -> w-3.5 */}
+                                    <Icon className="w-3.5 h-3.5" style={{ color: isActive? corPrimaria : textSecondary }} />
                                     {tab.label}
                                 </button>
                             )
@@ -219,12 +226,12 @@ export default function EscolaDirecaoPage() {
                 <div className="rounded-2xl p-0">
                     {anoLetivoAtivo && (
                         <>
-                            {activeTab === 'turmas' && <div>Conteúdo de Turmas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
-                            {activeTab === 'cursos' && <div>Conteúdo de Cursos - ano_letivo_id: {anoLetivoAtivo.id}</div>}
-                            {activeTab === 'salas' && <div>Conteúdo de Salas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
-                            {activeTab === 'professores' && <div>Conteúdo de Professores - ano_letivo_id: {anoLetivoAtivo.id}</div>}
-                            {activeTab === 'disciplinas' && <div>Conteúdo de Disciplinas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
-                            {activeTab === 'horarios' && <div>Conteúdo de Horários - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'turmas' && <div className="text-sm">Conteúdo de Turmas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'cursos' && <div className="text-sm">Conteúdo de Cursos - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'salas' && <div className="text-sm">Conteúdo de Salas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'professores' && <div className="text-sm">Conteúdo de Professores - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'disciplinas' && <div className="text-sm">Conteúdo de Disciplinas - ano_letivo_id: {anoLetivoAtivo.id}</div>}
+                            {activeTab === 'horarios' && <div className="text-sm">Conteúdo de Horários - ano_letivo_id: {anoLetivoAtivo.id}</div>}
                         </>
                     )}
                 </div>

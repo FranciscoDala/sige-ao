@@ -31,10 +31,10 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
     const isClaro = tema?.tema === 'claro'
     const corPrimaria = tema?.cor_primaria || '#3B82F6'
     const corSecundaria = tema?.cor_secundaria || '#8B5CF6'
-    const textPrimary = isClaro ? '#1E293B' : 'white'
-    const textSecondary = isClaro ? '#64748B' : '#9CA3AF'
-    const bgCard = isClaro ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
-    const borderCard = isClaro ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+    const textPrimary = isClaro? '#1E293B' : 'white'
+    const textSecondary = isClaro? '#64748B' : '#9CA3AF'
+    const bgCard = isClaro? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)'
+    const borderCard = isClaro? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
 
     const getCardStyle = () => {
         const estilo = tema?.estilo_card || 'arredondado'
@@ -105,44 +105,51 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
         onSave(form)
     }
 
-    const handleChange = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+    const handleChange = (field: string, value: string) => setForm(prev => ({...prev, [field]: value }))
 
-    // AJUSTE: w-full min-w-0 para forçar 100% no mobile
-    const inputClass = `w-full min-w-0 h-11 px-4 rounded-xl focus:outline-none focus:ring-2 transition appearance-none`
+    // INPUT MENOR: h-11 -> h-10 px-4 -> px-3
+    const inputClass = `w-full min-w-0 h-10 px-3 rounded-xl focus:outline-none focus:ring-2 transition appearance-none text-sm`
     const labelClass = "text-sm font-medium flex items-center gap-2"
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
+            {/* LARGURA MENOR: max-w-[420px] -> [380px] */}
             <div
                 onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-                className={`w-full max-w-[420px] ${cardClass} flex flex-col max-h-[90vh] overflow-hidden`}
+                className={`w-full max-w-[380px] ${cardClass} flex-col max-h-[90vh] overflow-hidden`}
                 style={{ borderColor: borderCard }}
             >
-                {/* Header */}
-                <div className="p-5 pb-3 border-b shrink-0" style={{ borderColor: borderCard }}>
+                {/* HEADER MAIS COMPACTO: p-5 pb-3 -> p-4 pb-3 */}
+                <div className="p-4 pb-3 border-b shrink-0" style={{ borderColor: borderCard }}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-bold" style={{ color: textPrimary }}>
-                                {isEdit ? "Editar Ano Letivo" : "Cadastrar Ano Letivo"}
+                            {/* TITULO MENOR: text-lg -> text-base */}
+                            <h2 className="text-base font-bold" style={{ color: textPrimary }}>
+                                {isEdit? "Editar Ano Letivo" : "Cadastrar Ano Letivo"}
                             </h2>
-                            <p className="text-sm mt-1" style={{ color: textSecondary }}>
-                                {isEdit ? "Atualizar período letivo" : "Definir novo período escolar"}
+                            {/* SUBTITULO MENOR: text-sm -> text-xs */}
+                            <p className="text-xs mt-1" style={{ color: textSecondary }}>
+                                {isEdit? "Atualizar período letivo" : "Definir novo período escolar"}
                             </p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-lg transition hover:bg-black/10"
+                            className="p-1.5 rounded-lg transition hover:bg-black/10"
                         >
-                            <X className="w-5 h-5" style={{ color: textSecondary }} />
+                            {/* ICONE MENOR: w-5 -> w-4 */}
+                            <X className="w-4 h-4" style={{ color: textSecondary }} />
                         </button>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-                    <div className="grid gap-4 py-4 px-5 overflow-y-auto flex-1 min-h-0">
+                    {/* GRID MENOR: gap-4 py-4 px-5 -> gap-3 py-3 px-4 */}
+                    <div className="grid gap-3 py-3 px-4 overflow-y-auto flex-1 min-h-0">
                         <div>
-                            <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
-                                <Calendar className="w-4 h-4" style={{ color: corPrimaria }} />Nome do Ano *
+                            {/* LABEL MB MENOR: mb-2 -> mb-1.5 */}
+                            <label className={`${labelClass} mb-1.5`} style={{ color: textPrimary }}>
+                                {/* ICONE MENOR: w-4 -> w-3.5 */}
+                                <Calendar className="w-3.5 h-3.5" style={{ color: corPrimaria }} />Nome do Ano *
                             </label>
                             <input
                                 value={form.nome}
@@ -154,54 +161,56 @@ export default function AnoLetivoModal({ open, onClose, onSave, saving, ano }: P
                             />
                         </div>
                         <div>
-                            <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
-                                <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Início *
+                            <label className={`${labelClass} mb-1.5`} style={{ color: textPrimary }}>
+                                <CalendarDays className="w-3.5 h-3.5" style={{ color: corPrimaria }} />Data Início *
                             </label>
                             <input
                                 type="date"
                                 value={form.data_inicio}
                                 onChange={e => handleChange('data_inicio', e.target.value)}
                                 className={inputClass}
-                                style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary, colorScheme: isClaro ? 'light' : 'dark' }}
+                                style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary, colorScheme: isClaro? 'light' : 'dark' }}
                                 required
                             />
                         </div>
                         <div>
-                            <label className={`${labelClass} mb-2`} style={{ color: textPrimary }}>
-                                <CalendarDays className="w-4 h-4" style={{ color: corPrimaria }} />Data Fim *
+                            <label className={`${labelClass} mb-1.5`} style={{ color: textPrimary }}>
+                                <CalendarDays className="w-3.5 h-3.5" style={{ color: corPrimaria }} />Data Fim *
                             </label>
                             <input
                                 type="date"
                                 value={form.data_fim}
                                 onChange={e => handleChange('data_fim', e.target.value)}
                                 className={inputClass}
-                                style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary, colorScheme: isClaro ? 'light' : 'dark' }}
+                                style={{ background: bgCard, border: `1px solid ${borderCard}`, color: textPrimary, colorScheme: isClaro? 'light' : 'dark' }}
                                 required
                             />
                         </div>
                     </div>
 
-                    {/* Footer */}
+                    {/* FOOTER MAIS COMPACTO: p-4 gap-3 -> p-3 gap-2 */}
                     <div
-                        className="p-4 border-t flex flex-col gap-3 shrink-0"
-                        style={{ borderColor: borderCard, background: isClaro ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.2)' }}
+                        className="p-3 border-t flex-col gap-2 shrink-0"
+                        style={{ borderColor: borderCard, background: isClaro? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.2)' }}
                     >
+                        {/* BOTAO MENOR: h-11 -> h-10 */}
                         <button
                             type="submit"
                             disabled={saving}
-                            className="w-full h-11 font-bold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition"
+                            className="w-full h-10 font-semibold rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-50 transition text-sm"
                             style={{
                                 background: `linear-gradient(to right, ${corPrimaria}, ${corSecundaria})`,
-                                borderRadius: tema?.estilo_card === 'quadrado' ? '0.5rem' : tema?.estilo_card === 'minimalista' ? '0.25rem' : '0.75rem'
+                                borderRadius: tema?.estilo_card === 'quadrado'? '0.5rem' : tema?.estilo_card === 'minimalista'? '0.25rem' : '0.75rem'
                             }}
                         >
-                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            {saving ? "Salvando..." : isEdit ? "Salvar" : "Cadastrar"}
+                            {saving? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                            {saving? "Salvando..." : isEdit? "Salvar" : "Cadastrar"}
                         </button>
+                        {/* BOTAO CANCELAR MENOR: h-11 -> h-10 px-6 -> px-4 */}
                         <button
                             type="button"
                             onClick={onClose}
-                            className="w-full px-6 h-11 font-semibold rounded-xl border transition"
+                            className="w-full px-4 h-10 font-semibold rounded-xl border transition text-sm"
                             style={{
                                 borderColor: 'rgba(239, 68, 68, 0.3)',
                                 background: 'rgba(239, 68, 68, 0.1)',

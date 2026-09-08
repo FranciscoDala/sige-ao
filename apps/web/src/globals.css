@@ -4,6 +4,11 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Zalando+Sans+Expanded:wght@400;500;600;700&display=swap');
 
+/* 👇 DEIXA TUDO 10% MENOR IGUAL ZOOM 80% */
+html {
+    font-size: 90%;
+}
+
 :root {
     --cor-primaria: #3B82F6;
     --cor-secundaria: #8B5CF6;
@@ -43,12 +48,12 @@ body {
 }
 
 /* 👇 ESTILOS DE CARD - COMPLETO */
-[data-card-style="quadrado"] .rounded-2xl { border-radius: 0.25rem; }
-[data-card-style="minimalista"] .rounded-2xl { border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: none; }
-[data-card-style="arredondado"] .rounded-2xl { border-radius: 1rem; }
-[data-card-style="elevado"] .rounded-2xl { border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-[data-card-style="borda_colorida"] .rounded-2xl { border-radius: 1rem; border: 2px solid var(--cor-primaria); }
-[data-card-style="glass"] .rounded-2xl {
+[data-card-style="quadrado"].rounded-2xl { border-radius: 0.25rem; }
+[data-card-style="minimalista"].rounded-2xl { border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: none; }
+[data-card-style="arredondado"].rounded-2xl { border-radius: 1rem; }
+[data-card-style="elevado"].rounded-2xl { border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+[data-card-style="borda_colorida"].rounded-2xl { border-radius: 1rem; border: 2px solid var(--cor-primaria); }
+[data-card-style="glass"].rounded-2xl {
     border-radius: 1rem;
     background: rgba(255,255,255,0.1);
     backdrop-filter: blur(20px) saturate(150%);
@@ -56,13 +61,13 @@ body {
 }
 
 /* Glass no claro */
-[data-tema="claro"][data-card-style="glass"] .rounded-2xl {
+[data-tema="claro"][data-card-style="glass"].rounded-2xl {
     background: rgba(0,0,0,0.03);
     border: 1px solid rgba(0,0,0,0.1);
 }
 
 /* Borda colorida no claro */
-[data-tema="claro"][data-card-style="borda_colorida"] .rounded-2xl {
+[data-tema="claro"][data-card-style="borda_colorida"].rounded-2xl {
     border: 2px solid var(--cor-primaria);
 }
 
@@ -80,21 +85,17 @@ body {
 [data-fonte-corpo="Poppins"] { --fonte-corpo: 'Poppins'; }
 
 /* 👇 EXTRA: adapta bg/border no claro */
-[data-tema="claro"] .bg-white\/5 { background-color: rgba(0, 0, 0, 0.04) !important; }
-[data-tema="claro"] .border-white\/10 { border-color: rgba(0, 0, 0, 0.08) !important; }
-[data-tema="claro"] .text-gray-400 { color: #64748B !important; }
-[data-tema="claro"] .text-gray-300 { color: #334155 !important; }
-[data-tema="claro"] .text-gray-500 { color: #64748B !important; }
-[data-tema="claro"] .backdrop-blur-xl { backdrop-filter: blur(20px) saturate(150%); }
-
-/* 👇 CORRECAO CRITICA: NUNCA mexer no .text-white */
-/* Antes tinha: [data-tema="claro"] .text-white { color: #1E293B !important; } */
-/* Isso quebrava botões com gradiente. Agora text-white é sempre branco */
+[data-tema="claro"].bg-white\/5 { background-color: rgba(0, 0, 0, 0.04)!important; }
+[data-tema="claro"].border-white\/10 { border-color: rgba(0, 0, 0, 0.08)!important; }
+[data-tema="claro"].text-gray-400 { color: #64748B!important; }
+[data-tema="claro"].text-gray-300 { color: #334155!important; }
+[data-tema="claro"].text-gray-500 { color: #64748B!important; }
+[data-tema="claro"].backdrop-blur-xl { backdrop-filter: blur(20px) saturate(150%); }
 
 /* 👇 FORÇA BRANCO EM BOTOES COM GRADIENTE NO TEMA CLARO */
 [data-tema="claro"] button[style*="linear-gradient"] {
-    color: white !important;
+    color: white!important;
 }
 [data-tema="claro"] button[style*="linear-gradient"] svg {
-    color: white !important;
+    color: white!important;
 }
