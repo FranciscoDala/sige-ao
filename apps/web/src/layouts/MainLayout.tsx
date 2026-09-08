@@ -159,7 +159,7 @@ export default function MainLayout() {
         const estilo = tema?.estilo_card || 'arredondado'
 
         if (isClaro) {
-            const baseClaro = `bg-white border-black/10`
+            const baseClaro = `bg-white border border-black/10`
             switch (estilo) {
                 case 'quadrado': return `${baseClaro} rounded-none`
                 case 'minimalista': return `${baseClaro} rounded-lg border-0`
@@ -187,7 +187,7 @@ export default function MainLayout() {
             className="min-h-screen w-full relative flex overflow-x-hidden"
             style={{
                 background: isClaro
-                   ? `var(--cor-fundo)` // TEMA CLARO SEM DEGRADÊ
+                   ? `var(--cor-fundo)` // <-- AQUI: só cor lisa
                     : `linear-gradient(to bottom right, ${corPrimaria}15, ${corSecundaria}10, #0F172A)`
             }}
         >
@@ -216,16 +216,16 @@ export default function MainLayout() {
                 tema={tema}
             />
 
-            {/* SIDEBAR MAIS FINA: 260px -> 240px */}
-            <div className="flex-1 w-full lg:ml-[240px]">
-                {/* HEADER MAIS COMPACTO: p-6 -> p-4 e py-3 -> py-2.5 */}
-                <header className="fixed top-0 right-0 left-0 lg:left-[240px] z-30 p-2 lg:p-4">
+            <div className="flex-1 w-full lg:ml-[260px]">
+                {/* HEADER COMPACTO: p-6 -> p-4 e py-3 -> py-2.5 */}
+                <header className="fixed top-0 right-0 left-0 lg:left-[260px] z-30 p-2 lg:p-4">
                     <div className={`${cardClass} px-3 lg:px-5 py-2.5 flex items-center justify-between gap-2`}>
+                        {/* ICONE MENOR: w-6 -> w-5 */}
                         <button className="lg:hidden p-2 flex-shrink-0" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-5 h-5" style={{ color: textPrimary }} /></button>
 
                         <div className={`relative flex-1 transition-all duration-300 ${isSearchOpen? 'max-w-[500px] opacity-100' : 'max-w-0 opacity-0'} hidden md:block`}>
+                            {/* ICONE E INPUT MENOR: left-4 top-3.5 w-5 -> left-3.5 top-3 w-4 | py-3 -> py-2.5 pl-12 -> pl-10 */}
                             <Search className="absolute left-3.5 top-3 w-4 h-4" style={{ color: textSecondary }} />
-                            {/* INPUT MENOR: py-3 -> py-2.5 */}
                             <input
                                 ref={searchInputRef}
                                 value={searchQuery}
@@ -237,7 +237,7 @@ export default function MainLayout() {
                         </div>
 
                         <div className="flex items-center gap-1.5 ml-auto">
-                            {/* BOTOES MENORES: p-2.5 -> p-2 */}
+                            {/* BOTOES MENORES: p-2.5 -> p-2 e icones w-5 -> w-4 */}
                             <button onClick={() => window.innerWidth < 768? setIsSearchModalOpen(true) : setIsSearchOpen(!isSearchOpen)} className={`p-2 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <Search className="w-4 h-4" style={{ color: textPrimary }} />
                             </button>
@@ -251,7 +251,7 @@ export default function MainLayout() {
                             </button>
 
                             <button className={`p-2 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}><Bell className="w-4 h-4" style={{ color: textPrimary }} /></button>
-                            {/* BOTAO USUARIO MENOR: py-3 -> py-2 */}
+                            {/* BOTAO USUARIO MENOR: p-2.5 lg:py-3 -> p-2 lg:py-2 */}
                             <button className={`hidden sm:flex items-center gap-2 p-2 lg:px-3 lg:py-2 ${bgCard} ${borderCard} rounded-xl ${hoverBg} transition flex-shrink-0`}>
                                 <User className="w-4 h-4" style={{ color: textPrimary }} />
                                 <span className="text-sm font-semibold hidden lg:inline" style={{ color: textPrimary }}>{user.nome.split(' ')[0]}</span>
@@ -263,21 +263,24 @@ export default function MainLayout() {
                     </div>
                 </header>
 
-                {/* MAIN MAIS COMPACTO: pt-32 -> pt-24 e p-6 -> p-4 */}
+                {/* MAIN COMPACTO: pt-32 -> pt-24 e p-6 -> p-4 */}
                 <main className="pt-24 lg:pt-28 p-2 lg:p-4 w-full">
                     <Outlet />
                 </main>
             </div>
 
             {isSearchModalOpen && (
-                <div className="fixed inset-0 z-[60] flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
+                <div className="fixed inset-0 z-[60] flex flex-col p-4 md:hidden animate-in fade-in" style={{ backgroundColor: isClaro? 'var(--cor-fundo)' : '#0F172A' }}>
                     <div className="flex items-center justify-between mb-4">
+                        {/* TITULO MENOR: text-lg -> text-base */}
                         <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Pesquisar</h2>
                         <button onClick={() => { setIsSearchModalOpen(false); setSearchQuery('') }} className="p-2 -mr-2">
+                            {/* ICONE MENOR: w-6 -> w-5 */}
                             <X className="w-5 h-5" style={{ color: textSecondary }} />
                         </button>
                     </div>
                     <div className="relative mb-4">
+                        {/* ICONE E INPUT MENOR */}
                         <Search className="absolute left-3.5 top-3 w-4 h-4" style={{ color: textSecondary }} />
                         <input
                             ref={searchInputRef}
@@ -293,6 +296,7 @@ export default function MainLayout() {
                         {searching && <div className="p-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin" style={{ color: corPrimaria }} /></div>}
                         {!searching && searchQuery.length >= 2 && searchResults.length === 0 && <p className="text-center pt-10 text-sm" style={{ color: textSecondary }}>Nenhum resultado encontrado</p>}
                         {searchResults.map(item => (
+                            // ITEM MENOR: p-3 -> p-2.5 e icones w-5 -> w-4
                             <button key={item.id} onClick={() => handleNavigate(item.path)} className={`w-full flex items-center gap-3 p-2.5 ${hoverBg} rounded-xl text-left transition`}>
                                 <item.Icon className="w-4 h-4 flex-shrink-0" style={{ color: corPrimaria }} />
                                 <div className="min-w-0">
