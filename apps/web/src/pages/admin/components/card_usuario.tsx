@@ -24,10 +24,10 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
     const isDiretor = usuario.nivel === 'DIRETOR'
 
     return (
-        <div className="group bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
+        <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-[85vw] max-w-sm snap-center shrink-0 shadow-lg md:w-full">
             <div className="flex items-start gap-3 mb-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg mt-0.5 overflow-hidden ${
-                    isDiretor ? 'bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] shadow-[#8B5CF6]/20' : 'bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-[#3B82F6]/20'
+                    isDiretor? 'bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] shadow-[#8B5CF6]/20' : 'bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-[#3B82F6]/20'
                 }`}>
                     <User className="w-5 h-5 text-white" />
                 </div>
@@ -40,7 +40,7 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                                 {getNivelLabel(usuario.nivel)}
                             </span>
                         </div>
-                        <div className={`w-2.5 h-2.5 rounded-full mt-1 ${usuario.ativo ? 'bg-green-400' : 'bg-gray-500'}`} />
+                        <div className={`w-2.5 h-2.5 rounded-full mt-1 ${usuario.ativo? 'bg-green-400' : 'bg-gray-500'}`} />
                     </div>
 
                     <div className="space-y-1 mt-2">
@@ -50,11 +50,11 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-300">
                             <Building className="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0" />
-                            <span>{usuario.departamento || (isDiretor ? 'Escola' : 'Ministério')}</span>
+                            <span>{usuario.departamento || (isDiretor? 'Escola' : 'Ministério')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-300">
                             <User className="w-3.5 h-3.5 text-[#3B82F6] flex-shrink-0" />
-                            <span>{usuario.ativo ? 'Ativo' : 'Inativo'}</span>
+                            <span>{usuario.ativo? 'Ativo' : 'Inativo'}</span>
                         </div>
                         {usuario.telefone && (
                             <div className="flex items-center gap-2 text-xs text-gray-300">

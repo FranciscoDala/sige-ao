@@ -21,7 +21,7 @@ interface EscolaCardProps {
 
 export default function EscolaCard({ escola, diretor, onView, onEdit, onDelete }: EscolaCardProps) {
     return (
-        <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg">
+        <div className="group bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-[85vw] max-w-sm snap-center shrink-0 shadow-lg md:w-full">
             <div className="flex items-start gap-3 mb-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B82F6]/20 mt-0.5 overflow-hidden">
                     {escola.logo_url? (
