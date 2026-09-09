@@ -336,8 +336,8 @@ export default function UsersPage() {
                 </button>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-2
-                md:grid md:grid-cols-3 md:overflow-visible">
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-4 px-4
+                md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:px-0">
                 {stats.map((stat) => (
                     <StatCard
                         key={stat.title}
@@ -354,8 +354,8 @@ export default function UsersPage() {
                     <Loader2 className="w-6 h-6 animate-spin text-[#3B82F6]" />
                 </div>
             ) : (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-4
-                md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible">
+                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-4 px-4
+                md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:px-0">
                     {usuarios.map((usuario) => (
                         <UsuarioCard
                             key={usuario.id}
