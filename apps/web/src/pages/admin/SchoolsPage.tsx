@@ -304,9 +304,8 @@ export default function Dashboard() {
                 </button>
             </div>
 
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-4
-                first:pl-4 last:pr-4 md:gap-6
-                md:grid md:grid-cols-3 md:overflow-visible md:p-0">
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-x-hidden
+                md:grid md:grid-cols-3 md:overflow-visible">
                 {stats.map((stat) => (
                     <StatCard
                         key={stat.title}
@@ -323,9 +322,8 @@ export default function Dashboard() {
                     <Loader2 className="w-6 h-6 animate-spin text-[#3B82F6]" />
                 </div>
             ) : (
-                <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-x-hidden pb-4
-                first:pl-4 last:pr-4 md:gap-6
-                md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:p-0">
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-x-hidden
+                md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible">
                     {escolas.map((escola) => (
                         <EscolaCard
                             key={escola.id}
