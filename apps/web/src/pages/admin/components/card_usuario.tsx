@@ -16,7 +16,7 @@ const getNivelLabel = (nivel: string) => {
 
 const getNivelColor = (nivel: string) => {
     if (nivel === 'MINISTERIO') return 'bg-red-500/20 text-red-400 border border-red-500/30'
-    if (nivel === 'DIRETOR') return 'bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/30'
+    if (nivel === 'DIRETOR') return 'bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/30'
     return 'bg-white/10 text-gray-300 border border-white/20'
 }
 
@@ -24,7 +24,7 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
     const isDiretor = usuario.nivel === 'DIRETOR'
 
     return (
-        <div className="group bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-[calc(100vw-2rem)] snap-center shrink-0 shadow-lg md:w-full">
+        <div className="group bg-white/5 backdrop-blur-2xl border-white/10 rounded-2xl p-4 hover:border-[#3B82F6]/60 hover:bg-white/10 transition-all duration-300 w-full snap-center shrink-0 shadow-lg md:w-full">
             <div className="flex items-start gap-3 mb-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg mt-0.5 overflow-hidden ${
                     isDiretor? 'bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] shadow-[#8B5CF6]/20' : 'bg-gradient-to-br from-[#3B82F6] to-[#2563EB] shadow-[#3B82F6]/20'
@@ -67,13 +67,13 @@ export default function UsuarioCard({ usuario, onView, onEdit, onDelete }: Usuar
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10">
-                <button onClick={onView} className="hidden w-full items-center justify-center gap-1.5 p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-gray-300 font-semibold transition">
+                <button onClick={onView} className="hidden w-full items-center justify-center gap-1.5 p-2 bg-white/5 hover:bg-white/10 border-white/10 rounded-lg text-xs text-gray-300 font-semibold transition">
                     <Eye className="w-3.5 h-3.5" /> Ver
                 </button>
-                <button onClick={onEdit} className="w-full flex items-center justify-center gap-1.5 p-2 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border border-[#8B5CF6]/20 rounded-lg text-xs text-[#8B5CF6] font-semibold transition">
+                <button onClick={onEdit} className="w-full flex items-center justify-center gap-1.5 p-2 bg-[#8B5CF6]/15 hover:bg-[#8B5CF6]/30 border-[#8B5CF6]/20 rounded-lg text-xs text-[#8B5CF6] font-semibold transition">
                     <Edit className="w-3.5 h-3.5" /> Editar
                 </button>
-                <button onClick={onDelete} className="w-full flex items-center justify-center gap-1.5 p-2 bg-red-500/15 hover:bg-red-500/30 border-red-500/20 rounded-lg text-xs text-red-400 font-semibold transition">
+                <button onClick={onDelete} className="w-full flex items-center justify-center gap-1.5 p-2 bg-red-500/15 hover:bg-red-500/30 border border-red-500/20 rounded-lg text-xs text-red-400 font-semibold transition">
                     <Trash2 className="w-3.5 h-3.5" /> Apagar
                 </button>
             </div>
