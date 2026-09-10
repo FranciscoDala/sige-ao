@@ -2,23 +2,26 @@ import {
     useEffect,
     useRef,
     useState,
+    type CSSProperties,
     type FormEvent,
     type RefObject,
 } from "react";
 import {
-    X,
-    Loader2,
-    User,
-    Phone,
-    Mail,
-    Calendar,
-    IdCard,
-    MapPin,
+    CalendarDays,
     ChevronDown,
-    GraduationCap,
-    Briefcase,
+    ChevronLeft,
+    ChevronRight,
+    IdCard,
+    Loader2,
+    Mail,
+    MapPin,
+    Phone,
+    User,
     Users,
+    X,
     BookOpen,
+    Briefcase,
+    GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,11 +33,6 @@ interface Escola {
 interface Turma {
     id: string;
     nome: string;
-}
-
-interface Option {
-    value: string;
-    label: string;
 }
 
 interface PessoaVinculo {
@@ -101,9 +99,6 @@ interface TemaConfig {
     cor_secundaria?: string;
     cor_fundo?: string;
     estilo_card?: string;
-    fonte_principal?: string;
-    fonte_titulo?: string;
-    fonte_corpo?: string;
 }
 
 interface FormState {
@@ -134,34 +129,6 @@ type DropdownKey =
 
 type DropdownState = Record<DropdownKey, boolean>;
 
-const TIPOS_VINCULO: Option[] = [
-    { value: "ALUNO", label: "Aluno" },
-    { value: "PROFESSOR", label: "Professor" },
-    { value: "FUNCIONARIO", label: "Funcionário" },
-    { value: "ENCARREGADO", label: "Encarregado" },
-];
-
-const SEXO_OPTIONS: Option[] = [
-    { value: "MASCULINO", label: "Masculino" },
-    { value: "FEMININO", label: "Feminino" },
-];
-
-const ESTADO_CIVIL_OPTIONS: Option[] = [
-    { value: "SOLTEIRO", label: "Solteiro" },
-    { value: "CASADO", label: "Casado" },
-    { value: "DIVORCIADO", label: "Divorciado" },
-    { value: "VIUVO", label: "Viúvo" },
-];
-
-const CARGO_OPTIONS: Option[] = [
-    { value: "SECRETARIO", label: "Secretário" },
-    { value: "DIRETOR_GERAL", label: "Diretor Geral" },
-    { value: "PEDAGOGICO", label: "Pedagógico" },
-    { value: "LIMPEZA", label: "Limpeza" },
-    { value: "SEGURANCA", label: "Segurança" },
-    { value: "OUTRO", label: "Outro" },
-];
-
 const INITIAL_FORM: FormState = {
     nome: "",
     bi: "",
@@ -189,24 +156,326 @@ const INITIAL_DROPDOWN: DropdownState = {
     turma: false,
 };
 
-function carregarTema(): TemaConfig | null {
-    const temaSalvo = localStorage.getItem("escola_tema");
+const TIPOS_VINCULO = [
+    { value: "ALUNO", label: "Aluno" },
+    { value: "PROFESSOR", label: "Professor" },
+    { value: "FUNCIONARIO", label: "Funcionário" },
+    { value: "ENCARREGADO", label: "Encarregado" },
+];
 
-    if (!temaSalvo) {
+const SEXO_OPTIONS = [
+    { value: "MASCULINO", label: "Masculino" },
+    { value: "FEMININO", label: "Feminino" },
+];
+
+const ESTADO_CIVIL_OPTIONS = [
+    { value: "SOLTEIRO", label: "Solteiro" },
+    { value: "CASADO", label: "Casado" },
+    { value: "DIVORCIADO", label: "Divorciado" },
+    { value: "VIUVO", label: "Viúvo" },
+];
+
+const CARGO_OPTIONS = [
+    { value: "SECRETARIO", label: "Secretário" },
+    { value: "DIRETOR_GERAL", label: "Diretor Geral" },
+    { value: "PEDAGOGICO", label: "Pedagógico" },
+    { value: "LIMPEZA", label: "Limpeza" },
+    { value: "SEGURANCA", label: "Segurança" },
+    { value: "OUTRO", label: "Outro" },
+];
+
+function getSavedTheme(): TemaConfig | null {
+    const saved = localStorage.getItem("escola_tema");
+
+    if (!saved) {
         return null;
     }
 
     try {
-        return JSON.parse(temaSalvo) as TemaConfig;
+        return JSON.parse(saved) as TemaConfig;
     } catch {
         return null;
     }
 }
 
+interface CalendarFieldProps {
+    value: string;
+    onChange: (value: string) => void;
+    corPrimaria: string;
+    corSecundaria: string;
+    textPrimary: string;
+    textSecondary: string;
+    bgCard: string;
+    borderCard: string;
+}
+
+function CalendarField({
+    value,
+    onChange,
+    corPrimaria,
+    corSecundaria,
+    textPrimary,
+    textSecondary,
+    bgCard,
+    borderCard,
+}: CalendarFieldProps) {
+    const calendarRef = useRef<HTMLDivElement>(null);
+    const [open, setOpen] = useState(false);
+
+    const getInitialMonth = () => {
+        if (!value) {
+            const current = new Date();
+            return new Date(current.getFullYear(), current.getMonth(), 1);
+        }
+
+        const [year, month] = value.split("-").map(Number);
+
+        return new Date(year, month - 1, 1);
+    };
+
+    const [visibleMonth, setVisibleMonth] =
+        useState<Date>(getInitialMonth);
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (
+                calendarRef.current &&
+                !calendarRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleOutsideClick);
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleOutsideClick,
+            );
+        };
+    }, []);
+
+    const year = visibleMonth.getFullYear();
+    const month = visibleMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+
+    const selectedDate = value
+        ? (() => {
+              const [selectedYear, selectedMonth, selectedDay] =
+                  value.split("-").map(Number);
+
+              return new Date(
+                  selectedYear,
+                  selectedMonth - 1,
+                  selectedDay,
+              );
+          })()
+        : null;
+
+    const today = new Date();
+
+    const isSameDay = (first: Date, second: Date | null) =>
+        Boolean(
+            second &&
+                first.getFullYear() === second.getFullYear() &&
+                first.getMonth() === second.getMonth() &&
+                first.getDate() === second.getDate(),
+        );
+
+    const formatDate = (date: Date) =>
+        [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+
+    const selectDate = (day: number) => {
+        onChange(formatDate(new Date(year, month, day)));
+        setOpen(false);
+    };
+
+    const days = Array.from(
+        { length: firstDay + daysInMonth },
+        (_, index) =>
+            index < firstDay ? null : index - firstDay + 1,
+    );
+
+    const displayValue = value
+        ? (() => {
+              const [dateYear, dateMonth, dateDay] = value
+                  .split("-")
+                  .map(Number);
+
+              return new Date(
+                  dateYear,
+                  dateMonth - 1,
+                  dateDay,
+              ).toLocaleDateString("pt-BR");
+          })()
+        : "Selecione a data";
+
+    return (
+        <div ref={calendarRef} className="relative sm:col-span-3">
+            <button
+                type="button"
+                onClick={() => setOpen((current) => !current)}
+                className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none focus:ring-2 sm:text-sm"
+                style={{
+                    backgroundColor: bgCard,
+                    border: `1px solid ${borderCard}`,
+                    color: value ? textPrimary : textSecondary,
+                }}
+            >
+                <span>{displayValue}</span>
+
+                <CalendarDays
+                    className="h-4 w-4"
+                    style={{ color: corPrimaria }}
+                />
+            </button>
+
+            {open && (
+                <div
+                    className="absolute left-0 top-full z-50 mt-2 w-full min-w-[280px] rounded-2xl p-3 shadow-2xl"
+                    style={{
+                        backgroundColor: bgCard,
+                        border: `1px solid ${borderCard}`,
+                    }}
+                >
+                    <div className="mb-3 flex items-center justify-between">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setVisibleMonth(
+                                    new Date(year, month - 1, 1),
+                                )
+                            }
+                            className="rounded-lg p-2 transition hover:bg-black/10"
+                            aria-label="Mês anterior"
+                        >
+                            <ChevronLeft
+                                className="h-4 w-4"
+                                style={{ color: textPrimary }}
+                            />
+                        </button>
+
+                        <span
+                            className="text-sm font-semibold capitalize"
+                            style={{ color: textPrimary }}
+                        >
+                            {visibleMonth.toLocaleDateString("pt-BR", {
+                                month: "long",
+                                year: "numeric",
+                            })}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setVisibleMonth(
+                                    new Date(year, month + 1, 1),
+                                )
+                            }
+                            className="rounded-lg p-2 transition hover:bg-black/10"
+                            aria-label="Próximo mês"
+                        >
+                            <ChevronRight
+                                className="h-4 w-4"
+                                style={{ color: textPrimary }}
+                            />
+                        </button>
+                    </div>
+
+                    <div className="mb-2 grid grid-cols-7 text-center">
+                        {["D", "S", "T", "Q", "Q", "S", "S"].map(
+                            (day, index) => (
+                                <span
+                                    key={`${day}-${index}`}
+                                    className="py-1 text-[11px] font-semibold"
+                                    style={{ color: textSecondary }}
+                                >
+                                    {day}
+                                </span>
+                            ),
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                        {days.map((day, index) =>
+                            day === null ? (
+                                <span
+                                    key={`empty-${index}`}
+                                    className="h-8"
+                                />
+                            ) : (
+                                <button
+                                    key={day}
+                                    type="button"
+                                    onClick={() => selectDate(day)}
+                                    className="h-8 rounded-lg text-xs font-medium transition hover:scale-105"
+                                    style={{
+                                        color:
+                                            isSameDay(
+                                                new Date(year, month, day),
+                                                selectedDate,
+                                            )
+                                                ? "#FFFFFF"
+                                                : textPrimary,
+                                        background:
+                                            isSameDay(
+                                                new Date(year, month, day),
+                                                selectedDate,
+                                            )
+                                                ? `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`
+                                                : isSameDay(
+                                                        new Date(
+                                                            year,
+                                                            month,
+                                                            day,
+                                                        ),
+                                                        today,
+                                                    )
+                                                    ? `${corPrimaria}20`
+                                                    : "transparent",
+                                    }}
+                                >
+                                    {day}
+                                </button>
+                            ),
+                        )}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const current = new Date();
+                            onChange(formatDate(current));
+                            setVisibleMonth(
+                                new Date(
+                                    current.getFullYear(),
+                                    current.getMonth(),
+                                    1,
+                                ),
+                            );
+                            setOpen(false);
+                        }}
+                        className="mt-3 w-full rounded-lg py-2 text-xs font-semibold transition hover:bg-black/10"
+                        style={{ color: corPrimaria }}
+                    >
+                        Hoje
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
 interface CustomSelectProps {
     refDiv: RefObject<HTMLDivElement | null>;
     value: string;
-    options: Option[];
+    options: { value: string; label: string }[];
     placeholder: string;
     isOpen: boolean;
     textPrimary: string;
@@ -232,9 +501,7 @@ function CustomSelect({
     onToggle,
     onSelect,
 }: CustomSelectProps) {
-    const selectedOption = options.find(
-        (option) => option.value === value,
-    );
+    const selected = options.find((option) => option.value === value);
 
     return (
         <div ref={refDiv} className="relative sm:col-span-3">
@@ -249,11 +516,11 @@ function CustomSelect({
                 }}
             >
                 <span className="truncate">
-                    {selectedOption?.label || placeholder}
+                    {selected?.label || placeholder}
                 </span>
 
                 <ChevronDown
-                    className={`h-4 w-4 flex-shrink-0 transition-transform ${
+                    className={`h-4 w-4 transition-transform ${
                         isOpen ? "rotate-180" : ""
                     }`}
                     style={{ color: textSecondary }}
@@ -262,45 +529,36 @@ function CustomSelect({
 
             {isOpen && (
                 <div
-                    className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl shadow-2xl backdrop-blur-2xl"
+                    className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl shadow-2xl backdrop-blur-2xl"
                     style={{
                         backgroundColor: bgCard,
                         border: `1px solid ${borderCard}`,
                     }}
                 >
                     <div className="modal-scrollbar-hide max-h-48 overflow-y-auto py-1">
-                        {options.length === 0 ? (
-                            <p
-                                className="px-4 py-3 text-sm"
-                                style={{ color: textSecondary }}
+                        {options.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onSelect(option.value);
+                                    onToggle();
+                                }}
+                                className="flex w-full px-3 py-2.5 text-left text-sm transition hover:bg-black/10"
+                                style={{
+                                    color:
+                                        value === option.value
+                                            ? corPrimaria
+                                            : textPrimary,
+                                    backgroundColor:
+                                        value === option.value
+                                            ? `${corPrimaria}20`
+                                            : "transparent",
+                                }}
                             >
-                                Nenhuma opção disponível
-                            </p>
-                        ) : (
-                            options.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() => {
-                                        onSelect(option.value);
-                                        onToggle();
-                                    }}
-                                    className="flex w-full items-center px-3 py-2.5 text-left text-sm transition hover:bg-black/10"
-                                    style={{
-                                        color:
-                                            value === option.value
-                                                ? corPrimaria
-                                                : textPrimary,
-                                        backgroundColor:
-                                            value === option.value
-                                                ? `${corPrimaria}20`
-                                                : "transparent",
-                                    }}
-                                >
-                                    {option.label}
-                                </button>
-                            ))
-                        )}
+                                {option.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}
@@ -318,9 +576,9 @@ export default function PessoaModal({
     turmas,
 }: Props) {
     const [form, setForm] = useState<FormState>(INITIAL_FORM);
+    const [tema, setTema] = useState<TemaConfig | null>(null);
     const [dropdown, setDropdown] =
         useState<DropdownState>(INITIAL_DROPDOWN);
-    const [tema, setTema] = useState<TemaConfig | null>(null);
 
     const tipo = form.tipo;
     const isEdit = Boolean(pessoa);
@@ -337,21 +595,17 @@ export default function PessoaModal({
     };
 
     useEffect(() => {
-        const atualizarTema = () => {
-            setTema(carregarTema());
+        const updateTheme = () => {
+            setTema(getSavedTheme());
         };
 
-        atualizarTema();
-
-        window.addEventListener(
-            "escola-tema-updated",
-            atualizarTema,
-        );
+        updateTheme();
+        window.addEventListener("escola-tema-updated", updateTheme);
 
         return () => {
             window.removeEventListener(
                 "escola-tema-updated",
-                atualizarTema,
+                updateTheme,
             );
         };
     }, []);
@@ -360,11 +614,11 @@ export default function PessoaModal({
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
 
-            const clicouDentro = (
+            const inside = (
                 Object.keys(refs) as DropdownKey[]
             ).some((key) => refs[key].current?.contains(target));
 
-            if (!clicouDentro) {
+            if (!inside) {
                 setDropdown(INITIAL_DROPDOWN);
             }
         };
@@ -447,12 +701,8 @@ export default function PessoaModal({
     const textSecondary = isClaro ? "#64748B" : "#9CA3AF";
 
     const bgCard = isClaro
-        ? "#FFFFFF"
+        ? "rgba(0,0,0,0.03)"
         : "rgba(255,255,255,0.05)";
-
-    const modalBackground = isClaro
-        ? "#FFFFFF"
-        : "#0F172A";
 
     const borderCard = isClaro
         ? "rgba(15,23,42,0.12)"
@@ -460,8 +710,16 @@ export default function PessoaModal({
 
     const estiloCard = tema?.estilo_card || "arredondado";
 
-    const cardStyle: React.CSSProperties = {
-        background: modalBackground,
+    const cardStyle: CSSProperties = {
+        background:
+            estiloCard === "glass"
+                ? isClaro
+                    ? "rgba(255,255,255,0.72)"
+                    : "rgba(15,23,42,0.72)"
+                : isClaro
+                    ? "#FFFFFF"
+                    : "#0F172A",
+        borderStyle: "solid",
         borderColor:
             estiloCard === "borda_colorida"
                 ? corPrimaria
@@ -484,7 +742,7 @@ export default function PessoaModal({
                 : undefined,
     };
 
-    const inputStyle: React.CSSProperties = {
+    const inputStyle: CSSProperties = {
         backgroundColor: bgCard,
         border: `1px solid ${borderCard}`,
         color: textPrimary,
@@ -497,9 +755,9 @@ export default function PessoaModal({
         "flex items-center gap-2 text-xs sm:justify-self-end";
 
     const toggleDropdown = (key: DropdownKey) => {
-        setDropdown((previous) => ({
-            ...previous,
-            [key]: !previous[key],
+        setDropdown((current) => ({
+            ...current,
+            [key]: !current[key],
         }));
     };
 
@@ -507,11 +765,14 @@ export default function PessoaModal({
         field: keyof FormState,
         value: string,
     ) => {
-        setForm((previous) => ({
-            ...previous,
+        setForm((current) => ({
+            ...current,
             [field]: value,
         }));
     };
+
+    const escolaId =
+        pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
 
     const handleSubmit = async (
         event: FormEvent<HTMLFormElement>,
@@ -520,7 +781,6 @@ export default function PessoaModal({
 
         const nome = form.nome.trim();
         const bi = form.bi.trim();
-        const escolaId = pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
 
         if (!nome) {
             toast.error("Nome é obrigatório");
@@ -554,7 +814,7 @@ export default function PessoaModal({
             return;
         }
 
-        const payload: PessoaCreatePayload = {
+        await onSave({
             nome,
             bi,
             data_nascimento: form.data_nascimento || null,
@@ -590,36 +850,46 @@ export default function PessoaModal({
                     ? form.turma_id || null
                     : null,
             observacao: form.observacao.trim() || null,
-        };
-
-        await onSave(payload);
+        });
     };
-
-    const escolaAtual =
-        pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
-
-    const escolaNome =
-        escolas.find((escola) => escola.id === escolaAtual)?.nome ||
-        "Escola atual";
-
-    const escolaOptions: Option[] = [
-        {
-            value: escolaAtual || "",
-            label: escolaNome,
-        },
-    ];
 
     const turmaOptions = turmas.map((turma) => ({
         value: turma.id,
         label: turma.nome,
     }));
 
+    const renderField = (
+        label: string,
+        icon: React.ReactNode,
+        field: keyof FormState,
+        type = "text",
+    ) => (
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
+            <label
+                className={labelClass}
+                style={{ color: textPrimary }}
+            >
+                {icon}
+                {label}
+            </label>
+
+            <input
+                type={type}
+                value={String(form[field])}
+                onChange={(event) =>
+                    handleChange(field, event.target.value)
+                }
+                className={`${inputClass} sm:col-span-3`}
+                style={inputStyle}
+            />
+        </div>
+    );
+
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
             <div
-                className="flex max-h-[92vh] w-full max-w-[800px] flex-col overflow-hidden border"
+                className="flex max-h-[92vh] w-full max-w-[800px] flex-col overflow-hidden"
                 style={cardStyle}
-                onClick={(event) => event.stopPropagation()}
             >
                 <div
                     className="shrink-0 border-b p-4"
@@ -640,7 +910,7 @@ export default function PessoaModal({
                                 className="mt-1 text-xs"
                                 style={{ color: textSecondary }}
                             >
-                                {escolaNome}
+                                Preencha os dados do registro
                             </p>
                         </div>
 
@@ -670,81 +940,50 @@ export default function PessoaModal({
                             Dados Pessoais
                         </h3>
 
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label
-                                className={labelClass}
-                                style={{ color: textPrimary }}
-                            >
-                                <User
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
-                                />
-                                Nome *
-                            </label>
+                        {renderField(
+                            "Nome *",
+                            <User
+                                className="h-3.5 w-3.5"
+                                style={{ color: corPrimaria }}
+                            />,
+                            "nome",
+                        )}
 
-                            <input
-                                value={form.nome}
-                                onChange={(event) =>
-                                    handleChange(
-                                        "nome",
-                                        event.target.value,
-                                    )
-                                }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
-                                required
-                            />
-                        </div>
+                        {renderField(
+                            "BI *",
+                            <IdCard
+                                className="h-3.5 w-3.5"
+                                style={{ color: corPrimaria }}
+                            />,
+                            "bi",
+                        )}
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
                                 className={labelClass}
                                 style={{ color: textPrimary }}
                             >
-                                <IdCard
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
-                                />
-                                BI *
-                            </label>
-
-                            <input
-                                value={form.bi}
-                                onChange={(event) =>
-                                    handleChange(
-                                        "bi",
-                                        event.target.value,
-                                    )
-                                }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
-                                required
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label
-                                className={labelClass}
-                                style={{ color: textPrimary }}
-                            >
-                                <Calendar
+                                <CalendarDays
                                     className="h-3.5 w-3.5"
                                     style={{ color: corPrimaria }}
                                 />
                                 Data Nasc.
                             </label>
 
-                            <input
-                                type="date"
+                            <CalendarField
                                 value={form.data_nascimento}
-                                onChange={(event) =>
+                                onChange={(value) =>
                                     handleChange(
                                         "data_nascimento",
-                                        event.target.value,
+                                        value,
                                     )
                                 }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
+                                corPrimaria={corPrimaria}
+                                corSecundaria={corSecundaria}
+                                textPrimary={textPrimary}
+                                textSecondary={textSecondary}
+                                bgCard={bgCard}
+                                borderCard={borderCard}
                             />
                         </div>
 
@@ -807,81 +1046,33 @@ export default function PessoaModal({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label
-                                className={labelClass}
-                                style={{ color: textPrimary }}
-                            >
-                                <Phone
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
-                                />
-                                Telefone
-                            </label>
+                        {renderField(
+                            "Telefone",
+                            <Phone
+                                className="h-3.5 w-3.5"
+                                style={{ color: corPrimaria }}
+                            />,
+                            "telefone",
+                        )}
 
-                            <input
-                                value={form.telefone}
-                                onChange={(event) =>
-                                    handleChange(
-                                        "telefone",
-                                        event.target.value,
-                                    )
-                                }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
-                            />
-                        </div>
+                        {renderField(
+                            "Email",
+                            <Mail
+                                className="h-3.5 w-3.5"
+                                style={{ color: corPrimaria }}
+                            />,
+                            "email",
+                            "email",
+                        )}
 
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label
-                                className={labelClass}
-                                style={{ color: textPrimary }}
-                            >
-                                <Mail
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
-                                />
-                                Email
-                            </label>
-
-                            <input
-                                type="email"
-                                value={form.email}
-                                onChange={(event) =>
-                                    handleChange(
-                                        "email",
-                                        event.target.value,
-                                    )
-                                }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label
-                                className={labelClass}
-                                style={{ color: textPrimary }}
-                            >
-                                <MapPin
-                                    className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
-                                />
-                                Endereço
-                            </label>
-
-                            <input
-                                value={form.endereco}
-                                onChange={(event) =>
-                                    handleChange(
-                                        "endereco",
-                                        event.target.value,
-                                    )
-                                }
-                                className={`${inputClass} sm:col-span-3`}
-                                style={inputStyle}
-                            />
-                        </div>
+                        {renderField(
+                            "Endereço",
+                            <MapPin
+                                className="h-3.5 w-3.5"
+                                style={{ color: corPrimaria }}
+                            />,
+                            "endereco",
+                        )}
 
                         <div
                             className="my-2 border-t"
@@ -894,17 +1085,6 @@ export default function PessoaModal({
                         >
                             Vínculo com a Escola
                         </h3>
-
-                        <div
-                            className="rounded-xl border p-3 text-sm"
-                            style={{
-                                backgroundColor: bgCard,
-                                borderColor: borderCard,
-                                color: textPrimary,
-                            }}
-                        >
-                            Escola: <strong>{escolaNome}</strong>
-                        </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
@@ -936,32 +1116,16 @@ export default function PessoaModal({
 
                         {tipo === "ALUNO" && (
                             <>
-                                <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label
-                                        className={labelClass}
-                                        style={{ color: textPrimary }}
-                                    >
-                                        <BookOpen
-                                            className="h-3.5 w-3.5"
-                                            style={{
-                                                color: corPrimaria,
-                                            }}
-                                        />
-                                        Nº Processo *
-                                    </label>
-
-                                    <input
-                                        value={form.numero_processo}
-                                        onChange={(event) =>
-                                            handleChange(
-                                                "numero_processo",
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={`${inputClass} sm:col-span-3`}
-                                        style={inputStyle}
-                                    />
-                                </div>
+                                {renderField(
+                                    "Nº Processo *",
+                                    <BookOpen
+                                        className="h-3.5 w-3.5"
+                                        style={{
+                                            color: corPrimaria,
+                                        }}
+                                    />,
+                                    "numero_processo",
+                                )}
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
@@ -1004,84 +1168,42 @@ export default function PessoaModal({
 
                         {tipo === "PROFESSOR" && (
                             <>
-                                <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label
-                                        className={labelClass}
-                                        style={{ color: textPrimary }}
-                                    >
-                                        Formação *
-                                    </label>
+                                {renderField(
+                                    "Formação *",
+                                    <GraduationCap
+                                        className="h-3.5 w-3.5"
+                                        style={{
+                                            color: corPrimaria,
+                                        }}
+                                    />,
+                                    "formacao",
+                                )}
 
-                                    <input
-                                        value={form.formacao}
-                                        onChange={(event) =>
-                                            handleChange(
-                                                "formacao",
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={`${inputClass} sm:col-span-3`}
-                                        style={inputStyle}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label
-                                        className={labelClass}
-                                        style={{ color: textPrimary }}
-                                    >
-                                        <GraduationCap
-                                            className="h-3.5 w-3.5"
-                                            style={{
-                                                color: corPrimaria,
-                                            }}
-                                        />
-                                        Disciplinas
-                                    </label>
-
-                                    <input
-                                        value={form.disciplinas}
-                                        onChange={(event) =>
-                                            handleChange(
-                                                "disciplinas",
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={`${inputClass} sm:col-span-3`}
-                                        style={inputStyle}
-                                    />
-                                </div>
+                                {renderField(
+                                    "Disciplinas",
+                                    <BookOpen
+                                        className="h-3.5 w-3.5"
+                                        style={{
+                                            color: corPrimaria,
+                                        }}
+                                    />,
+                                    "disciplinas",
+                                )}
                             </>
                         )}
 
                         {tipo === "FUNCIONARIO" && (
                             <>
-                                <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label
-                                        className={labelClass}
-                                        style={{ color: textPrimary }}
-                                    >
-                                        <Briefcase
-                                            className="h-3.5 w-3.5"
-                                            style={{
-                                                color: corPrimaria,
-                                            }}
-                                        />
-                                        Nº Funcional
-                                    </label>
-
-                                    <input
-                                        value={form.numero_funcional}
-                                        onChange={(event) =>
-                                            handleChange(
-                                                "numero_funcional",
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={`${inputClass} sm:col-span-3`}
-                                        style={inputStyle}
-                                    />
-                                </div>
+                                {renderField(
+                                    "Nº Funcional",
+                                    <Briefcase
+                                        className="h-3.5 w-3.5"
+                                        style={{
+                                            color: corPrimaria,
+                                        }}
+                                    />,
+                                    "numero_funcional",
+                                )}
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
@@ -1116,32 +1238,15 @@ export default function PessoaModal({
                             </>
                         )}
 
-                        {tipo === "ENCARREGADO" && (
-                            <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                <label
-                                    className={labelClass}
-                                    style={{ color: textPrimary }}
-                                >
-                                    <Users
-                                        className="h-3.5 w-3.5"
-                                        style={{ color: corPrimaria }}
-                                    />
-                                    Observação
-                                </label>
-
-                                <input
-                                    value={form.observacao}
-                                    onChange={(event) =>
-                                        handleChange(
-                                            "observacao",
-                                            event.target.value,
-                                        )
-                                    }
-                                    className={`${inputClass} sm:col-span-3`}
-                                    style={inputStyle}
-                                />
-                            </div>
-                        )}
+                        {tipo === "ENCARREGADO" &&
+                            renderField(
+                                "Observação",
+                                <Users
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />,
+                                "observacao",
+                            )}
                     </div>
 
                     <div
@@ -1200,13 +1305,6 @@ export default function PessoaModal({
                         display: none;
                         width: 0;
                         height: 0;
-                    }
-
-                    input,
-                    select,
-                    textarea,
-                    button {
-                        font-family: inherit;
                     }
 
                     @media (max-width: 640px) {
