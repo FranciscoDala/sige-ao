@@ -95,6 +95,45 @@ interface Props {
     turmas: Turma[];
 }
 
+interface TemaConfig {
+    tema?: "claro" | "escuro";
+    cor_primaria?: string;
+    cor_secundaria?: string;
+    cor_fundo?: string;
+    estilo_card?: string;
+    fonte_principal?: string;
+    fonte_titulo?: string;
+    fonte_corpo?: string;
+}
+
+interface FormState {
+    nome: string;
+    bi: string;
+    data_nascimento: string;
+    sexo: string;
+    estado_civil: string;
+    telefone: string;
+    email: string;
+    endereco: string;
+    tipo: string;
+    numero_funcional: string;
+    cargo: string;
+    formacao: string;
+    disciplinas: string;
+    numero_processo: string;
+    turma_id: string;
+    observacao: string;
+}
+
+type DropdownKey =
+    | "tipo"
+    | "sexo"
+    | "estado_civil"
+    | "cargo"
+    | "turma";
+
+type DropdownState = Record<DropdownKey, boolean>;
+
 const TIPOS_VINCULO: Option[] = [
     { value: "ALUNO", label: "Aluno" },
     { value: "PROFESSOR", label: "Professor" },
@@ -123,47 +162,6 @@ const CARGO_OPTIONS: Option[] = [
     { value: "OUTRO", label: "Outro" },
 ];
 
-type FormState = {
-    nome: string;
-    bi: string;
-    data_nascimento: string;
-    sexo: string;
-    estado_civil: string;
-    telefone: string;
-    email: string;
-    endereco: string;
-    escola_id: string;
-    tipo: string;
-    numero_funcional: string;
-    cargo: string;
-    formacao: string;
-    disciplinas: string;
-    numero_processo: string;
-    turma_id: string;
-    observacao: string;
-};
-
-type DropdownState = {
-    tipo: boolean;
-    sexo: boolean;
-    ec: boolean;
-    escola: boolean;
-    cargo: boolean;
-    turma: boolean;
-};
-
-type DropdownKey = keyof DropdownState;
-
-interface CustomSelectProps {
-    refDiv: RefObject<HTMLDivElement | null>;
-    value: string;
-    onSelect: (value: string) => void;
-    options: Option[];
-    placeholder: string;
-    isOpen: boolean;
-    onToggle: () => void;
-}
-
 const INITIAL_FORM: FormState = {
     nome: "",
     bi: "",
@@ -173,7 +171,6 @@ const INITIAL_FORM: FormState = {
     telefone: "",
     email: "",
     endereco: "",
-    escola_id: "",
     tipo: "ALUNO",
     numero_funcional: "",
     cargo: "",
@@ -187,47 +184,97 @@ const INITIAL_FORM: FormState = {
 const INITIAL_DROPDOWN: DropdownState = {
     tipo: false,
     sexo: false,
-    ec: false,
-    escola: false,
+    estado_civil: false,
     cargo: false,
     turma: false,
 };
 
+function carregarTema(): TemaConfig | null {
+    const temaSalvo = localStorage.getItem("escola_tema");
+
+    if (!temaSalvo) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(temaSalvo) as TemaConfig;
+    } catch {
+        return null;
+    }
+}
+
+interface CustomSelectProps {
+    refDiv: RefObject<HTMLDivElement | null>;
+    value: string;
+    options: Option[];
+    placeholder: string;
+    isOpen: boolean;
+    textPrimary: string;
+    textSecondary: string;
+    bgCard: string;
+    borderCard: string;
+    corPrimaria: string;
+    onToggle: () => void;
+    onSelect: (value: string) => void;
+}
+
 function CustomSelect({
     refDiv,
     value,
-    onSelect,
     options,
     placeholder,
     isOpen,
+    textPrimary,
+    textSecondary,
+    bgCard,
+    borderCard,
+    corPrimaria,
     onToggle,
+    onSelect,
 }: CustomSelectProps) {
-    const selectedOption = options.find((option) => option.value === value);
+    const selectedOption = options.find(
+        (option) => option.value === value,
+    );
 
     return (
         <div ref={refDiv} className="relative sm:col-span-3">
             <button
                 type="button"
                 onClick={onToggle}
-                className="flex h-10 w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 text-left text-base text-white transition hover:bg-white/10 focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6] sm:text-sm"
+                className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none sm:text-sm"
+                style={{
+                    backgroundColor: bgCard,
+                    border: `1px solid ${borderCard}`,
+                    color: textPrimary,
+                }}
             >
                 <span className="truncate">
                     {selectedOption?.label || placeholder}
                 </span>
 
                 <ChevronDown
-                    className={`h-4 w-4 flex-shrink-0 text-gray-400 transition-transform ${
+                    className={`h-4 w-4 flex-shrink-0 transition-transform ${
                         isOpen ? "rotate-180" : ""
                     }`}
+                    style={{ color: textSecondary }}
                 />
             </button>
 
             {isOpen && (
-                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-[#1E293B]/95 shadow-2xl shadow-black/30 backdrop-blur-2xl">
-                    <div className="max-h-48 overflow-y-auto overflow-x-hidden py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div
+                    className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl shadow-2xl backdrop-blur-2xl"
+                    style={{
+                        backgroundColor: bgCard,
+                        border: `1px solid ${borderCard}`,
+                    }}
+                >
+                    <div className="modal-scrollbar-hide max-h-48 overflow-y-auto py-1">
                         {options.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-gray-400">
-                                Nenhuma opção
+                            <p
+                                className="px-4 py-3 text-sm"
+                                style={{ color: textSecondary }}
+                            >
+                                Nenhuma opção disponível
                             </p>
                         ) : (
                             options.map((option) => (
@@ -238,11 +285,17 @@ function CustomSelect({
                                         onSelect(option.value);
                                         onToggle();
                                     }}
-                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition ${
-                                        value === option.value
-                                            ? "bg-[#3B82F6]/20 font-semibold text-[#3B82F6]"
-                                            : "text-gray-300 hover:bg-white/10"
-                                    }`}
+                                    className="flex w-full items-center px-3 py-2.5 text-left text-sm transition hover:bg-black/10"
+                                    style={{
+                                        color:
+                                            value === option.value
+                                                ? corPrimaria
+                                                : textPrimary,
+                                        backgroundColor:
+                                            value === option.value
+                                                ? `${corPrimaria}20`
+                                                : "transparent",
+                                    }}
                                 >
                                     {option.label}
                                 </button>
@@ -267,6 +320,10 @@ export default function PessoaModal({
     const [form, setForm] = useState<FormState>(INITIAL_FORM);
     const [dropdown, setDropdown] =
         useState<DropdownState>(INITIAL_DROPDOWN);
+    const [tema, setTema] = useState<TemaConfig | null>(null);
+
+    const tipo = form.tipo;
+    const isEdit = Boolean(pessoa);
 
     const refs: Record<
         DropdownKey,
@@ -274,34 +331,40 @@ export default function PessoaModal({
     > = {
         tipo: useRef<HTMLDivElement>(null),
         sexo: useRef<HTMLDivElement>(null),
-        ec: useRef<HTMLDivElement>(null),
-        escola: useRef<HTMLDivElement>(null),
+        estado_civil: useRef<HTMLDivElement>(null),
         cargo: useRef<HTMLDivElement>(null),
         turma: useRef<HTMLDivElement>(null),
     };
 
-    const isEdit = Boolean(pessoa);
-    const tipo = form.tipo;
+    useEffect(() => {
+        const atualizarTema = () => {
+            setTema(carregarTema());
+        };
 
-    const toggleDropdown = (key: DropdownKey) => {
-        setDropdown((previous) => ({
-            ...previous,
-            [key]: !previous[key],
-        }));
-    };
+        atualizarTema();
+
+        window.addEventListener(
+            "escola-tema-updated",
+            atualizarTema,
+        );
+
+        return () => {
+            window.removeEventListener(
+                "escola-tema-updated",
+                atualizarTema,
+            );
+        };
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
 
-            const clickedInsideDropdown = (
+            const clicouDentro = (
                 Object.keys(refs) as DropdownKey[]
-            ).some((key) => {
-                const ref = refs[key];
-                return ref.current?.contains(target);
-            });
+            ).some((key) => refs[key].current?.contains(target));
 
-            if (!clickedInsideDropdown) {
+            if (!clicouDentro) {
                 setDropdown(INITIAL_DROPDOWN);
             }
         };
@@ -309,7 +372,10 @@ export default function PessoaModal({
         document.addEventListener("mousedown", handleClickOutside);
 
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside,
+            );
         };
     }, []);
 
@@ -324,9 +390,9 @@ export default function PessoaModal({
             }
         };
 
-        document.addEventListener("keydown", handleKeyDown);
-
         const previousOverflow = document.body.style.overflow;
+
+        document.addEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "hidden";
 
         return () => {
@@ -353,7 +419,6 @@ export default function PessoaModal({
                 telefone: pessoa.telefone || "",
                 email: pessoa.email || "",
                 endereco: pessoa.endereco || "",
-                escola_id: vinculo?.escola_id || "",
                 tipo: vinculo?.tipo || "ALUNO",
                 numero_funcional: vinculo?.numero_funcional || "",
                 cargo: vinculo?.cargo || "",
@@ -374,6 +439,70 @@ export default function PessoaModal({
         return null;
     }
 
+    const isClaro = tema?.tema === "claro";
+    const corPrimaria = tema?.cor_primaria || "#3B82F6";
+    const corSecundaria = tema?.cor_secundaria || "#8B5CF6";
+
+    const textPrimary = isClaro ? "#1E293B" : "#FFFFFF";
+    const textSecondary = isClaro ? "#64748B" : "#9CA3AF";
+
+    const bgCard = isClaro
+        ? "#FFFFFF"
+        : "rgba(255,255,255,0.05)";
+
+    const modalBackground = isClaro
+        ? "#FFFFFF"
+        : "#0F172A";
+
+    const borderCard = isClaro
+        ? "rgba(15,23,42,0.12)"
+        : "rgba(255,255,255,0.12)";
+
+    const estiloCard = tema?.estilo_card || "arredondado";
+
+    const cardStyle: React.CSSProperties = {
+        background: modalBackground,
+        borderColor:
+            estiloCard === "borda_colorida"
+                ? corPrimaria
+                : borderCard,
+        borderWidth:
+            estiloCard === "borda_colorida" ? "2px" : "1px",
+        borderRadius:
+            estiloCard === "quadrado"
+                ? "0"
+                : estiloCard === "minimalista"
+                    ? "0.5rem"
+                    : "1rem",
+        boxShadow:
+            estiloCard === "elevado"
+                ? "0 20px 25px -5px rgba(0,0,0,0.25)"
+                : "0 25px 50px -12px rgba(0,0,0,0.35)",
+        backdropFilter:
+            estiloCard === "glass"
+                ? "blur(20px) saturate(150%)"
+                : undefined,
+    };
+
+    const inputStyle: React.CSSProperties = {
+        backgroundColor: bgCard,
+        border: `1px solid ${borderCard}`,
+        color: textPrimary,
+    };
+
+    const inputClass =
+        "h-10 w-full rounded-xl px-3 text-base transition focus:outline-none focus:ring-2 sm:text-sm";
+
+    const labelClass =
+        "flex items-center gap-2 text-xs sm:justify-self-end";
+
+    const toggleDropdown = (key: DropdownKey) => {
+        setDropdown((previous) => ({
+            ...previous,
+            [key]: !previous[key],
+        }));
+    };
+
     const handleChange = (
         field: keyof FormState,
         value: string,
@@ -391,6 +520,7 @@ export default function PessoaModal({
 
         const nome = form.nome.trim();
         const bi = form.bi.trim();
+        const escolaId = pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
 
         if (!nome) {
             toast.error("Nome é obrigatório");
@@ -402,18 +532,15 @@ export default function PessoaModal({
             return;
         }
 
-        if (!form.escola_id) {
-            toast.error("Selecione a escola");
-            return;
-        }
-
-        if (!form.tipo) {
-            toast.error("Selecione o tipo de vínculo");
+        if (!escolaId) {
+            toast.error("Escola não identificada");
             return;
         }
 
         if (tipo === "ALUNO" && !form.numero_processo.trim()) {
-            toast.error("Nº de processo é obrigatório para aluno");
+            toast.error(
+                "Nº de processo é obrigatório para aluno",
+            );
             return;
         }
 
@@ -436,55 +563,51 @@ export default function PessoaModal({
             telefone: form.telefone.trim() || null,
             email: form.email.trim() || null,
             endereco: form.endereco.trim() || null,
-            escola_id: form.escola_id,
-            tipo: form.tipo,
-
+            escola_id: escolaId,
+            tipo,
             numero_funcional:
                 tipo === "FUNCIONARIO"
                     ? form.numero_funcional.trim() || null
                     : null,
-
             cargo:
                 tipo === "FUNCIONARIO"
                     ? form.cargo || null
                     : null,
-
             formacao:
                 tipo === "PROFESSOR"
                     ? form.formacao.trim() || null
                     : null,
-
             disciplinas:
                 tipo === "PROFESSOR"
                     ? form.disciplinas.trim() || null
                     : null,
-
             numero_processo:
                 tipo === "ALUNO"
                     ? form.numero_processo.trim() || null
                     : null,
-
             turma_id:
                 tipo === "ALUNO"
                     ? form.turma_id || null
                     : null,
-
             observacao: form.observacao.trim() || null,
         };
 
         await onSave(payload);
     };
 
-    const inputClass =
-        "h-10 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-base text-white placeholder:text-gray-400 transition focus:border-[#3B82F6] focus:outline-none focus:ring-1 focus:ring-[#3B82F6] sm:text-sm";
+    const escolaAtual =
+        pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
 
-    const labelClass =
-        "flex items-center gap-2 text-xs text-gray-300 sm:justify-self-end";
+    const escolaNome =
+        escolas.find((escola) => escola.id === escolaAtual)?.nome ||
+        "Escola atual";
 
-    const escolaOptions = escolas.map((escola) => ({
-        value: escola.id,
-        label: escola.nome,
-    }));
+    const escolaOptions: Option[] = [
+        {
+            value: escolaAtual || "",
+            label: escolaNome,
+        },
+    ];
 
     const turmaOptions = turmas.map((turma) => ({
         value: turma.id,
@@ -493,20 +616,44 @@ export default function PessoaModal({
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
-            <div className="flex max-h-[90vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F172A]/90 shadow-2xl backdrop-blur-2xl">
-                <div className="shrink-0 border-b border-white/10 p-4">
+            <div
+                className="flex max-h-[92vh] w-full max-w-[800px] flex-col overflow-hidden border"
+                style={cardStyle}
+                onClick={(event) => event.stopPropagation()}
+            >
+                <div
+                    className="shrink-0 border-b p-4"
+                    style={{ borderColor: borderCard }}
+                >
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-white">
-                            {isEdit ? "Editar Pessoa" : "Cadastrar Pessoa"}
-                        </h2>
+                        <div>
+                            <h2
+                                className="text-base font-bold"
+                                style={{ color: textPrimary }}
+                            >
+                                {isEdit
+                                    ? "Editar Registro"
+                                    : "Cadastrar Registro"}
+                            </h2>
+
+                            <p
+                                className="mt-1 text-xs"
+                                style={{ color: textSecondary }}
+                            >
+                                {escolaNome}
+                            </p>
+                        </div>
 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg p-1 transition hover:bg-white/10"
+                            className="rounded-lg p-1.5 transition hover:bg-black/10"
                             aria-label="Fechar modal"
                         >
-                            <X className="h-5 w-5 text-gray-400" />
+                            <X
+                                className="h-4 w-4"
+                                style={{ color: textSecondary }}
+                            />
                         </button>
                     </div>
                 </div>
@@ -515,46 +662,75 @@ export default function PessoaModal({
                     onSubmit={handleSubmit}
                     className="flex min-h-0 flex-1 flex-col"
                 >
-                    <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto px-4 py-4">
-                        <h3 className="text-sm font-semibold text-[#3B82F6]">
+                    <div className="modal-scrollbar-hide grid min-h-0 flex-1 gap-3 overflow-y-auto px-4 py-4">
+                        <h3
+                            className="text-sm font-semibold"
+                            style={{ color: corPrimaria }}
+                        >
                             Dados Pessoais
                         </h3>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <User className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <User
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 Nome *
                             </label>
 
                             <input
                                 value={form.nome}
                                 onChange={(event) =>
-                                    handleChange("nome", event.target.value)
+                                    handleChange(
+                                        "nome",
+                                        event.target.value,
+                                    )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                                 required
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <IdCard className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <IdCard
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 BI *
                             </label>
 
                             <input
                                 value={form.bi}
                                 onChange={(event) =>
-                                    handleChange("bi", event.target.value)
+                                    handleChange(
+                                        "bi",
+                                        event.target.value,
+                                    )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                                 required
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <Calendar className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <Calendar
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 Data Nasc.
                             </label>
 
@@ -568,46 +744,78 @@ export default function PessoaModal({
                                     )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>Sexo</label>
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                Sexo
+                            </label>
 
                             <CustomSelect
                                 refDiv={refs.sexo}
                                 value={form.sexo}
-                                onSelect={(value) =>
-                                    handleChange("sexo", value)
-                                }
                                 options={SEXO_OPTIONS}
                                 placeholder="Selecione"
                                 isOpen={dropdown.sexo}
-                                onToggle={() => toggleDropdown("sexo")}
+                                textPrimary={textPrimary}
+                                textSecondary={textSecondary}
+                                bgCard={bgCard}
+                                borderCard={borderCard}
+                                corPrimaria={corPrimaria}
+                                onToggle={() =>
+                                    toggleDropdown("sexo")
+                                }
+                                onSelect={(value) =>
+                                    handleChange("sexo", value)
+                                }
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
                                 Estado Civil
                             </label>
 
                             <CustomSelect
-                                refDiv={refs.ec}
+                                refDiv={refs.estado_civil}
                                 value={form.estado_civil}
-                                onSelect={(value) =>
-                                    handleChange("estado_civil", value)
-                                }
                                 options={ESTADO_CIVIL_OPTIONS}
                                 placeholder="Selecione"
-                                isOpen={dropdown.ec}
-                                onToggle={() => toggleDropdown("ec")}
+                                isOpen={dropdown.estado_civil}
+                                textPrimary={textPrimary}
+                                textSecondary={textSecondary}
+                                bgCard={bgCard}
+                                borderCard={borderCard}
+                                corPrimaria={corPrimaria}
+                                onToggle={() =>
+                                    toggleDropdown("estado_civil")
+                                }
+                                onSelect={(value) =>
+                                    handleChange(
+                                        "estado_civil",
+                                        value,
+                                    )
+                                }
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <Phone className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <Phone
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 Telefone
                             </label>
 
@@ -620,12 +828,19 @@ export default function PessoaModal({
                                     )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <Mail className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <Mail
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 Email
                             </label>
 
@@ -633,15 +848,25 @@ export default function PessoaModal({
                                 type="email"
                                 value={form.email}
                                 onChange={(event) =>
-                                    handleChange("email", event.target.value)
+                                    handleChange(
+                                        "email",
+                                        event.target.value,
+                                    )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>
-                                <MapPin className="h-4 w-4" />
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                <MapPin
+                                    className="h-3.5 w-3.5"
+                                    style={{ color: corPrimaria }}
+                                />
                                 Endereço
                             </label>
 
@@ -654,52 +879,74 @@ export default function PessoaModal({
                                     )
                                 }
                                 className={`${inputClass} sm:col-span-3`}
+                                style={inputStyle}
                             />
                         </div>
 
-                        <div className="my-2 border-t border-white/10" />
+                        <div
+                            className="my-2 border-t"
+                            style={{ borderColor: borderCard }}
+                        />
 
-                        <h3 className="text-sm font-semibold text-[#3B82F6]">
+                        <h3
+                            className="text-sm font-semibold"
+                            style={{ color: corPrimaria }}
+                        >
                             Vínculo com a Escola
                         </h3>
 
-                        <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>Escola *</label>
-
-                            <CustomSelect
-                                refDiv={refs.escola}
-                                value={form.escola_id}
-                                onSelect={(value) =>
-                                    handleChange("escola_id", value)
-                                }
-                                options={escolaOptions}
-                                placeholder="Selecione a Escola"
-                                isOpen={dropdown.escola}
-                                onToggle={() => toggleDropdown("escola")}
-                            />
+                        <div
+                            className="rounded-xl border p-3 text-sm"
+                            style={{
+                                backgroundColor: bgCard,
+                                borderColor: borderCard,
+                                color: textPrimary,
+                            }}
+                        >
+                            Escola: <strong>{escolaNome}</strong>
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                            <label className={labelClass}>Tipo *</label>
+                            <label
+                                className={labelClass}
+                                style={{ color: textPrimary }}
+                            >
+                                Tipo *
+                            </label>
 
                             <CustomSelect
                                 refDiv={refs.tipo}
                                 value={form.tipo}
-                                onSelect={(value) =>
-                                    handleChange("tipo", value)
-                                }
                                 options={TIPOS_VINCULO}
                                 placeholder="Selecione o Tipo"
                                 isOpen={dropdown.tipo}
-                                onToggle={() => toggleDropdown("tipo")}
+                                textPrimary={textPrimary}
+                                textSecondary={textSecondary}
+                                bgCard={bgCard}
+                                borderCard={borderCard}
+                                corPrimaria={corPrimaria}
+                                onToggle={() =>
+                                    toggleDropdown("tipo")
+                                }
+                                onSelect={(value) =>
+                                    handleChange("tipo", value)
+                                }
                             />
                         </div>
 
                         {tipo === "ALUNO" && (
                             <>
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
-                                        <BookOpen className="h-4 w-4" />
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
+                                        <BookOpen
+                                            className="h-3.5 w-3.5"
+                                            style={{
+                                                color: corPrimaria,
+                                            }}
+                                        />
                                         Nº Processo *
                                     </label>
 
@@ -712,26 +959,43 @@ export default function PessoaModal({
                                             )
                                         }
                                         className={`${inputClass} sm:col-span-3`}
+                                        style={inputStyle}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
-                                        <Users className="h-4 w-4" />
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
+                                        <Users
+                                            className="h-3.5 w-3.5"
+                                            style={{
+                                                color: corPrimaria,
+                                            }}
+                                        />
                                         Turma
                                     </label>
 
                                     <CustomSelect
                                         refDiv={refs.turma}
                                         value={form.turma_id}
-                                        onSelect={(value) =>
-                                            handleChange("turma_id", value)
-                                        }
                                         options={turmaOptions}
                                         placeholder="Selecione a Turma"
                                         isOpen={dropdown.turma}
+                                        textPrimary={textPrimary}
+                                        textSecondary={textSecondary}
+                                        bgCard={bgCard}
+                                        borderCard={borderCard}
+                                        corPrimaria={corPrimaria}
                                         onToggle={() =>
                                             toggleDropdown("turma")
+                                        }
+                                        onSelect={(value) =>
+                                            handleChange(
+                                                "turma_id",
+                                                value,
+                                            )
                                         }
                                     />
                                 </div>
@@ -741,7 +1005,10 @@ export default function PessoaModal({
                         {tipo === "PROFESSOR" && (
                             <>
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
                                         Formação *
                                     </label>
 
@@ -754,12 +1021,21 @@ export default function PessoaModal({
                                             )
                                         }
                                         className={`${inputClass} sm:col-span-3`}
+                                        style={inputStyle}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
-                                        <GraduationCap className="h-4 w-4" />
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
+                                        <GraduationCap
+                                            className="h-3.5 w-3.5"
+                                            style={{
+                                                color: corPrimaria,
+                                            }}
+                                        />
                                         Disciplinas
                                     </label>
 
@@ -772,6 +1048,7 @@ export default function PessoaModal({
                                             )
                                         }
                                         className={`${inputClass} sm:col-span-3`}
+                                        style={inputStyle}
                                     />
                                 </div>
                             </>
@@ -780,8 +1057,16 @@ export default function PessoaModal({
                         {tipo === "FUNCIONARIO" && (
                             <>
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
-                                        <Briefcase className="h-4 w-4" />
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
+                                        <Briefcase
+                                            className="h-3.5 w-3.5"
+                                            style={{
+                                                color: corPrimaria,
+                                            }}
+                                        />
                                         Nº Funcional
                                     </label>
 
@@ -794,25 +1079,37 @@ export default function PessoaModal({
                                             )
                                         }
                                         className={`${inputClass} sm:col-span-3`}
+                                        style={inputStyle}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                    <label className={labelClass}>
+                                    <label
+                                        className={labelClass}
+                                        style={{ color: textPrimary }}
+                                    >
                                         Cargo *
                                     </label>
 
                                     <CustomSelect
                                         refDiv={refs.cargo}
                                         value={form.cargo}
-                                        onSelect={(value) =>
-                                            handleChange("cargo", value)
-                                        }
                                         options={CARGO_OPTIONS}
                                         placeholder="Selecione o Cargo"
                                         isOpen={dropdown.cargo}
+                                        textPrimary={textPrimary}
+                                        textSecondary={textSecondary}
+                                        bgCard={bgCard}
+                                        borderCard={borderCard}
+                                        corPrimaria={corPrimaria}
                                         onToggle={() =>
                                             toggleDropdown("cargo")
+                                        }
+                                        onSelect={(value) =>
+                                            handleChange(
+                                                "cargo",
+                                                value,
+                                            )
                                         }
                                     />
                                 </div>
@@ -821,8 +1118,14 @@ export default function PessoaModal({
 
                         {tipo === "ENCARREGADO" && (
                             <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
-                                <label className={labelClass}>
-                                    <Users className="h-4 w-4" />
+                                <label
+                                    className={labelClass}
+                                    style={{ color: textPrimary }}
+                                >
+                                    <Users
+                                        className="h-3.5 w-3.5"
+                                        style={{ color: corPrimaria }}
+                                    />
                                     Observação
                                 </label>
 
@@ -835,16 +1138,31 @@ export default function PessoaModal({
                                         )
                                     }
                                     className={`${inputClass} sm:col-span-3`}
+                                    style={inputStyle}
                                 />
                             </div>
                         )}
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-3 border-t border-white/10 p-4 sm:flex-row sm:justify-end">
+                    <div
+                        className="flex shrink-0 flex-col gap-3 border-t p-4 sm:flex-row sm:justify-end"
+                        style={{ borderColor: borderCard }}
+                    >
                         <button
                             type="button"
                             onClick={onClose}
-                            className="h-10 w-full rounded-xl border border-red-500/20 bg-red-500/15 px-6 text-sm font-semibold text-red-400 transition hover:bg-red-500/25 sm:w-auto"
+                            className="h-10 w-full rounded-xl border px-6 text-sm font-semibold transition hover:opacity-80 sm:w-auto"
+                            style={{
+                                color: isClaro
+                                    ? "#DC2626"
+                                    : "#F87171",
+                                borderColor: isClaro
+                                    ? "rgba(220,38,38,0.25)"
+                                    : "rgba(248,113,113,0.25)",
+                                backgroundColor: isClaro
+                                    ? "rgba(220,38,38,0.08)"
+                                    : "rgba(248,113,113,0.12)",
+                            }}
                         >
                             Cancelar
                         </button>
@@ -852,7 +1170,10 @@ export default function PessoaModal({
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] px-6 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                            style={{
+                                background: `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`,
+                            }}
                         >
                             {saving && (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -867,6 +1188,36 @@ export default function PessoaModal({
                     </div>
                 </form>
             </div>
+
+            <style>
+                {`
+                    .modal-scrollbar-hide {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+
+                    .modal-scrollbar-hide::-webkit-scrollbar {
+                        display: none;
+                        width: 0;
+                        height: 0;
+                    }
+
+                    input,
+                    select,
+                    textarea,
+                    button {
+                        font-family: inherit;
+                    }
+
+                    @media (max-width: 640px) {
+                        input,
+                        select,
+                        textarea {
+                            font-size: 16px !important;
+                        }
+                    }
+                `}
+            </style>
         </div>
     );
 }
