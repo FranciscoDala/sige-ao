@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 import {
-    Building,
-    Users,
-    DoorOpen,
     BookOpen,
+    Building,
     Calendar,
+    DoorOpen,
     GraduationCap,
     Laptop,
     Loader2,
     Lock,
     Plus,
+    Users,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
 import AnoLetivoModal from "./components/modal_anoLetivo";
 import PessoaModal, {
-    PessoaCreatePayload,
+    type PessoaCreatePayload,
 } from "./components/modal_registro";
 
 const API_URL =
@@ -37,7 +37,7 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-type NivelEnsino =
+export type NivelEnsino =
     | "PRIMARIO"
     | "I_CICLO"
     | "II_CICLO"
@@ -51,10 +51,12 @@ type Tab = {
     icon: typeof Users;
 };
 
+type AnoLetivoStatus = "ATIVO" | "FECHADO" | "PLANEJAMENTO";
+
 type AnoLetivo = {
     id: number;
     nome: string;
-    status: "ATIVO" | "FECHADO" | "PLANEJAMENTO";
+    status: AnoLetivoStatus;
     data_inicio: string;
     data_fim: string;
 };
@@ -67,6 +69,14 @@ type EscolaOption = {
 type TurmaOption = {
     id: string;
     nome: string;
+};
+
+type EscolaResponse = {
+    id: string;
+    nome: string;
+    nivel_ensino?: NivelEnsino;
+    cor_primaria?: string;
+    tema?: "claro" | "escuro";
 };
 
 const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
@@ -114,19 +124,21 @@ const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
     ],
 };
 
-const formatNivel = (nivel: string) => {
-    return nivel
+const formatNivel = (nivel: string) =>
+    nivel
         .toLowerCase()
         .replace(/_/g, " ")
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
-};
 
 export default function EscolaDirecaoPage() {
     const [nivel, setNivel] = useState<NivelEnsino>("PRIMARIO");
-    const [tabs, setTabs] = useState<Tab[]>(TABS_POR_NIVEL.PRIMARIO);
+    const [tabs, setTabs] = useState<Tab[]>(
+        TABS_POR_NIVEL.PRIMARIO,
+    );
     const [activeTab, setActiveTab] = useState("turmas");
     const [loading, setLoading] = useState(true);
-    const [corPrimariaHex, setCorPrimariaHex] = useState("#0056b3");
+    const [corPrimariaHex, setCorPrimariaHex] =
+        useState("#0056b3");
     const [isClaro, setIsClaro] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
 
@@ -134,7 +146,8 @@ export default function EscolaDirecaoPage() {
     const [modalAnoOpen, setModalAnoOpen] = useState(false);
 
     const [savingRegistro, setSavingRegistro] = useState(false);
-    const [modalRegistroOpen, setModalRegistroOpen] = useState(false);
+    const [modalRegistroOpen, setModalRegistroOpen] =
+        useState(false);
 
     const [escolasRegistro, setEscolasRegistro] = useState<
         EscolaOption[]
@@ -156,25 +169,25 @@ export default function EscolaDirecaoPage() {
 
         try {
             const [resEscola, resAnos] = await Promise.all([
-                api.get("/escolas/me"),
-                api.get("/anos-letivos"),
+                api.get<EscolaResponse>("/escolas/me"),
+                api.get<AnoLetivo[]>("/anos-letivos"),
             ]);
 
-            const nivelEscola =
-                (resEscola.data.nivel_ensino as NivelEnsino) ||
-                "PRIMARIO";
+            const escola = resEscola.data;
 
-            setNivel(nivelEscola);
-            setCorPrimariaHex(
-                resEscola.data.cor_primaria || "#0056b3",
-            );
-            setIsClaro(resEscola.data.tema === "claro");
+            const nivelEscola: NivelEnsino =
+                escola.nivel_ensino || "PRIMARIO";
 
             const tabsDoNivel =
                 TABS_POR_NIVEL[nivelEscola] ||
                 TABS_POR_NIVEL.PRIMARIO;
 
+            setNivel(nivelEscola);
             setTabs(tabsDoNivel);
+            setCorPrimariaHex(
+                escola.cor_primaria || "#0056b3",
+            );
+            setIsClaro(escola.tema === "claro");
 
             const listaAnos = Array.isArray(resAnos.data)
                 ? resAnos.data
@@ -184,29 +197,31 @@ export default function EscolaDirecaoPage() {
 
             const anoAtivo =
                 listaAnos.find(
-                    (ano: AnoLetivo) => ano.status === "ATIVO",
+                    (ano) => ano.status === "ATIVO",
                 ) ||
                 listaAnos[0] ||
                 null;
 
             setAnoLetivoAtivo(anoAtivo);
 
-            const escolaAtual: EscolaOption = {
-                id: String(resEscola.data.id),
-                nome: String(resEscola.data.nome),
-            };
-
-            setEscolasRegistro([escolaAtual]);
+            setEscolasRegistro([
+                {
+                    id: String(escola.id),
+                    nome: String(escola.nome),
+                },
+            ]);
 
             try {
-                const resTurmas = await api.get("/turmas");
+                const resTurmas = await api.get<TurmaOption[]>(
+                    "/turmas",
+                );
 
                 const listaTurmas = Array.isArray(resTurmas.data)
                     ? resTurmas.data
                     : [];
 
                 setTurmasRegistro(
-                    listaTurmas.map((turma: TurmaOption) => ({
+                    listaTurmas.map((turma) => ({
                         id: String(turma.id),
                         nome: turma.nome,
                     })),
@@ -219,7 +234,9 @@ export default function EscolaDirecaoPage() {
                 setTurmasRegistro([]);
             }
 
-            const savedTab = localStorage.getItem(STORAGE_KEY_TAB);
+            const savedTab =
+                localStorage.getItem(STORAGE_KEY_TAB);
+
             const isValidTab = tabsDoNivel.some(
                 (tab) => tab.id === savedTab,
             );
@@ -229,19 +246,24 @@ export default function EscolaDirecaoPage() {
                     ? savedTab
                     : tabsDoNivel[0].id,
             );
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(
                 "Erro ao buscar dados iniciais",
                 error,
             );
 
-            if (error.response?.status === 401) {
+            if (
+                axios.isAxiosError(error) &&
+                error.response?.status === 401
+            ) {
                 setErro("Token expirado. Faça login novamente.");
-            } else {
+            } else if (axios.isAxiosError(error)) {
                 setErro(
                     error.response?.data?.detail ||
                         "Erro ao carregar dados.",
                 );
+            } else {
+                setErro("Erro ao carregar dados.");
             }
         } finally {
             setLoading(false);
@@ -254,7 +276,10 @@ export default function EscolaDirecaoPage() {
 
     useEffect(() => {
         if (!loading) {
-            localStorage.setItem(STORAGE_KEY_TAB, activeTab);
+            localStorage.setItem(
+                STORAGE_KEY_TAB,
+                activeTab,
+            );
         }
     }, [activeTab, loading]);
 
@@ -268,11 +293,15 @@ export default function EscolaDirecaoPage() {
             setModalAnoOpen(false);
 
             await carregarDados();
-        } catch (error: any) {
-            toast.error(
-                error.response?.data?.detail ||
-                    "Erro ao criar ano letivo.",
-            );
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                toast.error(
+                    error.response?.data?.detail ||
+                        "Erro ao criar ano letivo.",
+                );
+            } else {
+                toast.error("Erro ao criar ano letivo.");
+            }
         } finally {
             setSavingAno(false);
         }
@@ -288,25 +317,32 @@ export default function EscolaDirecaoPage() {
 
             toast.success("Registro criado com sucesso!");
             setModalRegistroOpen(false);
-        } catch (error: any) {
-            toast.error(
-                error.response?.data?.detail ||
-                    "Erro ao criar registro.",
-            );
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                toast.error(
+                    error.response?.data?.detail ||
+                        "Erro ao criar registro.",
+                );
+            } else {
+                toast.error("Erro ao criar registro.");
+            }
         } finally {
             setSavingRegistro(false);
         }
     };
 
     const corPrimaria = corPrimariaHex;
-    const textPrimary = isClaro ? "#1E293B" : "white";
+    const textPrimary = isClaro ? "#1E293B" : "#FFFFFF";
     const textSecondary = isClaro ? "#64748B" : "#9CA3AF";
+
     const bgCard = isClaro
         ? "rgba(0,0,0,0.03)"
         : "rgba(255,255,255,0.05)";
+
     const borderCard = isClaro
         ? "rgba(0,0,0,0.1)"
         : "rgba(255,255,255,0.1)";
+
     const bgActive = `${corPrimaria}20`;
     const borderActive = `${corPrimaria}4D`;
     const lineColor = `${corPrimaria}26`;
@@ -382,7 +418,9 @@ export default function EscolaDirecaoPage() {
 
                         <button
                             type="button"
-                            onClick={() => setModalAnoOpen(true)}
+                            onClick={() =>
+                                setModalAnoOpen(true)
+                            }
                             className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition hover:scale-[1.02] sm:w-auto"
                             style={{
                                 color: corPrimaria,
@@ -424,9 +462,11 @@ export default function EscolaDirecaoPage() {
                     <div className="scrollbar-hide flex gap-2 overflow-x-auto p-0">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
+                            const isActive =
+                                activeTab === tab.id;
                             const isFechado =
-                                anoLetivoAtivo?.status === "FECHADO";
+                                anoLetivoAtivo?.status ===
+                                "FECHADO";
 
                             return (
                                 <button
@@ -437,7 +477,7 @@ export default function EscolaDirecaoPage() {
                                     }
                                     disabled={
                                         isFechado &&
-                                        !["turmas"].includes(tab.id)
+                                        tab.id !== "turmas"
                                     }
                                     className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
                                     style={{
@@ -460,6 +500,7 @@ export default function EscolaDirecaoPage() {
                                                 : textSecondary,
                                         }}
                                     />
+
                                     {tab.label}
                                 </button>
                             );
@@ -468,7 +509,9 @@ export default function EscolaDirecaoPage() {
 
                     <div
                         className="mt-2 h-0.5 w-full rounded-full"
-                        style={{ backgroundColor: lineColor }}
+                        style={{
+                            backgroundColor: lineColor,
+                        }}
                     />
                 </div>
 
@@ -476,28 +519,43 @@ export default function EscolaDirecaoPage() {
                     {anoLetivoAtivo && (
                         <>
                             {activeTab === "turmas" && (
-                                <div className="text-sm">
-                                    Conteúdo de Turmas - ano_letivo_id:{" "}
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
+                                    Conteúdo de Turmas -
+                                    ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
                                 </div>
                             )}
 
                             {activeTab === "cursos" && (
-                                <div className="text-sm">
-                                    Conteúdo de Cursos - ano_letivo_id:{" "}
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
+                                    Conteúdo de Cursos -
+                                    ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
                                 </div>
                             )}
 
                             {activeTab === "salas" && (
-                                <div className="text-sm">
-                                    Conteúdo de Salas - ano_letivo_id:{" "}
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
+                                    Conteúdo de Salas -
+                                    ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
                                 </div>
                             )}
 
                             {activeTab === "professores" && (
-                                <div className="text-sm">
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
                                     Conteúdo de Professores -
                                     ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
@@ -505,7 +563,10 @@ export default function EscolaDirecaoPage() {
                             )}
 
                             {activeTab === "disciplinas" && (
-                                <div className="text-sm">
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
                                     Conteúdo de Disciplinas -
                                     ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
@@ -513,27 +574,18 @@ export default function EscolaDirecaoPage() {
                             )}
 
                             {activeTab === "horarios" && (
-                                <div className="text-sm">
-                                    Conteúdo de Horários - ano_letivo_id:{" "}
+                                <div
+                                    className="text-sm"
+                                    style={{ color: textPrimary }}
+                                >
+                                    Conteúdo de Horários -
+                                    ano_letivo_id:{" "}
                                     {anoLetivoAtivo.id}
                                 </div>
                             )}
                         </>
                     )}
                 </div>
-
-                <style>
-                    {`
-                        .scrollbar-hide::-webkit-scrollbar {
-                            display: none;
-                        }
-
-                        .scrollbar-hide {
-                            -ms-overflow-style: none;
-                            scrollbar-width: none;
-                        }
-                    `}
-                </style>
             </div>
 
             <PessoaModal
@@ -544,6 +596,7 @@ export default function EscolaDirecaoPage() {
                 pessoa={null}
                 escolas={escolasRegistro}
                 turmas={turmasRegistro}
+                nivelEnsino={nivel}
             />
 
             <AnoLetivoModal
@@ -553,6 +606,19 @@ export default function EscolaDirecaoPage() {
                 saving={savingAno}
                 ano={null}
             />
+
+            <style>
+                {`
+                    .scrollbar-hide::-webkit-scrollbar {
+                        display: none;
+                    }
+
+                    .scrollbar-hide {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                `}
+            </style>
         </>
     );
 }

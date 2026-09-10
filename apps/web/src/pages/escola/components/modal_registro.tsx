@@ -26,6 +26,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+export type NivelEnsino =
+    | "PRIMARIO"
+    | "I_CICLO"
+    | "II_CICLO"
+    | "COMPLEXO"
+    | "MEDIO_TECNICO"
+    | "SUPERIOR";
+
 interface Escola {
     id: string;
     nome: string;
@@ -92,6 +100,7 @@ interface Props {
     pessoa: Pessoa | null;
     escolas: Escola[];
     turmas: Turma[];
+    nivelEnsino: NivelEnsino;
 }
 
 interface TemaConfig {
@@ -121,6 +130,11 @@ interface FormState {
     observacao: string;
 }
 
+interface Option {
+    value: string;
+    label: string;
+}
+
 type DropdownKey =
     | "tipo"
     | "sexo"
@@ -129,11 +143,6 @@ type DropdownKey =
     | "turma";
 
 type DropdownState = Record<DropdownKey, boolean>;
-
-interface Option {
-    value: string;
-    label: string;
-}
 
 const INITIAL_FORM: FormState = {
     nome: "",
@@ -213,20 +222,16 @@ function formatDate(date: Date): string {
 }
 
 function parseDate(value: string): Date | null {
-    if (!value) {
+    const parts = value.split("-").map(Number);
+
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
         return null;
     }
 
-    const [year, month, day] = value.split("-").map(Number);
-
-    if (!year || !month || !day) {
-        return null;
-    }
-
-    return new Date(year, month - 1, day);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 
-function sameDay(first: Date, second: Date | null): boolean {
+function isSameDay(first: Date, second: Date | null): boolean {
     return Boolean(
         second &&
             first.getFullYear() === second.getFullYear() &&
@@ -238,41 +243,41 @@ function sameDay(first: Date, second: Date | null): boolean {
 interface CalendarFieldProps {
     value: string;
     onChange: (value: string) => void;
-    corPrimaria: string;
-    corSecundaria: string;
-    textPrimary: string;
-    textSecondary: string;
-    bgInput: string;
-    bgPopup: string;
-    borderColor: string;
+    primary: string;
+    secondary: string;
+    text: string;
+    muted: string;
+    inputBackground: string;
+    popupBackground: string;
+    border: string;
 }
 
 function CalendarField({
     value,
     onChange,
-    corPrimaria,
-    corSecundaria,
-    textPrimary,
-    textSecondary,
-    bgInput,
-    bgPopup,
-    borderColor,
+    primary,
+    secondary,
+    text,
+    muted,
+    inputBackground,
+    popupBackground,
+    border,
 }: CalendarFieldProps) {
-    const calendarRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const selectedDate = parseDate(value);
     const initialDate = selectedDate || new Date();
 
-    const [open, setOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [month, setMonth] = useState(initialDate.getMonth());
     const [year, setYear] = useState(initialDate.getFullYear());
 
     useEffect(() => {
         const handleOutsideClick = (event: MouseEvent) => {
             if (
-                calendarRef.current &&
-                !calendarRef.current.contains(event.target as Node)
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
             ) {
-                setOpen(false);
+                setIsOpen(false);
             }
         };
 
@@ -295,51 +300,33 @@ function CalendarField({
             index < firstDay ? null : index - firstDay + 1,
     );
 
+    const moveMonth = (amount: number) => {
+        const next = new Date(year, month + amount, 1);
+        setMonth(next.getMonth());
+        setYear(next.getFullYear());
+    };
+
+    const moveYear = (amount: number) => {
+        setYear((current) => current + amount);
+    };
+
     const chooseDate = (day: number) => {
         onChange(formatDate(new Date(year, month, day)));
-        setOpen(false);
-    };
-
-    const goPreviousMonth = () => {
-        if (month === 0) {
-            setMonth(11);
-            setYear((current) => current - 1);
-            return;
-        }
-
-        setMonth((current) => current - 1);
-    };
-
-    const goNextMonth = () => {
-        if (month === 11) {
-            setMonth(0);
-            setYear((current) => current + 1);
-            return;
-        }
-
-        setMonth((current) => current + 1);
-    };
-
-    const goPreviousYear = () => {
-        setYear((current) => current - 1);
-    };
-
-    const goNextYear = () => {
-        setYear((current) => current + 1);
+        setIsOpen(false);
     };
 
     const today = new Date();
 
     return (
-        <div ref={calendarRef} className="relative sm:col-span-3">
+        <div ref={containerRef} className="relative sm:col-span-3">
             <button
                 type="button"
-                onClick={() => setOpen((current) => !current)}
+                onClick={() => setIsOpen((current) => !current)}
                 className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none focus:ring-2 sm:text-sm"
                 style={{
-                    backgroundColor: bgInput,
-                    border: `1px solid ${borderColor}`,
-                    color: value ? textPrimary : textSecondary,
+                    backgroundColor: inputBackground,
+                    border: `1px solid ${border}`,
+                    color: selectedDate ? text : muted,
                 }}
             >
                 <span>
@@ -350,43 +337,43 @@ function CalendarField({
 
                 <CalendarDays
                     className="h-4 w-4"
-                    style={{ color: corPrimaria }}
+                    style={{ color: primary }}
                 />
             </button>
 
-            {open && (
+            {isOpen && (
                 <div
                     className="absolute left-0 top-full z-[100] mt-2 w-full min-w-[280px] rounded-2xl p-3 shadow-2xl"
                     style={{
-                        backgroundColor: bgPopup,
-                        border: `1px solid ${borderColor}`,
+                        backgroundColor: popupBackground,
+                        border: `1px solid ${border}`,
                     }}
                 >
                     <div className="mb-3 flex items-center justify-between gap-1">
                         <button
                             type="button"
-                            onClick={goPreviousYear}
+                            onClick={() => moveYear(-1)}
                             className="rounded-lg px-2 py-1 text-xs transition hover:bg-black/10"
-                            style={{ color: textSecondary }}
+                            style={{ color: muted }}
                         >
                             «
                         </button>
 
                         <button
                             type="button"
-                            onClick={goPreviousMonth}
+                            onClick={() => moveMonth(-1)}
                             className="rounded-lg p-1.5 transition hover:bg-black/10"
                             aria-label="Mês anterior"
                         >
                             <ChevronLeft
                                 className="h-4 w-4"
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             />
                         </button>
 
                         <span
                             className="flex-1 text-center text-sm font-semibold capitalize"
-                            style={{ color: textPrimary }}
+                            style={{ color: text }}
                         >
                             {new Date(year, month, 1).toLocaleDateString(
                                 "pt-BR",
@@ -399,21 +386,21 @@ function CalendarField({
 
                         <button
                             type="button"
-                            onClick={goNextMonth}
+                            onClick={() => moveMonth(1)}
                             className="rounded-lg p-1.5 transition hover:bg-black/10"
                             aria-label="Próximo mês"
                         >
                             <ChevronRight
                                 className="h-4 w-4"
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             />
                         </button>
 
                         <button
                             type="button"
-                            onClick={goNextYear}
+                            onClick={() => moveYear(1)}
                             className="rounded-lg px-2 py-1 text-xs transition hover:bg-black/10"
-                            style={{ color: textSecondary }}
+                            style={{ color: muted }}
                         >
                             »
                         </button>
@@ -425,7 +412,7 @@ function CalendarField({
                                 <span
                                     key={`${day}-${index}`}
                                     className="py-1 text-[11px] font-semibold"
-                                    style={{ color: textSecondary }}
+                                    style={{ color: muted }}
                                 >
                                     {day}
                                 </span>
@@ -445,11 +432,14 @@ function CalendarField({
                             }
 
                             const currentDate = new Date(year, month, day);
-                            const isSelected = sameDay(
+                            const selected = isSameDay(
                                 currentDate,
                                 selectedDate,
                             );
-                            const isToday = sameDay(currentDate, today);
+                            const isToday = isSameDay(
+                                currentDate,
+                                today,
+                            );
 
                             return (
                                 <button
@@ -458,17 +448,15 @@ function CalendarField({
                                     onClick={() => chooseDate(day)}
                                     className="h-8 rounded-lg text-xs font-medium transition hover:scale-105"
                                     style={{
-                                        color: isSelected
-                                            ? "#FFFFFF"
-                                            : textPrimary,
-                                        background: isSelected
-                                            ? `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`
+                                        color: selected ? "#FFFFFF" : text,
+                                        background: selected
+                                            ? `linear-gradient(135deg, ${primary}, ${secondary})`
                                             : isToday
-                                                ? `${corPrimaria}20`
+                                                ? `${primary}20`
                                                 : "transparent",
                                         border:
-                                            isToday && !isSelected
-                                                ? `1px solid ${corPrimaria}`
+                                            isToday && !selected
+                                                ? `1px solid ${primary}`
                                                 : "1px solid transparent",
                                     }}
                                 >
@@ -481,15 +469,13 @@ function CalendarField({
                     <button
                         type="button"
                         onClick={() => {
-                            const current = new Date();
-
-                            onChange(formatDate(current));
-                            setMonth(current.getMonth());
-                            setYear(current.getFullYear());
-                            setOpen(false);
+                            onChange(formatDate(today));
+                            setMonth(today.getMonth());
+                            setYear(today.getFullYear());
+                            setIsOpen(false);
                         }}
                         className="mt-3 w-full rounded-lg py-2 text-xs font-semibold transition hover:bg-black/10"
-                        style={{ color: corPrimaria }}
+                        style={{ color: primary }}
                     >
                         Hoje
                     </button>
@@ -505,12 +491,12 @@ interface CustomSelectProps {
     options: Option[];
     placeholder: string;
     isOpen: boolean;
-    textPrimary: string;
-    textSecondary: string;
-    bgInput: string;
-    bgPopup: string;
-    borderColor: string;
-    corPrimaria: string;
+    primary: string;
+    text: string;
+    muted: string;
+    inputBackground: string;
+    popupBackground: string;
+    border: string;
     onToggle: () => void;
     onSelect: (value: string) => void;
 }
@@ -521,18 +507,16 @@ function CustomSelect({
     options,
     placeholder,
     isOpen,
-    textPrimary,
-    textSecondary,
-    bgInput,
-    bgPopup,
-    borderColor,
-    corPrimaria,
+    primary,
+    text,
+    muted,
+    inputBackground,
+    popupBackground,
+    border,
     onToggle,
     onSelect,
 }: CustomSelectProps) {
-    const selected = options.find(
-        (option) => option.value === value,
-    );
+    const selected = options.find((option) => option.value === value);
 
     return (
         <div ref={refDiv} className="relative sm:col-span-3">
@@ -541,9 +525,9 @@ function CustomSelect({
                 onClick={onToggle}
                 className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none sm:text-sm"
                 style={{
-                    backgroundColor: bgInput,
-                    border: `1px solid ${borderColor}`,
-                    color: textPrimary,
+                    backgroundColor: inputBackground,
+                    border: `1px solid ${border}`,
+                    color: text,
                 }}
             >
                 <span className="truncate">
@@ -554,7 +538,7 @@ function CustomSelect({
                     className={`h-4 w-4 transition-transform ${
                         isOpen ? "rotate-180" : ""
                     }`}
-                    style={{ color: textSecondary }}
+                    style={{ color: muted }}
                 />
             </button>
 
@@ -562,11 +546,11 @@ function CustomSelect({
                 <div
                     className="absolute z-[100] mt-2 w-full overflow-hidden rounded-xl shadow-2xl"
                     style={{
-                        backgroundColor: bgPopup,
-                        border: `1px solid ${borderColor}`,
+                        backgroundColor: popupBackground,
+                        border: `1px solid ${border}`,
                     }}
                 >
-                    <div className="modal-scrollbar-hide max-h-48 overflow-y-auto py-1">
+                    <div className="registro-scrollbar-hide max-h-48 overflow-y-auto py-1">
                         {options.map((option) => (
                             <button
                                 key={option.value}
@@ -578,12 +562,12 @@ function CustomSelect({
                                 className="flex w-full px-3 py-2.5 text-left text-sm transition hover:bg-black/10"
                                 style={{
                                     color:
-                                        option.value === value
-                                            ? corPrimaria
-                                            : textPrimary,
+                                        value === option.value
+                                            ? primary
+                                            : text,
                                     backgroundColor:
-                                        option.value === value
-                                            ? `${corPrimaria}20`
+                                        value === option.value
+                                            ? `${primary}20`
                                             : "transparent",
                                 }}
                             >
@@ -605,28 +589,38 @@ export default function PessoaModal({
     pessoa,
     escolas,
     turmas,
+    nivelEnsino,
 }: Props) {
     const [form, setForm] = useState<FormState>(INITIAL_FORM);
-    const [tema, setTema] = useState<TemaConfig | null>(null);
+    const [theme, setTheme] = useState<TemaConfig | null>(null);
     const [dropdown, setDropdown] =
         useState<DropdownState>(INITIAL_DROPDOWN);
 
-    const isEdit = Boolean(pessoa);
     const tipo = form.tipo;
+    const isEdit = Boolean(pessoa);
+
+    const professorUsaTurma = nivelEnsino === "PRIMARIO";
+    const professorUsaDisciplinas = !professorUsaTurma;
+
+    const tipoRef = useRef<HTMLDivElement>(null);
+    const sexoRef = useRef<HTMLDivElement>(null);
+    const estadoCivilRef = useRef<HTMLDivElement>(null);
+    const cargoRef = useRef<HTMLDivElement>(null);
+    const turmaRef = useRef<HTMLDivElement>(null);
 
     const refs: Record<
         DropdownKey,
         RefObject<HTMLDivElement | null>
     > = {
-        tipo: useRef<HTMLDivElement>(null),
-        sexo: useRef<HTMLDivElement>(null),
-        estado_civil: useRef<HTMLDivElement>(null),
-        cargo: useRef<HTMLDivElement>(null),
-        turma: useRef<HTMLDivElement>(null),
+        tipo: tipoRef,
+        sexo: sexoRef,
+        estado_civil: estadoCivilRef,
+        cargo: cargoRef,
+        turma: turmaRef,
     };
 
     useEffect(() => {
-        const updateTheme = () => setTema(readTheme());
+        const updateTheme = () => setTheme(readTheme());
 
         updateTheme();
         window.addEventListener("escola-tema-updated", updateTheme);
@@ -635,29 +629,6 @@ export default function PessoaModal({
             window.removeEventListener(
                 "escola-tema-updated",
                 updateTheme,
-            );
-        };
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Node;
-
-            const clickedInside = (
-                Object.keys(refs) as DropdownKey[]
-            ).some((key) => refs[key].current?.contains(target));
-
-            if (!clickedInside) {
-                setDropdown(INITIAL_DROPDOWN);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener(
-                "mousedown",
-                handleClickOutside,
             );
         };
     }, []);
@@ -683,6 +654,29 @@ export default function PessoaModal({
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, [open, onClose]);
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            const target = event.target as Node;
+
+            const clickedInside = (
+                Object.keys(refs) as DropdownKey[]
+            ).some((key) => refs[key].current?.contains(target));
+
+            if (!clickedInside) {
+                setDropdown(INITIAL_DROPDOWN);
+            }
+        };
+
+        document.addEventListener("mousedown", handleOutsideClick);
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleOutsideClick,
+            );
+        };
+    }, []);
 
     useEffect(() => {
         if (!open) {
@@ -722,41 +716,40 @@ export default function PessoaModal({
         return null;
     }
 
-    const isClaro = tema?.tema === "claro";
-    const corPrimaria = tema?.cor_primaria || "#3B82F6";
-    const corSecundaria = tema?.cor_secundaria || "#8B5CF6";
+    const isClaro = theme?.tema === "claro";
+    const primary = theme?.cor_primaria || "#3B82F6";
+    const secondary = theme?.cor_secundaria || "#8B5CF6";
 
-    const textPrimary = isClaro ? "#1E293B" : "#FFFFFF";
-    const textSecondary = isClaro ? "#64748B" : "#CBD5E1";
+    const text = isClaro ? "#1E293B" : "#FFFFFF";
+    const muted = isClaro ? "#64748B" : "#CBD5E1";
 
-    const bgInput = isClaro
+    const inputBackground = isClaro
         ? "rgba(15,23,42,0.04)"
         : "rgba(255,255,255,0.08)";
 
-    const bgPopup = isClaro ? "#FFFFFF" : "#172033";
+    const popupBackground = isClaro ? "#FFFFFF" : "#172033";
 
-    const borderColor = isClaro
+    const border = isClaro
         ? "rgba(15,23,42,0.16)"
         : "rgba(255,255,255,0.16)";
 
-    const estiloCard = tema?.estilo_card || "arredondado";
-
-    const modalStyle: CSSProperties = {
+    const cardStyle: CSSProperties = {
         backgroundColor: isClaro ? "#FFFFFF" : "#0F172A",
         border: `1px solid ${
-            estiloCard === "borda_colorida"
-                ? corPrimaria
-                : borderColor
+            theme?.estilo_card === "borda_colorida"
+                ? primary
+                : border
         }`,
-        borderWidth: estiloCard === "borda_colorida" ? 2 : 1,
+        borderWidth:
+            theme?.estilo_card === "borda_colorida" ? 2 : 1,
         borderRadius:
-            estiloCard === "quadrado"
+            theme?.estilo_card === "quadrado"
                 ? "0"
-                : estiloCard === "minimalista"
+                : theme?.estilo_card === "minimalista"
                     ? "0.5rem"
                     : "1rem",
         boxShadow:
-            estiloCard === "elevado"
+            theme?.estilo_card === "elevado"
                 ? "0 24px 60px rgba(0,0,0,0.4)"
                 : "0 20px 50px rgba(0,0,0,0.35)",
     };
@@ -766,6 +759,14 @@ export default function PessoaModal({
 
     const labelClass =
         "flex items-center gap-2 text-xs sm:justify-self-end";
+
+    const turmaOptions = turmas.map((turma) => ({
+        value: turma.id,
+        label: turma.nome,
+    }));
+
+    const escolaId =
+        pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
 
     const toggleDropdown = (key: DropdownKey) => {
         setDropdown((current) => ({
@@ -778,14 +779,25 @@ export default function PessoaModal({
         field: keyof FormState,
         value: string,
     ) => {
-        setForm((current) => ({
-            ...current,
-            [field]: value,
-        }));
-    };
+        setForm((current) => {
+            const next = {
+                ...current,
+                [field]: value,
+            };
 
-    const escolaId =
-        pessoa?.vinculos?.[0]?.escola_id || escolas[0]?.id;
+            if (field === "tipo") {
+                next.numero_funcional = "";
+                next.cargo = "";
+                next.formacao = "";
+                next.disciplinas = "";
+                next.numero_processo = "";
+                next.turma_id = "";
+                next.observacao = "";
+            }
+
+            return next;
+        });
+    };
 
     const handleSubmit = async (
         event: FormEvent<HTMLFormElement>,
@@ -810,20 +822,48 @@ export default function PessoaModal({
             return;
         }
 
-        if (tipo === "ALUNO" && !form.numero_processo.trim()) {
-            toast.error(
-                "Nº de processo é obrigatório para aluno",
-            );
-            return;
+        if (tipo === "ALUNO") {
+            if (!form.numero_processo.trim()) {
+                toast.error(
+                    "Nº de processo é obrigatório para aluno.",
+                );
+                return;
+            }
+
+            if (!form.turma_id) {
+                toast.error("Selecione a turma do aluno.");
+                return;
+            }
         }
 
-        if (tipo === "PROFESSOR" && !form.formacao.trim()) {
-            toast.error("Formação é obrigatória para professor");
-            return;
+        if (tipo === "PROFESSOR") {
+            if (!form.formacao.trim()) {
+                toast.error(
+                    "Formação é obrigatória para professor.",
+                );
+                return;
+            }
+
+            if (professorUsaTurma && !form.turma_id) {
+                toast.error(
+                    "Selecione a turma que o professor irá lecionar.",
+                );
+                return;
+            }
+
+            if (
+                professorUsaDisciplinas &&
+                !form.disciplinas.trim()
+            ) {
+                toast.error(
+                    "Informe as disciplinas do professor.",
+                );
+                return;
+            }
         }
 
         if (tipo === "FUNCIONARIO" && !form.cargo) {
-            toast.error("Cargo é obrigatório para funcionário");
+            toast.error("Cargo é obrigatório para funcionário.");
             return;
         }
 
@@ -851,7 +891,7 @@ export default function PessoaModal({
                     ? form.formacao.trim() || null
                     : null,
             disciplinas:
-                tipo === "PROFESSOR"
+                tipo === "PROFESSOR" && professorUsaDisciplinas
                     ? form.disciplinas.trim() || null
                     : null,
             numero_processo:
@@ -859,23 +899,13 @@ export default function PessoaModal({
                     ? form.numero_processo.trim() || null
                     : null,
             turma_id:
-                tipo === "ALUNO"
+                tipo === "ALUNO" ||
+                (tipo === "PROFESSOR" && professorUsaTurma)
                     ? form.turma_id || null
                     : null,
             observacao: form.observacao.trim() || null,
         });
     };
-
-    const inputStyle: CSSProperties = {
-        backgroundColor: bgInput,
-        border: `1px solid ${borderColor}`,
-        color: textPrimary,
-    };
-
-    const turmaOptions = turmas.map((turma) => ({
-        value: turma.id,
-        label: turma.nome,
-    }));
 
     const renderInput = (
         label: string,
@@ -887,7 +917,7 @@ export default function PessoaModal({
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
             <label
                 className={labelClass}
-                style={{ color: textPrimary }}
+                style={{ color: text }}
             >
                 {icon}
                 {label}
@@ -900,7 +930,11 @@ export default function PessoaModal({
                     handleChange(field, event.target.value)
                 }
                 className={`${inputClass} sm:col-span-3`}
-                style={inputStyle}
+                style={{
+                    backgroundColor: inputBackground,
+                    border: `1px solid ${border}`,
+                    color: text,
+                }}
                 required={required}
             />
         </div>
@@ -910,16 +944,16 @@ export default function PessoaModal({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm sm:p-4">
             <div
                 className="flex max-h-[92vh] w-full max-w-[500px] flex-col overflow-hidden"
-                style={modalStyle}
+                style={cardStyle}
             >
                 <div
                     className="flex shrink-0 items-center justify-between border-b p-4"
-                    style={{ borderColor }}
+                    style={{ borderColor: border }}
                 >
                     <div>
                         <h2
                             className="text-base font-bold"
-                            style={{ color: textPrimary }}
+                            style={{ color: text }}
                         >
                             {isEdit
                                 ? "Editar Registro"
@@ -928,9 +962,11 @@ export default function PessoaModal({
 
                         <p
                             className="mt-1 text-xs"
-                            style={{ color: textSecondary }}
+                            style={{ color: muted }}
                         >
-                            Preencha os dados do registro
+                            {nivelEnsino === "PRIMARIO"
+                                ? "Ensino Primário"
+                                : nivelEnsino.replace(/_/g, " ")}
                         </p>
                     </div>
 
@@ -942,7 +978,7 @@ export default function PessoaModal({
                     >
                         <X
                             className="h-4 w-4"
-                            style={{ color: textSecondary }}
+                            style={{ color: muted }}
                         />
                     </button>
                 </div>
@@ -951,10 +987,10 @@ export default function PessoaModal({
                     onSubmit={handleSubmit}
                     className="flex min-h-0 flex-1 flex-col"
                 >
-                    <div className="modal-scrollbar-hide min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+                    <div className="registro-scrollbar-hide min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
                         <h3
                             className="text-sm font-semibold"
-                            style={{ color: corPrimaria }}
+                            style={{ color: primary }}
                         >
                             Dados Pessoais
                         </h3>
@@ -963,7 +999,7 @@ export default function PessoaModal({
                             "Nome *",
                             <User
                                 className="h-3.5 w-3.5"
-                                style={{ color: corPrimaria }}
+                                style={{ color: primary }}
                             />,
                             "nome",
                             "text",
@@ -974,7 +1010,7 @@ export default function PessoaModal({
                             "BI *",
                             <IdCard
                                 className="h-3.5 w-3.5"
-                                style={{ color: corPrimaria }}
+                                style={{ color: primary }}
                             />,
                             "bi",
                             "text",
@@ -984,11 +1020,11 @@ export default function PessoaModal({
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
                                 className={labelClass}
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             >
                                 <CalendarDays
                                     className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
+                                    style={{ color: primary }}
                                 />
                                 Data Nasc.
                             </label>
@@ -1001,20 +1037,20 @@ export default function PessoaModal({
                                         value,
                                     )
                                 }
-                                corPrimaria={corPrimaria}
-                                corSecundaria={corSecundaria}
-                                textPrimary={textPrimary}
-                                textSecondary={textSecondary}
-                                bgInput={bgInput}
-                                bgPopup={bgPopup}
-                                borderColor={borderColor}
+                                primary={primary}
+                                secondary={secondary}
+                                text={text}
+                                muted={muted}
+                                inputBackground={inputBackground}
+                                popupBackground={popupBackground}
+                                border={border}
                             />
                         </div>
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
                                 className={labelClass}
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             >
                                 Sexo
                             </label>
@@ -1025,12 +1061,12 @@ export default function PessoaModal({
                                 options={SEXO_OPTIONS}
                                 placeholder="Selecione"
                                 isOpen={dropdown.sexo}
-                                textPrimary={textPrimary}
-                                textSecondary={textSecondary}
-                                bgInput={bgInput}
-                                bgPopup={bgPopup}
-                                borderColor={borderColor}
-                                corPrimaria={corPrimaria}
+                                primary={primary}
+                                text={text}
+                                muted={muted}
+                                inputBackground={inputBackground}
+                                popupBackground={popupBackground}
+                                border={border}
                                 onToggle={() =>
                                     toggleDropdown("sexo")
                                 }
@@ -1043,7 +1079,7 @@ export default function PessoaModal({
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
                                 className={labelClass}
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             >
                                 Estado Civil
                             </label>
@@ -1054,12 +1090,12 @@ export default function PessoaModal({
                                 options={ESTADO_CIVIL_OPTIONS}
                                 placeholder="Selecione"
                                 isOpen={dropdown.estado_civil}
-                                textPrimary={textPrimary}
-                                textSecondary={textSecondary}
-                                bgInput={bgInput}
-                                bgPopup={bgPopup}
-                                borderColor={borderColor}
-                                corPrimaria={corPrimaria}
+                                primary={primary}
+                                text={text}
+                                muted={muted}
+                                inputBackground={inputBackground}
+                                popupBackground={popupBackground}
+                                border={border}
                                 onToggle={() =>
                                     toggleDropdown("estado_civil")
                                 }
@@ -1076,7 +1112,7 @@ export default function PessoaModal({
                             "Telefone",
                             <Phone
                                 className="h-3.5 w-3.5"
-                                style={{ color: corPrimaria }}
+                                style={{ color: primary }}
                             />,
                             "telefone",
                         )}
@@ -1085,7 +1121,7 @@ export default function PessoaModal({
                             "Email",
                             <Mail
                                 className="h-3.5 w-3.5"
-                                style={{ color: corPrimaria }}
+                                style={{ color: primary }}
                             />,
                             "email",
                             "email",
@@ -1095,19 +1131,19 @@ export default function PessoaModal({
                             "Endereço",
                             <MapPin
                                 className="h-3.5 w-3.5"
-                                style={{ color: corPrimaria }}
+                                style={{ color: primary }}
                             />,
                             "endereco",
                         )}
 
                         <div
                             className="my-2 border-t"
-                            style={{ borderColor }}
+                            style={{ borderColor: border }}
                         />
 
                         <h3
                             className="text-sm font-semibold"
-                            style={{ color: corPrimaria }}
+                            style={{ color: primary }}
                         >
                             Vínculo com a Escola
                         </h3>
@@ -1115,7 +1151,7 @@ export default function PessoaModal({
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                             <label
                                 className={labelClass}
-                                style={{ color: textPrimary }}
+                                style={{ color: text }}
                             >
                                 Tipo *
                             </label>
@@ -1126,12 +1162,12 @@ export default function PessoaModal({
                                 options={TIPOS_VINCULO}
                                 placeholder="Selecione o tipo"
                                 isOpen={dropdown.tipo}
-                                textPrimary={textPrimary}
-                                textSecondary={textSecondary}
-                                bgInput={bgInput}
-                                bgPopup={bgPopup}
-                                borderColor={borderColor}
-                                corPrimaria={corPrimaria}
+                                primary={primary}
+                                text={text}
+                                muted={muted}
+                                inputBackground={inputBackground}
+                                popupBackground={popupBackground}
+                                border={border}
                                 onToggle={() =>
                                     toggleDropdown("tipo")
                                 }
@@ -1147,9 +1183,7 @@ export default function PessoaModal({
                                     "Nº Processo *",
                                     <BookOpen
                                         className="h-3.5 w-3.5"
-                                        style={{
-                                            color: corPrimaria,
-                                        }}
+                                        style={{ color: primary }}
                                     />,
                                     "numero_processo",
                                     "text",
@@ -1159,17 +1193,13 @@ export default function PessoaModal({
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
                                         className={labelClass}
-                                        style={{
-                                            color: textPrimary,
-                                        }}
+                                        style={{ color: text }}
                                     >
                                         <Users
                                             className="h-3.5 w-3.5"
-                                            style={{
-                                                color: corPrimaria,
-                                            }}
+                                            style={{ color: primary }}
                                         />
-                                        Turma
+                                        Turma *
                                     </label>
 
                                     <CustomSelect
@@ -1178,12 +1208,12 @@ export default function PessoaModal({
                                         options={turmaOptions}
                                         placeholder="Selecione a turma"
                                         isOpen={dropdown.turma}
-                                        textPrimary={textPrimary}
-                                        textSecondary={textSecondary}
-                                        bgInput={bgInput}
-                                        bgPopup={bgPopup}
-                                        borderColor={borderColor}
-                                        corPrimaria={corPrimaria}
+                                        primary={primary}
+                                        text={text}
+                                        muted={muted}
+                                        inputBackground={inputBackground}
+                                        popupBackground={popupBackground}
+                                        border={border}
                                         onToggle={() =>
                                             toggleDropdown("turma")
                                         }
@@ -1204,24 +1234,64 @@ export default function PessoaModal({
                                     "Formação *",
                                     <GraduationCap
                                         className="h-3.5 w-3.5"
-                                        style={{
-                                            color: corPrimaria,
-                                        }}
+                                        style={{ color: primary }}
                                     />,
                                     "formacao",
                                     "text",
                                     true,
                                 )}
 
-                                {renderInput(
-                                    "Disciplinas",
-                                    <BookOpen
-                                        className="h-3.5 w-3.5"
-                                        style={{
-                                            color: corPrimaria,
-                                        }}
-                                    />,
-                                    "disciplinas",
+                                {professorUsaTurma ? (
+                                    <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
+                                        <label
+                                            className={labelClass}
+                                            style={{ color: text }}
+                                        >
+                                            <Users
+                                                className="h-3.5 w-3.5"
+                                                style={{
+                                                    color: primary,
+                                                }}
+                                            />
+                                            Turma *
+                                        </label>
+
+                                        <CustomSelect
+                                            refDiv={refs.turma}
+                                            value={form.turma_id}
+                                            options={turmaOptions}
+                                            placeholder="Selecione a turma"
+                                            isOpen={dropdown.turma}
+                                            primary={primary}
+                                            text={text}
+                                            muted={muted}
+                                            inputBackground={inputBackground}
+                                            popupBackground={popupBackground}
+                                            border={border}
+                                            onToggle={() =>
+                                                toggleDropdown("turma")
+                                            }
+                                            onSelect={(value) =>
+                                                handleChange(
+                                                    "turma_id",
+                                                    value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                ) : (
+                                    renderInput(
+                                        "Disciplinas *",
+                                        <BookOpen
+                                            className="h-3.5 w-3.5"
+                                            style={{
+                                                color: primary,
+                                            }}
+                                        />,
+                                        "disciplinas",
+                                        "text",
+                                        true,
+                                    )
                                 )}
                             </>
                         )}
@@ -1232,9 +1302,7 @@ export default function PessoaModal({
                                     "Nº Funcional",
                                     <Briefcase
                                         className="h-3.5 w-3.5"
-                                        style={{
-                                            color: corPrimaria,
-                                        }}
+                                        style={{ color: primary }}
                                     />,
                                     "numero_funcional",
                                 )}
@@ -1242,9 +1310,7 @@ export default function PessoaModal({
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
                                         className={labelClass}
-                                        style={{
-                                            color: textPrimary,
-                                        }}
+                                        style={{ color: text }}
                                     >
                                         Cargo *
                                     </label>
@@ -1255,12 +1321,12 @@ export default function PessoaModal({
                                         options={CARGO_OPTIONS}
                                         placeholder="Selecione o cargo"
                                         isOpen={dropdown.cargo}
-                                        textPrimary={textPrimary}
-                                        textSecondary={textSecondary}
-                                        bgInput={bgInput}
-                                        bgPopup={bgPopup}
-                                        borderColor={borderColor}
-                                        corPrimaria={corPrimaria}
+                                        primary={primary}
+                                        text={text}
+                                        muted={muted}
+                                        inputBackground={inputBackground}
+                                        popupBackground={popupBackground}
+                                        border={border}
                                         onToggle={() =>
                                             toggleDropdown("cargo")
                                         }
@@ -1280,7 +1346,7 @@ export default function PessoaModal({
                                 "Observação",
                                 <Users
                                     className="h-3.5 w-3.5"
-                                    style={{ color: corPrimaria }}
+                                    style={{ color: primary }}
                                 />,
                                 "observacao",
                             )}
@@ -1288,7 +1354,7 @@ export default function PessoaModal({
 
                     <div
                         className="flex shrink-0 flex-col gap-3 border-t p-4 sm:flex-row sm:justify-end"
-                        style={{ borderColor }}
+                        style={{ borderColor: border }}
                     >
                         <button
                             type="button"
@@ -1314,7 +1380,7 @@ export default function PessoaModal({
                             disabled={saving}
                             className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                             style={{
-                                background: `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`,
+                                background: `linear-gradient(135deg, ${primary}, ${secondary})`,
                             }}
                         >
                             {saving && (
@@ -1333,12 +1399,12 @@ export default function PessoaModal({
 
             <style>
                 {`
-                    .modal-scrollbar-hide {
+                    .registro-scrollbar-hide {
                         -ms-overflow-style: none;
                         scrollbar-width: none;
                     }
 
-                    .modal-scrollbar-hide::-webkit-scrollbar {
+                    .registro-scrollbar-hide::-webkit-scrollbar {
                         display: none;
                         width: 0;
                         height: 0;
