@@ -4,13 +4,17 @@ import {
     useState,
     type CSSProperties,
     type FormEvent,
+    type ReactNode,
     type RefObject,
 } from "react";
 import {
+    BookOpen,
+    Briefcase,
     CalendarDays,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    GraduationCap,
     IdCard,
     Loader2,
     Mail,
@@ -19,9 +23,6 @@ import {
     User,
     Users,
     X,
-    BookOpen,
-    Briefcase,
-    GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,6 +130,11 @@ type DropdownKey =
 
 type DropdownState = Record<DropdownKey, boolean>;
 
+interface Option {
+    value: string;
+    label: string;
+}
+
 const INITIAL_FORM: FormState = {
     nome: "",
     bi: "",
@@ -156,26 +162,26 @@ const INITIAL_DROPDOWN: DropdownState = {
     turma: false,
 };
 
-const TIPOS_VINCULO = [
+const TIPOS_VINCULO: Option[] = [
     { value: "ALUNO", label: "Aluno" },
     { value: "PROFESSOR", label: "Professor" },
     { value: "FUNCIONARIO", label: "Funcionário" },
     { value: "ENCARREGADO", label: "Encarregado" },
 ];
 
-const SEXO_OPTIONS = [
+const SEXO_OPTIONS: Option[] = [
     { value: "MASCULINO", label: "Masculino" },
     { value: "FEMININO", label: "Feminino" },
 ];
 
-const ESTADO_CIVIL_OPTIONS = [
+const ESTADO_CIVIL_OPTIONS: Option[] = [
     { value: "SOLTEIRO", label: "Solteiro" },
     { value: "CASADO", label: "Casado" },
     { value: "DIVORCIADO", label: "Divorciado" },
     { value: "VIUVO", label: "Viúvo" },
 ];
 
-const CARGO_OPTIONS = [
+const CARGO_OPTIONS: Option[] = [
     { value: "SECRETARIO", label: "Secretário" },
     { value: "DIRETOR_GERAL", label: "Diretor Geral" },
     { value: "PEDAGOGICO", label: "Pedagógico" },
@@ -184,7 +190,7 @@ const CARGO_OPTIONS = [
     { value: "OUTRO", label: "Outro" },
 ];
 
-function getSavedTheme(): TemaConfig | null {
+function readTheme(): TemaConfig | null {
     const saved = localStorage.getItem("escola_tema");
 
     if (!saved) {
@@ -198,6 +204,37 @@ function getSavedTheme(): TemaConfig | null {
     }
 }
 
+function formatDate(date: Date): string {
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+}
+
+function parseDate(value: string): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    return new Date(year, month - 1, day);
+}
+
+function sameDay(first: Date, second: Date | null): boolean {
+    return Boolean(
+        second &&
+            first.getFullYear() === second.getFullYear() &&
+            first.getMonth() === second.getMonth() &&
+            first.getDate() === second.getDate(),
+    );
+}
+
 interface CalendarFieldProps {
     value: string;
     onChange: (value: string) => void;
@@ -205,8 +242,9 @@ interface CalendarFieldProps {
     corSecundaria: string;
     textPrimary: string;
     textSecondary: string;
-    bgCard: string;
-    borderCard: string;
+    bgInput: string;
+    bgPopup: string;
+    borderColor: string;
 }
 
 function CalendarField({
@@ -216,25 +254,17 @@ function CalendarField({
     corSecundaria,
     textPrimary,
     textSecondary,
-    bgCard,
-    borderCard,
+    bgInput,
+    bgPopup,
+    borderColor,
 }: CalendarFieldProps) {
     const calendarRef = useRef<HTMLDivElement>(null);
+    const selectedDate = parseDate(value);
+    const initialDate = selectedDate || new Date();
+
     const [open, setOpen] = useState(false);
-
-    const getInitialMonth = () => {
-        if (!value) {
-            const current = new Date();
-            return new Date(current.getFullYear(), current.getMonth(), 1);
-        }
-
-        const [year, month] = value.split("-").map(Number);
-
-        return new Date(year, month - 1, 1);
-    };
-
-    const [visibleMonth, setVisibleMonth] =
-        useState<Date>(getInitialMonth);
+    const [month, setMonth] = useState(initialDate.getMonth());
+    const [year, setYear] = useState(initialDate.getFullYear());
 
     useEffect(() => {
         const handleOutsideClick = (event: MouseEvent) => {
@@ -256,45 +286,8 @@ function CalendarField({
         };
     }, []);
 
-    const year = visibleMonth.getFullYear();
-    const month = visibleMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDay = new Date(year, month, 1).getDay();
-
-    const selectedDate = value
-        ? (() => {
-              const [selectedYear, selectedMonth, selectedDay] =
-                  value.split("-").map(Number);
-
-              return new Date(
-                  selectedYear,
-                  selectedMonth - 1,
-                  selectedDay,
-              );
-          })()
-        : null;
-
-    const today = new Date();
-
-    const isSameDay = (first: Date, second: Date | null) =>
-        Boolean(
-            second &&
-                first.getFullYear() === second.getFullYear() &&
-                first.getMonth() === second.getMonth() &&
-                first.getDate() === second.getDate(),
-        );
-
-    const formatDate = (date: Date) =>
-        [
-            date.getFullYear(),
-            String(date.getMonth() + 1).padStart(2, "0"),
-            String(date.getDate()).padStart(2, "0"),
-        ].join("-");
-
-    const selectDate = (day: number) => {
-        onChange(formatDate(new Date(year, month, day)));
-        setOpen(false);
-    };
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     const days = Array.from(
         { length: firstDay + daysInMonth },
@@ -302,19 +295,40 @@ function CalendarField({
             index < firstDay ? null : index - firstDay + 1,
     );
 
-    const displayValue = value
-        ? (() => {
-              const [dateYear, dateMonth, dateDay] = value
-                  .split("-")
-                  .map(Number);
+    const chooseDate = (day: number) => {
+        onChange(formatDate(new Date(year, month, day)));
+        setOpen(false);
+    };
 
-              return new Date(
-                  dateYear,
-                  dateMonth - 1,
-                  dateDay,
-              ).toLocaleDateString("pt-BR");
-          })()
-        : "Selecione a data";
+    const goPreviousMonth = () => {
+        if (month === 0) {
+            setMonth(11);
+            setYear((current) => current - 1);
+            return;
+        }
+
+        setMonth((current) => current - 1);
+    };
+
+    const goNextMonth = () => {
+        if (month === 11) {
+            setMonth(0);
+            setYear((current) => current + 1);
+            return;
+        }
+
+        setMonth((current) => current + 1);
+    };
+
+    const goPreviousYear = () => {
+        setYear((current) => current - 1);
+    };
+
+    const goNextYear = () => {
+        setYear((current) => current + 1);
+    };
+
+    const today = new Date();
 
     return (
         <div ref={calendarRef} className="relative sm:col-span-3">
@@ -323,12 +337,16 @@ function CalendarField({
                 onClick={() => setOpen((current) => !current)}
                 className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none focus:ring-2 sm:text-sm"
                 style={{
-                    backgroundColor: bgCard,
-                    border: `1px solid ${borderCard}`,
+                    backgroundColor: bgInput,
+                    border: `1px solid ${borderColor}`,
                     color: value ? textPrimary : textSecondary,
                 }}
             >
-                <span>{displayValue}</span>
+                <span>
+                    {selectedDate
+                        ? selectedDate.toLocaleDateString("pt-BR")
+                        : "Selecione a data"}
+                </span>
 
                 <CalendarDays
                     className="h-4 w-4"
@@ -338,21 +356,26 @@ function CalendarField({
 
             {open && (
                 <div
-                    className="absolute left-0 top-full z-50 mt-2 w-full min-w-[280px] rounded-2xl p-3 shadow-2xl"
+                    className="absolute left-0 top-full z-[100] mt-2 w-full min-w-[280px] rounded-2xl p-3 shadow-2xl"
                     style={{
-                        backgroundColor: bgCard,
-                        border: `1px solid ${borderCard}`,
+                        backgroundColor: bgPopup,
+                        border: `1px solid ${borderColor}`,
                     }}
                 >
-                    <div className="mb-3 flex items-center justify-between">
+                    <div className="mb-3 flex items-center justify-between gap-1">
                         <button
                             type="button"
-                            onClick={() =>
-                                setVisibleMonth(
-                                    new Date(year, month - 1, 1),
-                                )
-                            }
-                            className="rounded-lg p-2 transition hover:bg-black/10"
+                            onClick={goPreviousYear}
+                            className="rounded-lg px-2 py-1 text-xs transition hover:bg-black/10"
+                            style={{ color: textSecondary }}
+                        >
+                            «
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={goPreviousMonth}
+                            className="rounded-lg p-1.5 transition hover:bg-black/10"
                             aria-label="Mês anterior"
                         >
                             <ChevronLeft
@@ -362,29 +385,37 @@ function CalendarField({
                         </button>
 
                         <span
-                            className="text-sm font-semibold capitalize"
+                            className="flex-1 text-center text-sm font-semibold capitalize"
                             style={{ color: textPrimary }}
                         >
-                            {visibleMonth.toLocaleDateString("pt-BR", {
-                                month: "long",
-                                year: "numeric",
-                            })}
+                            {new Date(year, month, 1).toLocaleDateString(
+                                "pt-BR",
+                                {
+                                    month: "long",
+                                    year: "numeric",
+                                },
+                            )}
                         </span>
 
                         <button
                             type="button"
-                            onClick={() =>
-                                setVisibleMonth(
-                                    new Date(year, month + 1, 1),
-                                )
-                            }
-                            className="rounded-lg p-2 transition hover:bg-black/10"
+                            onClick={goNextMonth}
+                            className="rounded-lg p-1.5 transition hover:bg-black/10"
                             aria-label="Próximo mês"
                         >
                             <ChevronRight
                                 className="h-4 w-4"
                                 style={{ color: textPrimary }}
                             />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={goNextYear}
+                            className="rounded-lg px-2 py-1 text-xs transition hover:bg-black/10"
+                            style={{ color: textSecondary }}
+                        >
+                            »
                         </button>
                     </div>
 
@@ -403,62 +434,58 @@ function CalendarField({
                     </div>
 
                     <div className="grid grid-cols-7 gap-1">
-                        {days.map((day, index) =>
-                            day === null ? (
-                                <span
-                                    key={`empty-${index}`}
-                                    className="h-8"
-                                />
-                            ) : (
+                        {days.map((day, index) => {
+                            if (day === null) {
+                                return (
+                                    <span
+                                        key={`empty-${index}`}
+                                        className="h-8"
+                                    />
+                                );
+                            }
+
+                            const currentDate = new Date(year, month, day);
+                            const isSelected = sameDay(
+                                currentDate,
+                                selectedDate,
+                            );
+                            const isToday = sameDay(currentDate, today);
+
+                            return (
                                 <button
                                     key={day}
                                     type="button"
-                                    onClick={() => selectDate(day)}
+                                    onClick={() => chooseDate(day)}
                                     className="h-8 rounded-lg text-xs font-medium transition hover:scale-105"
                                     style={{
-                                        color:
-                                            isSameDay(
-                                                new Date(year, month, day),
-                                                selectedDate,
-                                            )
-                                                ? "#FFFFFF"
-                                                : textPrimary,
-                                        background:
-                                            isSameDay(
-                                                new Date(year, month, day),
-                                                selectedDate,
-                                            )
-                                                ? `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`
-                                                : isSameDay(
-                                                        new Date(
-                                                            year,
-                                                            month,
-                                                            day,
-                                                        ),
-                                                        today,
-                                                    )
-                                                    ? `${corPrimaria}20`
-                                                    : "transparent",
+                                        color: isSelected
+                                            ? "#FFFFFF"
+                                            : textPrimary,
+                                        background: isSelected
+                                            ? `linear-gradient(135deg, ${corPrimaria}, ${corSecundaria})`
+                                            : isToday
+                                                ? `${corPrimaria}20`
+                                                : "transparent",
+                                        border:
+                                            isToday && !isSelected
+                                                ? `1px solid ${corPrimaria}`
+                                                : "1px solid transparent",
                                     }}
                                 >
                                     {day}
                                 </button>
-                            ),
-                        )}
+                            );
+                        })}
                     </div>
 
                     <button
                         type="button"
                         onClick={() => {
                             const current = new Date();
+
                             onChange(formatDate(current));
-                            setVisibleMonth(
-                                new Date(
-                                    current.getFullYear(),
-                                    current.getMonth(),
-                                    1,
-                                ),
-                            );
+                            setMonth(current.getMonth());
+                            setYear(current.getFullYear());
                             setOpen(false);
                         }}
                         className="mt-3 w-full rounded-lg py-2 text-xs font-semibold transition hover:bg-black/10"
@@ -475,13 +502,14 @@ function CalendarField({
 interface CustomSelectProps {
     refDiv: RefObject<HTMLDivElement | null>;
     value: string;
-    options: { value: string; label: string }[];
+    options: Option[];
     placeholder: string;
     isOpen: boolean;
     textPrimary: string;
     textSecondary: string;
-    bgCard: string;
-    borderCard: string;
+    bgInput: string;
+    bgPopup: string;
+    borderColor: string;
     corPrimaria: string;
     onToggle: () => void;
     onSelect: (value: string) => void;
@@ -495,13 +523,16 @@ function CustomSelect({
     isOpen,
     textPrimary,
     textSecondary,
-    bgCard,
-    borderCard,
+    bgInput,
+    bgPopup,
+    borderColor,
     corPrimaria,
     onToggle,
     onSelect,
 }: CustomSelectProps) {
-    const selected = options.find((option) => option.value === value);
+    const selected = options.find(
+        (option) => option.value === value,
+    );
 
     return (
         <div ref={refDiv} className="relative sm:col-span-3">
@@ -510,8 +541,8 @@ function CustomSelect({
                 onClick={onToggle}
                 className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-left text-base transition focus:outline-none sm:text-sm"
                 style={{
-                    backgroundColor: bgCard,
-                    border: `1px solid ${borderCard}`,
+                    backgroundColor: bgInput,
+                    border: `1px solid ${borderColor}`,
                     color: textPrimary,
                 }}
             >
@@ -529,10 +560,10 @@ function CustomSelect({
 
             {isOpen && (
                 <div
-                    className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl shadow-2xl backdrop-blur-2xl"
+                    className="absolute z-[100] mt-2 w-full overflow-hidden rounded-xl shadow-2xl"
                     style={{
-                        backgroundColor: bgCard,
-                        border: `1px solid ${borderCard}`,
+                        backgroundColor: bgPopup,
+                        border: `1px solid ${borderColor}`,
                     }}
                 >
                     <div className="modal-scrollbar-hide max-h-48 overflow-y-auto py-1">
@@ -547,11 +578,11 @@ function CustomSelect({
                                 className="flex w-full px-3 py-2.5 text-left text-sm transition hover:bg-black/10"
                                 style={{
                                     color:
-                                        value === option.value
+                                        option.value === value
                                             ? corPrimaria
                                             : textPrimary,
                                     backgroundColor:
-                                        value === option.value
+                                        option.value === value
                                             ? `${corPrimaria}20`
                                             : "transparent",
                                 }}
@@ -580,8 +611,8 @@ export default function PessoaModal({
     const [dropdown, setDropdown] =
         useState<DropdownState>(INITIAL_DROPDOWN);
 
-    const tipo = form.tipo;
     const isEdit = Boolean(pessoa);
+    const tipo = form.tipo;
 
     const refs: Record<
         DropdownKey,
@@ -595,9 +626,7 @@ export default function PessoaModal({
     };
 
     useEffect(() => {
-        const updateTheme = () => {
-            setTema(getSavedTheme());
-        };
+        const updateTheme = () => setTema(readTheme());
 
         updateTheme();
         window.addEventListener("escola-tema-updated", updateTheme);
@@ -614,11 +643,11 @@ export default function PessoaModal({
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
 
-            const inside = (
+            const clickedInside = (
                 Object.keys(refs) as DropdownKey[]
             ).some((key) => refs[key].current?.contains(target));
 
-            if (!inside) {
+            if (!clickedInside) {
                 setDropdown(INITIAL_DROPDOWN);
             }
         };
@@ -638,20 +667,20 @@ export default function PessoaModal({
             return;
         }
 
+        const previousOverflow = document.body.style.overflow;
+
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 onClose();
             }
         };
 
-        const previousOverflow = document.body.style.overflow;
-
-        document.addEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "hidden";
+        document.addEventListener("keydown", handleKeyDown);
 
         return () => {
-            document.removeEventListener("keydown", handleKeyDown);
             document.body.style.overflow = previousOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, [open, onClose]);
 
@@ -698,34 +727,28 @@ export default function PessoaModal({
     const corSecundaria = tema?.cor_secundaria || "#8B5CF6";
 
     const textPrimary = isClaro ? "#1E293B" : "#FFFFFF";
-    const textSecondary = isClaro ? "#64748B" : "#9CA3AF";
+    const textSecondary = isClaro ? "#64748B" : "#CBD5E1";
 
-    const bgCard = isClaro
-        ? "rgba(0,0,0,0.03)"
-        : "rgba(255,255,255,0.05)";
+    const bgInput = isClaro
+        ? "rgba(15,23,42,0.04)"
+        : "rgba(255,255,255,0.08)";
 
-    const borderCard = isClaro
-        ? "rgba(15,23,42,0.12)"
-        : "rgba(255,255,255,0.12)";
+    const bgPopup = isClaro ? "#FFFFFF" : "#172033";
+
+    const borderColor = isClaro
+        ? "rgba(15,23,42,0.16)"
+        : "rgba(255,255,255,0.16)";
 
     const estiloCard = tema?.estilo_card || "arredondado";
 
-    const cardStyle: CSSProperties = {
-        background:
-            estiloCard === "glass"
-                ? isClaro
-                    ? "rgba(255,255,255,0.72)"
-                    : "rgba(15,23,42,0.72)"
-                : isClaro
-                    ? "#FFFFFF"
-                    : "#0F172A",
-        borderStyle: "solid",
-        borderColor:
+    const modalStyle: CSSProperties = {
+        backgroundColor: isClaro ? "#FFFFFF" : "#0F172A",
+        border: `1px solid ${
             estiloCard === "borda_colorida"
                 ? corPrimaria
-                : borderCard,
-        borderWidth:
-            estiloCard === "borda_colorida" ? "2px" : "1px",
+                : borderColor
+        }`,
+        borderWidth: estiloCard === "borda_colorida" ? 2 : 1,
         borderRadius:
             estiloCard === "quadrado"
                 ? "0"
@@ -734,18 +757,8 @@ export default function PessoaModal({
                     : "1rem",
         boxShadow:
             estiloCard === "elevado"
-                ? "0 20px 25px -5px rgba(0,0,0,0.25)"
-                : "0 25px 50px -12px rgba(0,0,0,0.35)",
-        backdropFilter:
-            estiloCard === "glass"
-                ? "blur(20px) saturate(150%)"
-                : undefined,
-    };
-
-    const inputStyle: CSSProperties = {
-        backgroundColor: bgCard,
-        border: `1px solid ${borderCard}`,
-        color: textPrimary,
+                ? "0 24px 60px rgba(0,0,0,0.4)"
+                : "0 20px 50px rgba(0,0,0,0.35)",
     };
 
     const inputClass =
@@ -853,16 +866,23 @@ export default function PessoaModal({
         });
     };
 
+    const inputStyle: CSSProperties = {
+        backgroundColor: bgInput,
+        border: `1px solid ${borderColor}`,
+        color: textPrimary,
+    };
+
     const turmaOptions = turmas.map((turma) => ({
         value: turma.id,
         label: turma.nome,
     }));
 
-    const renderField = (
+    const renderInput = (
         label: string,
-        icon: React.ReactNode,
+        icon: ReactNode,
         field: keyof FormState,
         type = "text",
+        required = false,
     ) => (
         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
             <label
@@ -875,64 +895,63 @@ export default function PessoaModal({
 
             <input
                 type={type}
-                value={String(form[field])}
+                value={form[field]}
                 onChange={(event) =>
                     handleChange(field, event.target.value)
                 }
                 className={`${inputClass} sm:col-span-3`}
                 style={inputStyle}
+                required={required}
             />
         </div>
     );
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm sm:p-4">
             <div
-                className="flex max-h-[92vh] w-full max-w-[800px] flex-col overflow-hidden"
-                style={cardStyle}
+                className="flex max-h-[92vh] w-full max-w-[500px] flex-col overflow-hidden"
+                style={modalStyle}
             >
                 <div
-                    className="shrink-0 border-b p-4"
-                    style={{ borderColor: borderCard }}
+                    className="flex shrink-0 items-center justify-between border-b p-4"
+                    style={{ borderColor }}
                 >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2
-                                className="text-base font-bold"
-                                style={{ color: textPrimary }}
-                            >
-                                {isEdit
-                                    ? "Editar Registro"
-                                    : "Cadastrar Registro"}
-                            </h2>
-
-                            <p
-                                className="mt-1 text-xs"
-                                style={{ color: textSecondary }}
-                            >
-                                Preencha os dados do registro
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-lg p-1.5 transition hover:bg-black/10"
-                            aria-label="Fechar modal"
+                    <div>
+                        <h2
+                            className="text-base font-bold"
+                            style={{ color: textPrimary }}
                         >
-                            <X
-                                className="h-4 w-4"
-                                style={{ color: textSecondary }}
-                            />
-                        </button>
+                            {isEdit
+                                ? "Editar Registro"
+                                : "Cadastrar Registro"}
+                        </h2>
+
+                        <p
+                            className="mt-1 text-xs"
+                            style={{ color: textSecondary }}
+                        >
+                            Preencha os dados do registro
+                        </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Fechar modal"
+                        className="rounded-lg p-1.5 transition hover:bg-black/10"
+                    >
+                        <X
+                            className="h-4 w-4"
+                            style={{ color: textSecondary }}
+                        />
+                    </button>
                 </div>
 
                 <form
                     onSubmit={handleSubmit}
                     className="flex min-h-0 flex-1 flex-col"
                 >
-                    <div className="modal-scrollbar-hide grid min-h-0 flex-1 gap-3 overflow-y-auto px-4 py-4">
+                    <div className="modal-scrollbar-hide min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
                         <h3
                             className="text-sm font-semibold"
                             style={{ color: corPrimaria }}
@@ -940,22 +959,26 @@ export default function PessoaModal({
                             Dados Pessoais
                         </h3>
 
-                        {renderField(
+                        {renderInput(
                             "Nome *",
                             <User
                                 className="h-3.5 w-3.5"
                                 style={{ color: corPrimaria }}
                             />,
                             "nome",
+                            "text",
+                            true,
                         )}
 
-                        {renderField(
+                        {renderInput(
                             "BI *",
                             <IdCard
                                 className="h-3.5 w-3.5"
                                 style={{ color: corPrimaria }}
                             />,
                             "bi",
+                            "text",
+                            true,
                         )}
 
                         <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
@@ -982,8 +1005,9 @@ export default function PessoaModal({
                                 corSecundaria={corSecundaria}
                                 textPrimary={textPrimary}
                                 textSecondary={textSecondary}
-                                bgCard={bgCard}
-                                borderCard={borderCard}
+                                bgInput={bgInput}
+                                bgPopup={bgPopup}
+                                borderColor={borderColor}
                             />
                         </div>
 
@@ -1003,8 +1027,9 @@ export default function PessoaModal({
                                 isOpen={dropdown.sexo}
                                 textPrimary={textPrimary}
                                 textSecondary={textSecondary}
-                                bgCard={bgCard}
-                                borderCard={borderCard}
+                                bgInput={bgInput}
+                                bgPopup={bgPopup}
+                                borderColor={borderColor}
                                 corPrimaria={corPrimaria}
                                 onToggle={() =>
                                     toggleDropdown("sexo")
@@ -1031,8 +1056,9 @@ export default function PessoaModal({
                                 isOpen={dropdown.estado_civil}
                                 textPrimary={textPrimary}
                                 textSecondary={textSecondary}
-                                bgCard={bgCard}
-                                borderCard={borderCard}
+                                bgInput={bgInput}
+                                bgPopup={bgPopup}
+                                borderColor={borderColor}
                                 corPrimaria={corPrimaria}
                                 onToggle={() =>
                                     toggleDropdown("estado_civil")
@@ -1046,7 +1072,7 @@ export default function PessoaModal({
                             />
                         </div>
 
-                        {renderField(
+                        {renderInput(
                             "Telefone",
                             <Phone
                                 className="h-3.5 w-3.5"
@@ -1055,7 +1081,7 @@ export default function PessoaModal({
                             "telefone",
                         )}
 
-                        {renderField(
+                        {renderInput(
                             "Email",
                             <Mail
                                 className="h-3.5 w-3.5"
@@ -1065,7 +1091,7 @@ export default function PessoaModal({
                             "email",
                         )}
 
-                        {renderField(
+                        {renderInput(
                             "Endereço",
                             <MapPin
                                 className="h-3.5 w-3.5"
@@ -1076,7 +1102,7 @@ export default function PessoaModal({
 
                         <div
                             className="my-2 border-t"
-                            style={{ borderColor: borderCard }}
+                            style={{ borderColor }}
                         />
 
                         <h3
@@ -1098,12 +1124,13 @@ export default function PessoaModal({
                                 refDiv={refs.tipo}
                                 value={form.tipo}
                                 options={TIPOS_VINCULO}
-                                placeholder="Selecione o Tipo"
+                                placeholder="Selecione o tipo"
                                 isOpen={dropdown.tipo}
                                 textPrimary={textPrimary}
                                 textSecondary={textSecondary}
-                                bgCard={bgCard}
-                                borderCard={borderCard}
+                                bgInput={bgInput}
+                                bgPopup={bgPopup}
+                                borderColor={borderColor}
                                 corPrimaria={corPrimaria}
                                 onToggle={() =>
                                     toggleDropdown("tipo")
@@ -1116,7 +1143,7 @@ export default function PessoaModal({
 
                         {tipo === "ALUNO" && (
                             <>
-                                {renderField(
+                                {renderInput(
                                     "Nº Processo *",
                                     <BookOpen
                                         className="h-3.5 w-3.5"
@@ -1125,12 +1152,16 @@ export default function PessoaModal({
                                         }}
                                     />,
                                     "numero_processo",
+                                    "text",
+                                    true,
                                 )}
 
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
                                         className={labelClass}
-                                        style={{ color: textPrimary }}
+                                        style={{
+                                            color: textPrimary,
+                                        }}
                                     >
                                         <Users
                                             className="h-3.5 w-3.5"
@@ -1145,12 +1176,13 @@ export default function PessoaModal({
                                         refDiv={refs.turma}
                                         value={form.turma_id}
                                         options={turmaOptions}
-                                        placeholder="Selecione a Turma"
+                                        placeholder="Selecione a turma"
                                         isOpen={dropdown.turma}
                                         textPrimary={textPrimary}
                                         textSecondary={textSecondary}
-                                        bgCard={bgCard}
-                                        borderCard={borderCard}
+                                        bgInput={bgInput}
+                                        bgPopup={bgPopup}
+                                        borderColor={borderColor}
                                         corPrimaria={corPrimaria}
                                         onToggle={() =>
                                             toggleDropdown("turma")
@@ -1168,7 +1200,7 @@ export default function PessoaModal({
 
                         {tipo === "PROFESSOR" && (
                             <>
-                                {renderField(
+                                {renderInput(
                                     "Formação *",
                                     <GraduationCap
                                         className="h-3.5 w-3.5"
@@ -1177,9 +1209,11 @@ export default function PessoaModal({
                                         }}
                                     />,
                                     "formacao",
+                                    "text",
+                                    true,
                                 )}
 
-                                {renderField(
+                                {renderInput(
                                     "Disciplinas",
                                     <BookOpen
                                         className="h-3.5 w-3.5"
@@ -1194,7 +1228,7 @@ export default function PessoaModal({
 
                         {tipo === "FUNCIONARIO" && (
                             <>
-                                {renderField(
+                                {renderInput(
                                     "Nº Funcional",
                                     <Briefcase
                                         className="h-3.5 w-3.5"
@@ -1208,7 +1242,9 @@ export default function PessoaModal({
                                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-4 sm:items-center">
                                     <label
                                         className={labelClass}
-                                        style={{ color: textPrimary }}
+                                        style={{
+                                            color: textPrimary,
+                                        }}
                                     >
                                         Cargo *
                                     </label>
@@ -1217,12 +1253,13 @@ export default function PessoaModal({
                                         refDiv={refs.cargo}
                                         value={form.cargo}
                                         options={CARGO_OPTIONS}
-                                        placeholder="Selecione o Cargo"
+                                        placeholder="Selecione o cargo"
                                         isOpen={dropdown.cargo}
                                         textPrimary={textPrimary}
                                         textSecondary={textSecondary}
-                                        bgCard={bgCard}
-                                        borderCard={borderCard}
+                                        bgInput={bgInput}
+                                        bgPopup={bgPopup}
+                                        borderColor={borderColor}
                                         corPrimaria={corPrimaria}
                                         onToggle={() =>
                                             toggleDropdown("cargo")
@@ -1239,7 +1276,7 @@ export default function PessoaModal({
                         )}
 
                         {tipo === "ENCARREGADO" &&
-                            renderField(
+                            renderInput(
                                 "Observação",
                                 <Users
                                     className="h-3.5 w-3.5"
@@ -1251,7 +1288,7 @@ export default function PessoaModal({
 
                     <div
                         className="flex shrink-0 flex-col gap-3 border-t p-4 sm:flex-row sm:justify-end"
-                        style={{ borderColor: borderCard }}
+                        style={{ borderColor }}
                     >
                         <button
                             type="button"
