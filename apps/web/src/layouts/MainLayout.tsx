@@ -14,7 +14,7 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const menuItems = [
     { icon: LayoutGrid, label: 'Painel', path: '/dashboard', type: 'Definição' },
-    { icon: Building, label: 'Direção', path: '/dashboard/direcao', type: 'Gestão' },
+    { icon: Building, label: 'Direção Escolar', path: '/dashboard/direcao', type: 'Gestão' },
     { icon: Settings, label: 'Definições', path: '/dashboard/definicoes', type: 'Definição' },
 ]
 

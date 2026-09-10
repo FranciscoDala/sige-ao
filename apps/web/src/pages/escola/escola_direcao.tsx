@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     Building,
     Users,
@@ -13,9 +13,14 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
-import AnoLetivoModal from "./components/modal_anoLetivo";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+import AnoLetivoModal from "./components/modal_anoLetivo";
+import PessoaModal, {
+    PessoaCreatePayload,
+} from "./components/modal_registro";
+
+const API_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 const api = axios.create({
     baseURL: API_URL,
@@ -26,11 +31,7 @@ api.interceptors.request.use((config) => {
 
     if (token) {
         config.headers = config.headers ?? {};
-        if (typeof (config.headers as any).set === "function") {
-            (config.headers as any).set("Authorization", `Bearer ${token}`);
-        } else {
-            (config.headers as any).Authorization = `Bearer ${token}`;
-        }
+        config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -47,7 +48,7 @@ type NivelEnsino =
 type Tab = {
     id: string;
     label: string;
-    icon: any;
+    icon: typeof Users;
 };
 
 type AnoLetivo = {
@@ -56,6 +57,16 @@ type AnoLetivo = {
     status: "ATIVO" | "FECHADO" | "PLANEJAMENTO";
     data_inicio: string;
     data_fim: string;
+};
+
+type EscolaOption = {
+    id: string;
+    nome: string;
+};
+
+type TurmaOption = {
+    id: string;
+    nome: string;
 };
 
 const TABS_POR_NIVEL: Record<NivelEnsino, Tab[]> = {
@@ -107,7 +118,7 @@ const formatNivel = (nivel: string) => {
     return nivel
         .toLowerCase()
         .replace(/_/g, " ")
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
 export default function EscolaDirecaoPage() {
@@ -118,11 +129,24 @@ export default function EscolaDirecaoPage() {
     const [corPrimariaHex, setCorPrimariaHex] = useState("#0056b3");
     const [isClaro, setIsClaro] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+
     const [savingAno, setSavingAno] = useState(false);
     const [modalAnoOpen, setModalAnoOpen] = useState(false);
 
+    const [savingRegistro, setSavingRegistro] = useState(false);
+    const [modalRegistroOpen, setModalRegistroOpen] = useState(false);
+
+    const [escolasRegistro, setEscolasRegistro] = useState<
+        EscolaOption[]
+    >([]);
+
+    const [turmasRegistro, setTurmasRegistro] = useState<
+        TurmaOption[]
+    >([]);
+
     const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([]);
-    const [anoLetivoAtivo, setAnoLetivoAtivo] = useState<AnoLetivo | null>(null);
+    const [anoLetivoAtivo, setAnoLetivoAtivo] =
+        useState<AnoLetivo | null>(null);
 
     const STORAGE_KEY_TAB = "direcao_active_tab";
 
@@ -131,36 +155,93 @@ export default function EscolaDirecaoPage() {
         setErro(null);
 
         try {
-            const resEscola = await api.get("/escolas/me");
-            const resAnos = await api.get("/anos-letivos");
+            const [resEscola, resAnos] = await Promise.all([
+                api.get("/escolas/me"),
+                api.get("/anos-letivos"),
+            ]);
 
-            const nivelEscola = resEscola.data.nivel_ensino as NivelEnsino;
+            const nivelEscola =
+                (resEscola.data.nivel_ensino as NivelEnsino) ||
+                "PRIMARIO";
+
             setNivel(nivelEscola);
-            setCorPrimariaHex(resEscola.data.cor_primaria || "#0056b3");
+            setCorPrimariaHex(
+                resEscola.data.cor_primaria || "#0056b3",
+            );
             setIsClaro(resEscola.data.tema === "claro");
 
-            const tabsDoNivel = TABS_POR_NIVEL[nivelEscola] || TABS_POR_NIVEL.PRIMARIO;
+            const tabsDoNivel =
+                TABS_POR_NIVEL[nivelEscola] ||
+                TABS_POR_NIVEL.PRIMARIO;
+
             setTabs(tabsDoNivel);
 
-            const listaAnos = Array.isArray(resAnos.data) ? resAnos.data : [];
+            const listaAnos = Array.isArray(resAnos.data)
+                ? resAnos.data
+                : [];
+
             setAnosLetivos(listaAnos);
 
             const anoAtivo =
-                listaAnos.find((a: AnoLetivo) => a.status === "ATIVO") ||
+                listaAnos.find(
+                    (ano: AnoLetivo) => ano.status === "ATIVO",
+                ) ||
                 listaAnos[0] ||
                 null;
+
             setAnoLetivoAtivo(anoAtivo);
 
-            const savedTab = localStorage.getItem(STORAGE_KEY_TAB);
-            const isValidTab = tabsDoNivel.some((t) => t.id === savedTab);
-            setActiveTab(isValidTab ? savedTab! : tabsDoNivel[0].id);
-        } catch (e: any) {
-            console.error("Erro ao buscar dados iniciais", e);
+            const escolaAtual: EscolaOption = {
+                id: String(resEscola.data.id),
+                nome: String(resEscola.data.nome),
+            };
 
-            if (e.response?.status === 401) {
+            setEscolasRegistro([escolaAtual]);
+
+            try {
+                const resTurmas = await api.get("/turmas");
+
+                const listaTurmas = Array.isArray(resTurmas.data)
+                    ? resTurmas.data
+                    : [];
+
+                setTurmasRegistro(
+                    listaTurmas.map((turma: TurmaOption) => ({
+                        id: String(turma.id),
+                        nome: turma.nome,
+                    })),
+                );
+            } catch (turmaError) {
+                console.error(
+                    "Erro ao carregar turmas",
+                    turmaError,
+                );
+                setTurmasRegistro([]);
+            }
+
+            const savedTab = localStorage.getItem(STORAGE_KEY_TAB);
+            const isValidTab = tabsDoNivel.some(
+                (tab) => tab.id === savedTab,
+            );
+
+            setActiveTab(
+                isValidTab && savedTab
+                    ? savedTab
+                    : tabsDoNivel[0].id,
+            );
+        } catch (error: any) {
+            console.error(
+                "Erro ao buscar dados iniciais",
+                error,
+            );
+
+            if (error.response?.status === 401) {
                 setErro("Token expirado. Faça login novamente.");
             } else {
-                setErro(e.response?.data?.detail || "Erro ao carregar dados");
+                setErro(
+                    error.response?.data?.detail ||
+                        "Erro ao carregar dados.",
+                );
             }
         } finally {
             setLoading(false);
@@ -168,23 +249,8 @@ export default function EscolaDirecaoPage() {
     };
 
     useEffect(() => {
-        carregarDados();
+        void carregarDados();
     }, []);
-
-    const handleSalvarAno = async (data: any) => {
-        setSavingAno(true);
-
-        try {
-            await api.post("/anos-letivos", data);
-            toast.success("Ano letivo criado com sucesso!");
-            setModalAnoOpen(false);
-            await carregarDados();
-        } catch (e: any) {
-            toast.error(e.response?.data?.detail || "Erro ao criar ano");
-        } finally {
-            setSavingAno(false);
-        }
-    };
 
     useEffect(() => {
         if (!loading) {
@@ -192,11 +258,55 @@ export default function EscolaDirecaoPage() {
         }
     }, [activeTab, loading]);
 
+    const handleSalvarAno = async (data: unknown) => {
+        setSavingAno(true);
+
+        try {
+            await api.post("/anos-letivos", data);
+
+            toast.success("Ano letivo criado com sucesso!");
+            setModalAnoOpen(false);
+
+            await carregarDados();
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.detail ||
+                    "Erro ao criar ano letivo.",
+            );
+        } finally {
+            setSavingAno(false);
+        }
+    };
+
+    const handleSalvarRegistro = async (
+        data: PessoaCreatePayload,
+    ) => {
+        setSavingRegistro(true);
+
+        try {
+            await api.post("/pessoas/", data);
+
+            toast.success("Registro criado com sucesso!");
+            setModalRegistroOpen(false);
+        } catch (error: any) {
+            toast.error(
+                error.response?.data?.detail ||
+                    "Erro ao criar registro.",
+            );
+        } finally {
+            setSavingRegistro(false);
+        }
+    };
+
     const corPrimaria = corPrimariaHex;
     const textPrimary = isClaro ? "#1E293B" : "white";
     const textSecondary = isClaro ? "#64748B" : "#9CA3AF";
-    const bgCard = isClaro ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.05)";
-    const borderCard = isClaro ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)";
+    const bgCard = isClaro
+        ? "rgba(0,0,0,0.03)"
+        : "rgba(255,255,255,0.05)";
+    const borderCard = isClaro
+        ? "rgba(0,0,0,0.1)"
+        : "rgba(255,255,255,0.1)";
     const bgActive = `${corPrimaria}20`;
     const borderActive = `${corPrimaria}4D`;
     const lineColor = `${corPrimaria}26`;
@@ -204,7 +314,10 @@ export default function EscolaDirecaoPage() {
     if (loading) {
         return (
             <div className="flex justify-center p-6">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: corPrimaria }} />
+                <Loader2
+                    className="h-6 w-6 animate-spin"
+                    style={{ color: corPrimaria }}
+                />
             </div>
         );
     }
@@ -222,32 +335,65 @@ export default function EscolaDirecaoPage() {
             <div className="space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex items-center gap-3">
-                        <Building className="h-6 w-6" style={{ color: corPrimaria }} />
+                        <Building
+                            className="h-6 w-6"
+                            style={{ color: corPrimaria }}
+                        />
+
                         <div>
-                            <h1 className="text-xl font-bold" style={{ color: textPrimary }}>
+                            <h1
+                                className="text-xl font-bold"
+                                style={{ color: textPrimary }}
+                            >
                                 Direção Escolar
                             </h1>
-                            <p className="text-xs" style={{ color: textSecondary }}>
+
+                            <p
+                                className="text-xs"
+                                style={{ color: textSecondary }}
+                            >
                                 Ensino: {formatNivel(nivel)}
+
                                 {anoLetivoAtivo && (
                                     <span>
                                         {" "}
-                                        | {anoLetivoAtivo.nome} - {anoLetivoAtivo.status}
+                                        | {anoLetivoAtivo.nome} -{" "}
+                                        {anoLetivoAtivo.status}
                                     </span>
                                 )}
                             </p>
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => setModalAnoOpen(true)}
-                        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition hover:scale-[1.02] lg:w-auto"
-                        style={{ backgroundColor: corPrimaria }}
-                    >
-                        <Plus className="h-3.5 w-3.5" />
-                        Novo Ano
-                    </button>
+                    <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setModalRegistroOpen(true)
+                            }
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition hover:scale-[1.02] sm:w-auto"
+                            style={{
+                                backgroundColor: corPrimaria,
+                            }}
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            Novo Registro
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setModalAnoOpen(true)}
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition hover:scale-[1.02] sm:w-auto"
+                            style={{
+                                color: corPrimaria,
+                                borderColor: `${corPrimaria}66`,
+                                backgroundColor: bgCard,
+                            }}
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            Novo Ano
+                        </button>
+                    </div>
                 </div>
 
                 {anoLetivoAtivo?.status === "FECHADO" && (
@@ -258,10 +404,18 @@ export default function EscolaDirecaoPage() {
                             borderColor: `${corPrimaria}30`,
                         }}
                     >
-                        <Lock className="h-3.5 w-3.5" style={{ color: corPrimaria }} />
-                        <p className="text-xs" style={{ color: textPrimary }}>
-                            Ano letivo <b>{anoLetivoAtivo.nome}</b> está fechado. Modo apenas para
-                            consulta.
+                        <Lock
+                            className="h-3.5 w-3.5"
+                            style={{ color: corPrimaria }}
+                        />
+
+                        <p
+                            className="text-xs"
+                            style={{ color: textPrimary }}
+                        >
+                            Ano letivo{" "}
+                            <b>{anoLetivoAtivo.nome}</b> está fechado.
+                            Modo apenas para consulta.
                         </p>
                     </div>
                 )}
@@ -271,24 +425,40 @@ export default function EscolaDirecaoPage() {
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
-                            const isFechado = anoLetivoAtivo?.status === "FECHADO";
+                            const isFechado =
+                                anoLetivoAtivo?.status === "FECHADO";
 
                             return (
                                 <button
                                     key={tab.id}
                                     type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    disabled={isFechado && !["turmas"].includes(tab.id)}
+                                    onClick={() =>
+                                        setActiveTab(tab.id)
+                                    }
+                                    disabled={
+                                        isFechado &&
+                                        !["turmas"].includes(tab.id)
+                                    }
                                     className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
                                     style={{
-                                        backgroundColor: isActive ? bgActive : bgCard,
-                                        color: isActive ? corPrimaria : textSecondary,
-                                        borderColor: isActive ? borderActive : borderCard,
+                                        backgroundColor: isActive
+                                            ? bgActive
+                                            : bgCard,
+                                        color: isActive
+                                            ? corPrimaria
+                                            : textSecondary,
+                                        borderColor: isActive
+                                            ? borderActive
+                                            : borderCard,
                                     }}
                                 >
                                     <Icon
                                         className="h-3.5 w-3.5"
-                                        style={{ color: isActive ? corPrimaria : textSecondary }}
+                                        style={{
+                                            color: isActive
+                                                ? corPrimaria
+                                                : textSecondary,
+                                        }}
                                     />
                                     {tab.label}
                                 </button>
@@ -307,32 +477,45 @@ export default function EscolaDirecaoPage() {
                         <>
                             {activeTab === "turmas" && (
                                 <div className="text-sm">
-                                    Conteúdo de Turmas - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Turmas - ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
+
                             {activeTab === "cursos" && (
                                 <div className="text-sm">
-                                    Conteúdo de Cursos - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Cursos - ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
+
                             {activeTab === "salas" && (
                                 <div className="text-sm">
-                                    Conteúdo de Salas - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Salas - ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
+
                             {activeTab === "professores" && (
                                 <div className="text-sm">
-                                    Conteúdo de Professores - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Professores -
+                                    ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
+
                             {activeTab === "disciplinas" && (
                                 <div className="text-sm">
-                                    Conteúdo de Disciplinas - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Disciplinas -
+                                    ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
+
                             {activeTab === "horarios" && (
                                 <div className="text-sm">
-                                    Conteúdo de Horários - ano_letivo_id: {anoLetivoAtivo.id}
+                                    Conteúdo de Horários - ano_letivo_id:{" "}
+                                    {anoLetivoAtivo.id}
                                 </div>
                             )}
                         </>
@@ -341,11 +524,27 @@ export default function EscolaDirecaoPage() {
 
                 <style>
                     {`
-            .scrollbar-hide::-webkit-scrollbar { display: none; }
-            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-          `}
+                        .scrollbar-hide::-webkit-scrollbar {
+                            display: none;
+                        }
+
+                        .scrollbar-hide {
+                            -ms-overflow-style: none;
+                            scrollbar-width: none;
+                        }
+                    `}
                 </style>
             </div>
+
+            <PessoaModal
+                open={modalRegistroOpen}
+                onClose={() => setModalRegistroOpen(false)}
+                onSave={handleSalvarRegistro}
+                saving={savingRegistro}
+                pessoa={null}
+                escolas={escolasRegistro}
+                turmas={turmasRegistro}
+            />
 
             <AnoLetivoModal
                 open={modalAnoOpen}
